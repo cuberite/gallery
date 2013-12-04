@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project>
+  <file>
+    <filename>Gallery.lua</filename>
+  </file>
+  <file>
+    <filename>Gallery_init.lua</filename>
+  </file>
+</project>

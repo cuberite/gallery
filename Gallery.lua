@@ -588,6 +588,29 @@ end
 
 
 
+local function InitGalleries()
+	-- Load the last used area index for each gallery:
+	for idx, gallery in ipairs(g_Galleries) do
+		DBExec("SELECT LastAreaIdx FROM GalleryEnd WHERE GalleryName = \"" .. gallery.Name .. "\"",
+			function (UserData, NumCols, Values, Names)
+				for i = 1, NumCols do
+					if (Names[i] == LastAreaIdx) then
+						gallery.LastAreaIdx = tonumber(Values[i]);
+						return;
+					end
+				end
+			end
+		);
+		if (gallery.LastAreaIdx == nil) then
+			gallery.LastAreaIdx = 0;
+		end
+	end
+end
+
+
+
+
+
 -- All the initialization code should be down here, global:
 
 -- Load the config
@@ -597,8 +620,11 @@ LoadConfig();
 VerifyGalleries();
 VerifyConfig();
 
--- Open the DB connection
+-- Open the DB connection:
 OpenDB();
+
+-- Initialize the values in galleries stored in the DB:
+InitGalleries();
 
 -- Load per-player list of areas for all currently connected players:
 LoadAllPlayersAreas();

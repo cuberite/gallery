@@ -16,8 +16,16 @@ local g_Config = {};
 --- The per-world per-player list of owned areas. Access as "g_Areas[WorldName][PlayerEntityID]"
 local g_PlayerAreas = {};
 
+--- The DB connection that provides the player areas
+local g_DB = nil;
+
+--- The file with the player areas database:
+local DATABASE_FILE = "Galleries.sqlite";
+
 --- The file from which the galleries and the configuration is read
-local CONFIG_FILE = "Galleries.cfg"
+local CONFIG_FILE = "Galleries.cfg";
+
+local PLUGIN_PREFIX = "Gallery: ";
 
 
 
@@ -59,11 +67,11 @@ local function CheckGallery(a_Gallery, a_Index)
 	for idx, param in ipairs(g_GalleryRequiredParams) do
 		local p = a_Gallery[param.Name];
 		if (p == nil) then
-			LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\" is missing a required parameter '" .. param.Name .."'. Disabling the gallery.");
+			LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\" is missing a required parameter '" .. param.Name .."'. Disabling the gallery.");
 			return false;
 		end
 		if (type(p) ~= param.Type) then
-			LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\"'s parameter \"" .. param.Name .."\" is wrong type. Expected " .. param.Type .. ", got " .. type(p) ..". Disabling the gallery.");
+			LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\"'s parameter \"" .. param.Name .."\" is wrong type. Expected " .. param.Type .. ", got " .. type(p) ..". Disabling the gallery.");
 			return false;
 		end
 	end
@@ -73,7 +81,7 @@ local function CheckGallery(a_Gallery, a_Index)
 		local p = a_Gallery[param.Name];
 		if (p ~= nil) then
 			if (type(p) ~= param.Type) then
-				LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\"'s parameter \"" .. param.Name .."\" is wrong type. Expected " .. param.Type .. ", got " .. type(p) ..". Disabling the gallery.");
+				LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\"'s parameter \"" .. param.Name .."\" is wrong type. Expected " .. param.Type .. ", got " .. type(p) ..". Disabling the gallery.");
 				return false;
 			end
 		end
@@ -82,7 +90,7 @@ local function CheckGallery(a_Gallery, a_Index)
 	-- Assign the world:
 	a_Gallery.World = cRoot:Get():GetWorld(a_Gallery.WorldName);
 	if (a_Gallery.World == nil) then
-		LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\" specifies an unknown world '" .. a_Gallery.WorldName .. "\".");
+		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\" specifies an unknown world '" .. a_Gallery.WorldName .. "\".");
 		return false;
 	end
 
@@ -91,11 +99,11 @@ local function CheckGallery(a_Gallery, a_Index)
 	if (AreaTemplate ~= nil) then
 		local Schematic = cBlockArea();
 		if (Schematic == nil) then
-			LOGWARNING("Cannot create the template schematic representation");
+			LOGWARNING(PLUGIN_PREFIX .. "Cannot create the template schematic representation");
 			return true;
 		end
 		if not(Schematic:LoadFromSchematicFile(AreaTemplate)) then
-			LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\"'s AreaTemplate failed to load from \"" .. AreaTemplate .. "\".");
+			LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\"'s AreaTemplate failed to load from \"" .. AreaTemplate .. "\".");
 			return false;
 		end
 		a_Gallery.AreaTemplateSchematic = Schematic;
@@ -150,8 +158,8 @@ local function LoadConfig()
 	-- Load and compile the config file:
 	local cfg, err = loadfile(CONFIG_FILE);
 	if (cfg == nil) then
-		LOGWARNING("Cannot open " .. CONFIG_FILE .. ": " .. err);
-		LOGWARNING("No galleries were loaded");
+		LOGWARNING(PLUGIN_PREFIX .. "Cannot open " .. CONFIG_FILE .. ": " .. err);
+		LOGWARNING(PLUGIN_PREFIX .. "No galleries were loaded");
 		return;
 	end
 	
@@ -164,11 +172,11 @@ local function LoadConfig()
 	-- Retrieve the values we want from the sandbox:
 	g_Galleries, g_Config = SecureEnvironment.Galleries, SecureEnvironment.Config;
 	if (g_Galleries == nil) then
-		LOGWARNING("Galleries not found in the config file '" .. CONFIG_FILE .. "'. Gallery plugin inactive.");
+		LOGWARNING(PLUGIN_PREFIX .. "Galleries not found in the config file '" .. CONFIG_FILE .. "'. Gallery plugin inactive.");
 		g_Galleries = {};
 	end
 	if (g_Config == nil) then
-		LOGWARNING("Config not found in the config file '" .. CONFIG_FILE .. "'. Using defaults.");
+		LOGWARNING(PLUGIN_PREFIX .. "Config not found in the config file '" .. CONFIG_FILE .. "'. Using defaults.");
 		g_Config = {};  -- Defaults will be inserted by VerifyConfig()
 	end
 end
@@ -307,9 +315,21 @@ end
 
 --- Loads the areas for a single player in the specified world
 local function LoadPlayerAreas(a_WorldName, a_PlayerName)
-	-- TODO
+	if (g_DB == nil) then
+		return {};
+	end
+
+	local res = {};
+	local stmt = g_DB:prepare("SELECT MinX, MaxX, MinZ, MaxZ FROM Areas WHERE PlayerName = ? AND WorldName = ?");
+	stmt:bind_values(a_PlayerName, a_WorldName);
+	for v in stmt:rows() do
+		table.insert(res, {MinX = v[1], MaxX = v[2], MinZ = v[3], MaxZ = v[4],});
+	end
+	stmt:finalize();
+	return res;
 	
-	--DEBUG: return a dummy area to test prevention:
+	--[[
+	-- DEBUG: return a dummy area to test prevention:
 	return
 	{
 		{
@@ -319,6 +339,7 @@ local function LoadPlayerAreas(a_WorldName, a_PlayerName)
 			MaxZ = 115,
 		}
 	};
+	--]]
 end
 
 
@@ -453,6 +474,120 @@ end
 
 
 
+--- Executes a command on the g_DB object
+local function DBExec(a_SQL, a_Callback, a_CallbackParam)
+	local ErrCode = g_DB:exec(a_SQL, a_Callback, a_CallbackParam);
+	if (ErrCode ~= sqlite3.OK) then
+		LOGWARNING(PLUGIN_PREFIX .. "Error " .. ErrCode .. " (" .. self.DB:errmsg() ..
+			") while processing SQL command >>" .. a_SQL .. "<<"
+		);
+		return false;
+	end
+	return true;
+end
+
+
+
+
+
+--- Creates the table of the specified name and columns[]
+-- If the table exists, any columns missing are added; existing data is kept
+local function CreateDBTable(a_TableName, a_Columns)
+	-- Try to create the table first
+	local sql = "CREATE TABLE IF NOT EXISTS '" .. a_TableName .. "' (";
+	sql = sql .. table.concat(a_Columns, ", ");
+	sql = sql .. ")";
+	if (not(DBExec(sql))) then
+		LOGWARNING(PLUGIN_PREFIX .. "Cannot create DB Table " .. a_TableName);
+		return false;
+	end
+	-- SQLite doesn't inform us if it created the table or not, so we have to continue anyway
+	
+	-- Check each column whether it exists
+	-- Remove all the existing columns from a_Columns:
+	local RemoveExistingColumn = function(UserData, NumCols, Values, Names)
+		-- Remove the received column from a_Columns. Search for column name in the Names[] / Values[] pairs
+		for i = 1, NumCols do
+			if (Names[i] == "name") then
+				local ColumnName = Values[i]:lower();
+				-- Search the a_Columns if they have that column:
+				for j = 1, #a_Columns do
+					-- Cut away all column specifiers (after the first space), if any:
+					local SpaceIdx = string.find(a_Columns[j], " ");
+					if (SpaceIdx ~= nil) then
+						SpaceIdx = SpaceIdx - 1;
+					end
+					local ColumnTemplate = string.lower(string.sub(a_Columns[j], 1, SpaceIdx));
+					-- If it is a match, remove from a_Columns:
+					if (ColumnTemplate == ColumnName) then
+						table.remove(a_Columns, j);
+						break;  -- for j
+					end
+				end  -- for j - a_Columns[]
+			end
+		end  -- for i - Names[] / Values[]
+		return 0;
+	end
+	if (not(DBExec("PRAGMA table_info(" .. a_TableName .. ")", RemoveExistingColumn))) then
+		LOGWARNING(PLUGIN_PREFIX .. "Cannot query DB table structure");
+		return false;
+	end
+	
+	-- Create the missing columns
+	-- a_Columns now contains only those columns that are missing in the DB
+	if (#a_Columns > 0) then
+		LOGINFO(PLUGIN_PREFIX .. "Database table \"" .. a_TableName .. "\" is missing " .. #a_Columns .. " columns, fixing now.");
+		for idx, ColumnName in ipairs(a_Columns) do
+			if (not(DBExec("ALTER TABLE '" .. a_TableName .. "' ADD COLUMN " .. ColumnName))) then
+				LOGWARNING(PLUGIN_PREFIX .. "Cannot add DB table \"" .. a_TableName .. "\" column \"" .. ColumnName .. "\"");
+				return false;
+			end
+		end
+		LOGINFO(PLUGIN_PREFIX .. "Database table \"" .. a_TableName .. "\" columns fixed.");
+	end
+	
+	return true;
+end
+
+
+
+
+
+function OpenDB()
+	-- Open the DB:
+	local ErrCode, ErrMsg;
+	g_DB, ErrCode, ErrMsg = sqlite3.open(DATABASE_FILE);
+	if (g_DB == nil) then
+		LOGWARNING(PLUGIN_PREFIX .. "Cannot open database \"" .. DATABASE_FILE .. "\": " .. ErrMsg);
+		error(ErrMsg);  -- Abort the plugin
+	end
+	
+	-- Create the tables, if they don't exist yet:
+	local AreasColumns =
+	{
+		"ID INTEGER PRIMARY KEY AUTOINCREMENT",
+		"MinX", "MaxX", "MinZ", "MaxZ",
+		"WorldName",
+		"PlayerName",
+	};
+	local GalleryEndColumns =
+	{
+		"GalleryName",
+		"LastAreaIdx",
+	};
+	if (
+		not(CreateDBTable("Areas", AreasColumns)) or
+		not(CreateDBTable("GalleryEnd", GalleryEndColumns))
+	) then
+		LOGWARNING(PLUGIN_PREFIX .. "Cannot create DB tables!");
+		error("Cannot create DB tables!");
+	end
+end
+
+
+
+
+
 -- All the initialization code should be down here, global:
 
 -- Load the config
@@ -461,6 +596,9 @@ LoadConfig();
 -- Verify the settings:
 VerifyGalleries();
 VerifyConfig();
+
+-- Open the DB connection
+OpenDB();
 
 -- Load per-player list of areas for all currently connected players:
 LoadAllPlayersAreas();
@@ -476,6 +614,7 @@ cPluginManager.AddHook(cPluginManager.HOOK_DISCONNECT,         OnDisconnect);
 cPluginManager.AddHook(cPluginManager.HOOK_PLAYER_LEFT_CLICK,  OnPlayerLeftClick);
 cPluginManager.AddHook(cPluginManager.HOOK_PLAYER_RIGHT_CLICK, OnPlayerRightClick);
 cPluginManager.AddHook(cPluginManager.HOOK_PLAYER_SPAWNED,     OnPlayerSpawned);
+
 
 
 

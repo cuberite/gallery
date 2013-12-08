@@ -107,6 +107,28 @@ local function CheckGallery(a_Gallery, a_Index)
 			return false;
 		end
 		a_Gallery.AreaTemplateSchematic = Schematic;
+		a_Gallery.AreaSizeX = Schematic:GetSizeX();
+		a_Gallery.AreaSizeZ = Schematic:GetSizeZ();
+	else
+		-- If no schematic is given, the area sizes must be specified:
+		if ((a_Gallery.AreaSizeX == nil) or (a_Gallery.AreaSizeZ == nil)) then
+			LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\" has neither AreaTemplate nor AreaSizeX / AreaSizeZ set.");
+			return false;
+		end
+	end
+	
+	-- Calculate and check the number of areas per X / Z dimension:
+	a_Gallery.NumAreasPerX = math.floor((a_Gallery.MaxX -  a_Gallery.MinX) / a_Gallery.AreaSizeX);
+	if (a_Gallery.NumAreasPerX <= 0) then
+		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\" has areas wider than will fit in the X direction:" ..
+			"AreaSizeX = " .. a_Gallery.AreaSizeX .. ", GallerySizeX = " .. tostring(a_Gallery.MaxX - a_Gallery.MinX));
+		return false;
+	end
+	a_Gallery.NumAreasPerZ = math.floor((a_Gallery.MaxZ -  a_Gallery.MinZ) / a_Gallery.AreaSizeZ);
+	if (a_Gallery.NumAreasPerZ <= 0) then
+		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\" has areas wider than will fit in the Z direction:" ..
+			"AreaSizeZ = " .. a_Gallery.AreaSizeZ .. ", GallerySizeZ = " .. tostring(a_Gallery.MaxZ - a_Gallery.MinZ));
+		return false;
 	end
 	
 	-- Apply defaults:
@@ -185,10 +207,56 @@ end
 
 
 
+--- Converts area index to area coords in the specified gallery
+local function AreaIndexToCoords(a_Index, a_Gallery)
+	if (a_Gallery.FillStrategy == "x+z+") then
+		local AreaX = math.floor(a_Index / a_Gallery.NumAreasPerX);
+		local AreaZ = a_Index % a_Gallery.NumAreasPerX;
+		return AreaX, AreaZ;
+	elseif (a_Gallery.FillStrategy == "x+z-") then
+		local AreaX = math.floor(a_Index / a_Gallery.NumAreasPerX);
+		local AreaZ = a_Gallery.NumAreasPerZ - (a_Index % a_Gallery.NumAreasPerX) - 1;
+		return AreaX, AreaZ;
+	elseif (a_Gallery.FillStrategy == "x-z+") then
+		local AreaX = a_Gallery.NumAreasPerX - math.floor(a_Index / a_Gallery.NumAreasPerX) - 1;
+		local AreaZ = a_Index % a_Gallery.NumAreasPerX;
+		return AreaX, AreaZ;
+	elseif (a_Gallery.FillStrategy == "x-z-") then
+		local AreaX = a_Gallery.NumAreasPerX - math.floor(a_Index / a_Gallery.NumAreasPerX) - 1;
+		local AreaZ = a_Gallery.NumAreasPerZ - (a_Index % a_Gallery.NumAreasPerX) - 1;
+		return AreaX, AreaZ;
+	elseif (a_Gallery.FillStreategy == "z+x+") then
+		local AreaX = a_Index % a_Gallery.NumAreasPerZ;
+		local AreaZ = math.floor(a_Index / a_Gallery.NumAreasPerZ);
+		return AreaX, AreaZ;
+	elseif (a_Gallery.FillStreategy == "z+x-") then
+		local AreaX = a_Gallery.NumAreasPerZ - (a_Index % a_Gallery.NumAreasPerZ) - 1;
+		local AreaZ = math.floor(a_Index / a_Gallery.NumAreasPerZ);
+		return AreaX, AreaZ;
+	elseif (a_Gallery.FillStreategy == "z-x+") then
+		local AreaX = a_Index % a_Gallery.NumAreasPerZ;
+		local AreaZ = a_Gallery.NumAreasPerZ - math.floor(a_Index / a_Gallery.NumAreasPerZ) - 1;
+		return AreaX, AreaZ;
+	elseif (a_Gallery.FillStreategy == "z-x-") then
+		local AreaX = a_Gallery.NumAreasPerZ - (a_Index % a_Gallery.NumAreasPerZ) - 1;
+		local AreaZ = a_Gallery.NumAreasPerZ - math.floor(a_Index / a_Gallery.NumAreasPerZ) - 1;
+		return AreaX, AreaZ;
+	end
+end
+
+
+
+
+
 --- Claims an area in a gallery for the specified player. Returns a table describing the area
 -- If there's no space left in the gallery, returns nil and error message
 local function ClaimArea(a_Player, a_Gallery)
+	local LastAreaIdx = a_Gallery.LastAreaIdx + 1;
+	a_Gallery.LastAreaIdx = LastAreaIdx;
+	local AreaX, AreaZ = AreaIndexToCoords(LastAreaIdx, a_Gallery)
+	
 	-- TODO
+	a_Player:SendMessage("Claiming area #" .. LastAreaIdx .. " at area-coords [" .. AreaX .. ", " .. AreaZ .. "]");
 	return nil, "Not implemented yet";
 end
 
@@ -196,8 +264,44 @@ end
 
 
 
+--- Returns the gallery of the specified name in the specified world
+local function FindGallery(a_GalleryName, a_WorldName)
+	for idx, gal in ipairs(g_Galleries) do
+		if ((gal.Name == a_GalleryName) and (gal.WorldName == a_WorldName)) then
+			return gal;
+		end
+	end
+	return nil;
+end
+
+
+
+
+
 local function HandleCmdList(a_Split, a_Player)
-	-- TODO
+	local WorldName = a_Player:GetWorld():GetName();
+
+	-- First count the galleries in this world:
+	local NumGalleries = 0;
+	for idx, gal in ipairs(g_Galleries) do
+		if (gal.WorldName == WorldName) then
+			NumGalleries = NumGalleries + 1;
+		end
+	end
+	
+	if (NumGalleries == 0) then
+		a_Player:SendMessage("There are no galleries defined for this world.");
+		return true;
+	end
+	
+	-- List all the galleries in this world:
+	a_Player:SendMessage("Number of galleries in this world: " .. NumGalleries);
+	for idx, gal in ipairs(g_Galleries) do
+		if (gal.WorldName == WorldName) then
+			a_Player:SendMessage("  " .. gal.Name);
+		end
+	end
+	
 	return true;
 end
 
@@ -206,7 +310,23 @@ end
 
 
 local function HandleCmdClaim(a_Split, a_Player)
-	-- TODO
+	-- Find the gallery specified:
+	local Gallery = FindGallery(a_Split[3], a_Player:GetWorld():GetName());
+	if (Gallery == nil) then
+		a_Player:SendMessage("There's no gallery " .. a_Split[3]);
+		-- Be nice, send the list of galleries to the player:
+		HandleCmdList({"/gal", "list"}, a_Player);
+		return true;
+	end
+	
+	-- Claim an area:
+	local Area, ErrMsg = ClaimArea(a_Player, Gallery);
+	if (Area == nil) then
+		a_Player:SendMessage("Cannot claim area in gallery " .. Gallery.Name .. ": " .. ErrMsg);
+		return true;
+	end
+	
+	-- TODO: Teleport to the area:
 	return true;
 end
 
@@ -235,29 +355,28 @@ end
 --- The list of subcommands, their handler functions and metadata:
 local g_Subcommands =
 {
+	list =
 	{
-		Cmd  = "list",
-		Params = "",
 		Help = "lists all available galleries",
 		Permission = "gallery.list",
 		Handler = HandleCmdList,
 	},
+	claim =
 	{
-		Cmd = "claim",
 		Params = "<gallery>",
 		Help = "claims a new area in the <gallery>",
 		Permission = "gallery.claim",
 		Handler = HandleCmdClaim,
 	},
+	my =
 	{
-		Cmd = "my",
 		Params = "[<gallery>]",
 		Help = "lists all your areas [in the <gallery>]",
 		Permission = "gallery.my",
 		Handler = HandleCmdMy,
 	},
+	goto =
 	{
-		Cmd = "goto",
 		Params = "<areaID>",
 		Help = "teleports you to specified gallery area",
 		Permission = "gallery.goto",
@@ -273,8 +392,8 @@ local function SendUsage(a_Player, a_Message)
 	if (a_Message ~= nil) then
 		a_Player:SendMessage(a_Message);
 	end
-	for idx, cmd in ipairs(g_Subcommands) do
-		a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " " .. cmd.Cmd .. " " .. cmd.Params .. " - " .. cmd.Help);
+	for cmd, info in pairs(g_Subcommands) do
+		a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " " .. cmd .. " " .. info.Params .. " - " .. info.Help);
 	end
 end
 
@@ -288,9 +407,9 @@ local function HandleGalleryCmd(a_Split, a_Player)
 		return true;
 	end
 	
-	local Subcommand = g_Subcommands[a_Split[1]];
+	local Subcommand = g_Subcommands[a_Split[2]];
 	if (Subcommand == nil) then
-		SendUsage(a_Player, "Unknown verb: " .. a_Split[1]);
+		SendUsage(a_Player, "Unknown verb: " .. a_Split[2]);
 		return true;
 	end
 	return Subcommand.Handler(a_Split, a_Player);
@@ -302,10 +421,13 @@ end
 
 local function RegisterSubcommands()
 	local CP = g_Config.CommandPrefix;
-	for idx, cmd in ipairs(g_Subcommands) do
-		local FullCmd = CP .. " " .. cmd.Cmd;
-		local HelpString = " - " .. cmd.Help;
-		cPluginManager.BindCommand(FullCmd, cmd.Permission, HandleGalleryCmd, HelpString);
+	for cmd, info in pairs(g_Subcommands) do
+		local FullCmd = CP .. " " .. cmd;
+		if ((info.Params ~= nil) and (info.Params ~= "")) then
+			FullCmd = FullCmd .. " " .. info.Params;
+		end
+		local HelpString = " - " .. info.Help;
+		cPluginManager.BindCommand(FullCmd, info.Permission, HandleGalleryCmd, HelpString);
 	end
 end
 
@@ -351,7 +473,7 @@ local function LoadAllPlayersAreas()
 			local WorldAreas = {}
 			a_World:ForEachPlayer(
 				function (a_Player)
-					WorldAreas[a_Player:GetUniqueID()] = LoadPlayerAreas(a_World, a_Player:GetName());
+					WorldAreas[a_Player:GetUniqueID()] = LoadPlayerAreas(a_World:GetName(), a_Player:GetName());
 				end
 			);
 			g_PlayerAreas[a_World:GetName()] = WorldAreas;
@@ -466,7 +588,7 @@ end
 
 function OnPlayerSpawned(a_Player)
 	-- Read this player's areas for this world:
-	g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()] = LoadPlayerAreas(a_Player);
+	g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()] = LoadPlayerAreas(a_Player:GetWorld():GetName(), a_Player:GetName());
 	return false;
 end
 

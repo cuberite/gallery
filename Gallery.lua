@@ -55,7 +55,7 @@ local g_GalleryOptionalParams =
 
 --- Returns true if the gallery has all the minimum settings it needs
 -- a_Index is used instead of gallery name if the name is not present
--- Also loads the gallery's schematic file
+-- Also loads the gallery's schematic file and calculates helper dimensions
 local function CheckGallery(a_Gallery, a_Index)
 	-- Check if the name is given:
 	if (a_Gallery.Name == nil) then
@@ -109,6 +109,9 @@ local function CheckGallery(a_Gallery, a_Index)
 		a_Gallery.AreaTemplateSchematic = Schematic;
 		a_Gallery.AreaSizeX = Schematic:GetSizeX();
 		a_Gallery.AreaSizeZ = Schematic:GetSizeZ();
+		a_Gallery.AreaTop   = Schematic:GetSizeY();
+		a_Gallery.AreaTemplateSchematicTop = cBlockArea();
+		a_Gallery.AreaTemplateSchematicTop:Create(a_Gallery.AreaSizeX, 255 - a_Gallery.AreaTop, a_Gallery.AreaSizeZ);
 	else
 		-- If no schematic is given, the area sizes must be specified:
 		if ((a_Gallery.AreaSizeX == nil) or (a_Gallery.AreaSizeZ == nil)) then
@@ -130,10 +133,22 @@ local function CheckGallery(a_Gallery, a_Index)
 			"AreaSizeZ = " .. a_Gallery.AreaSizeZ .. ", GallerySizeZ = " .. tostring(a_Gallery.MaxZ - a_Gallery.MinZ));
 		return false;
 	end
+	a_Gallery.MaxAreaIdx = a_Gallery.NumAreasPerX * a_Gallery.NumAreasPerZ;
 	
 	-- Apply defaults:
 	a_Gallery.AreaEdge = a_Gallery.AreaEdge or 2;
-	
+
+	if (a_Gallery.AreaSizeX <= a_Gallery.AreaEdge * 2) then
+		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. " has AreaEdge greater than X size: " ..
+			"AreaEdge = " .. a_Gallery.AreaEdge .. ", GallerySizeX = " .. a_Gallery.AreaSizeX .. ". Gallery is disabled");
+		return false;
+	end
+	if (a_Gallery.AreaSizeZ <= a_Gallery.AreaEdge * 2) then
+		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. " has AreaEdge greater than Z size: " ..
+			"AreaEdge = " .. a_Gallery.AreaEdge .. ", GallerySizeZ = " .. a_Gallery.AreaSizeZ .. ". Gallery is disabled");
+		return false;
+	end
+
 	-- All okay
 	return true;
 end
@@ -209,38 +224,67 @@ end
 
 --- Converts area index to area coords in the specified gallery
 local function AreaIndexToCoords(a_Index, a_Gallery)
-	if (a_Gallery.FillStrategy == "x+z+") then
-		local AreaX = math.floor(a_Index / a_Gallery.NumAreasPerX);
-		local AreaZ = a_Index % a_Gallery.NumAreasPerX;
+	if (a_Gallery.FillStrategy == "z+x+") then
+		local AreaX = math.floor(a_Index / a_Gallery.NumAreasPerZ);
+		local AreaZ = a_Index % a_Gallery.NumAreasPerZ;
 		return AreaX, AreaZ;
-	elseif (a_Gallery.FillStrategy == "x+z-") then
-		local AreaX = math.floor(a_Index / a_Gallery.NumAreasPerX);
-		local AreaZ = a_Gallery.NumAreasPerZ - (a_Index % a_Gallery.NumAreasPerX) - 1;
+	elseif (a_Gallery.FillStrategy == "z-x+") then
+		local AreaX = math.floor(a_Index / a_Gallery.NumAreasPerZ);
+		local AreaZ = a_Gallery.NumAreasPerZ - (a_Index % a_Gallery.NumAreasPerZ) - 1;
+		return AreaX, AreaZ;
+	elseif (a_Gallery.FillStrategy == "z+x-") then
+		local AreaX = a_Gallery.NumAreasPerX - math.floor(a_Index / a_Gallery.NumAreasPerZ) - 1;
+		local AreaZ = a_Index % a_Gallery.NumAreasPerZ;
+		return AreaX, AreaZ;
+	elseif (a_Gallery.FillStrategy == "z-x-") then
+		local AreaX = a_Gallery.NumAreasPerX - math.floor(a_Index / a_Gallery.NumAreasPerZ) - 1;
+		local AreaZ = a_Gallery.NumAreasPerZ - (a_Index % a_Gallery.NumAreasPerZ) - 1;
+		return AreaX, AreaZ;
+	elseif (a_Gallery.FillStrategy == "x+z+") then
+		local AreaX = a_Index % a_Gallery.NumAreasPerX;
+		local AreaZ = math.floor(a_Index / a_Gallery.NumAreasPerX);
 		return AreaX, AreaZ;
 	elseif (a_Gallery.FillStrategy == "x-z+") then
-		local AreaX = a_Gallery.NumAreasPerX - math.floor(a_Index / a_Gallery.NumAreasPerX) - 1;
-		local AreaZ = a_Index % a_Gallery.NumAreasPerX;
+		local AreaX = a_Gallery.NumAreasPerX - (a_Index % a_Gallery.NumAreasPerX) - 1;
+		local AreaZ = math.floor(a_Index / a_Gallery.NumAreasPerZ);
+		return AreaX, AreaZ;
+	elseif (a_Gallery.FillStrategy == "x+z-") then
+		local AreaX = a_Index % a_Gallery.NumAreasPerX;
+		local AreaZ = a_Gallery.NumAreasPerZ - math.floor(a_Index / a_Gallery.NumAreasPerX) - 1;
 		return AreaX, AreaZ;
 	elseif (a_Gallery.FillStrategy == "x-z-") then
-		local AreaX = a_Gallery.NumAreasPerX - math.floor(a_Index / a_Gallery.NumAreasPerX) - 1;
-		local AreaZ = a_Gallery.NumAreasPerZ - (a_Index % a_Gallery.NumAreasPerX) - 1;
+		local AreaX = a_Gallery.NumAreasPerX - (a_Index % a_Gallery.NumAreasPerX) - 1;
+		local AreaZ = a_Gallery.NumAreasPerZ - math.floor(a_Index / a_Gallery.NumAreasPerX) - 1;
 		return AreaX, AreaZ;
+	end
+	-- TODO: This shouldn't happen, the FillStrategy should be checked in CheckGallery()
+	LOGWARNING("Unknown FillStrategy: \"" .. a_Gallery.FillStrategy .. "\"");
+end
+
+
+
+
+
+--- Converts Area coords into blockcoords in the specified gallery.
+local function AreaCoordsToBlockCoords(a_Gallery, a_AreaX, a_AreaZ)
+	local X = a_AreaX * a_Gallery.AreaSizeX;
+	local Z = a_AreaZ * a_Gallery.AreaSizeZ;
+	if (a_Gallery.FillStrategy == "x+z+") then
+		return a_Gallery.MinX + X, a_Gallery.MinX + X + a_Gallery.AreaSizeX, a_Gallery.MinZ + Z, a_Gallery.MinZ + Z + a_Gallery.AreaSizeZ;
+	elseif (a_Gallery.FillStrategy == "x+z-") then
+		return a_Gallery.MinX + X, a_Gallery.MinX + X + a_Gallery.AreaSizeX, a_Gallery.MaxZ - Z - a_Gallery.AreaSizeZ, a_Gallery.MinZ - Z;
+	elseif (a_Gallery.FillStrategy == "x-z+") then
+		return a_Gallery.MaxX - X - a_Gallery.AreaSizeX, a_Gallery.MaxX - X, a_Gallery.MinZ + Z, a_Gallery.MinZ + Z + a_Gallery.AreaSizeZ;
+	elseif (a_Gallery.FillStrategy == "x-z-") then
+		return a_Gallery.MaxX - X - a_Gallery.AreaSizeX, a_Gallery.MaxX - X, a_Gallery.MaxZ - Z - a_Gallery.AreaSizeZ, a_Gallery.MaxZ - Z;
 	elseif (a_Gallery.FillStreategy == "z+x+") then
-		local AreaX = a_Index % a_Gallery.NumAreasPerZ;
-		local AreaZ = math.floor(a_Index / a_Gallery.NumAreasPerZ);
-		return AreaX, AreaZ;
-	elseif (a_Gallery.FillStreategy == "z+x-") then
-		local AreaX = a_Gallery.NumAreasPerZ - (a_Index % a_Gallery.NumAreasPerZ) - 1;
-		local AreaZ = math.floor(a_Index / a_Gallery.NumAreasPerZ);
-		return AreaX, AreaZ;
-	elseif (a_Gallery.FillStreategy == "z-x+") then
-		local AreaX = a_Index % a_Gallery.NumAreasPerZ;
-		local AreaZ = a_Gallery.NumAreasPerZ - math.floor(a_Index / a_Gallery.NumAreasPerZ) - 1;
-		return AreaX, AreaZ;
-	elseif (a_Gallery.FillStreategy == "z-x-") then
-		local AreaX = a_Gallery.NumAreasPerZ - (a_Index % a_Gallery.NumAreasPerZ) - 1;
-		local AreaZ = a_Gallery.NumAreasPerZ - math.floor(a_Index / a_Gallery.NumAreasPerZ) - 1;
-		return AreaX, AreaZ;
+		return a_Gallery.MinX + X, a_Gallery.MinX + X + a_Gallery.AreaSizeX, a_Gallery.MinZ + Z, a_Gallery.MinZ + Z + a_Gallery.AreaSizeZ;
+	elseif (a_Gallery.FillStrategy == "z-x+") then
+		return a_Gallery.MinX + X, a_Gallery.MinX + X + a_Gallery.AreaSizeX, a_Gallery.MaxZ - Z - a_Gallery.AreaSizeZ, a_Gallery.MaxZ - Z;
+	elseif (a_Gallery.FillStrategy == "z+x-") then
+		return a_Gallery.MaxX - X - a_Gallery.AreaSizeX, a_Gallery.MaxX - X, a_Gallery.MinZ + Z, a_Gallery.MinZ + Z + a_Gallery.AreaSizeZ;
+	elseif (a_Gallery.FillStrategy == "z-x-") then
+		return a_Gallery.MaxX - X - a_Gallery.AreaSizeX, a_Gallery.MaxX - X, a_Gallery.MaxZ - Z - a_Gallery.AreaSizeZ, a_Gallery.MaxZ - Z;
 	end
 end
 
@@ -251,13 +295,37 @@ end
 --- Claims an area in a gallery for the specified player. Returns a table describing the area
 -- If there's no space left in the gallery, returns nil and error message
 local function ClaimArea(a_Player, a_Gallery)
-	local LastAreaIdx = a_Gallery.LastAreaIdx + 1;
-	a_Gallery.LastAreaIdx = LastAreaIdx;
-	local AreaX, AreaZ = AreaIndexToCoords(LastAreaIdx, a_Gallery)
+	local NextAreaIdx = a_Gallery.NextAreaIdx;
+	if (NextAreaIdx >= a_Gallery.MaxAreaIdx) then
+		return nil, "The gallery is full";
+	end
+	local AreaX, AreaZ = AreaIndexToCoords(NextAreaIdx, a_Gallery)
+
+	local MinX, MaxX, MinZ, MaxZ = AreaCoordsToBlockCoords(a_Gallery, AreaX, AreaZ);
 	
-	-- TODO
-	a_Player:SendMessage("Claiming area #" .. LastAreaIdx .. " at area-coords [" .. AreaX .. ", " .. AreaZ .. "]");
-	return nil, "Not implemented yet";
+	-- DEBUG:
+	a_Player:SendMessage("Claiming area #" .. NextAreaIdx .. " at area-coords [" .. AreaX .. ", " .. AreaZ .. "]");
+	a_Player:SendMessage("  block-coords: {" .. MinX .. ", " .. MinZ .. "} - {" .. MaxX .. ", " .. MaxZ .. "}");
+
+	a_Gallery.NextAreaIdx = NextAreaIdx + 1;
+	-- TODO: Update this in the storage
+
+	local Area = {
+		MinX = MinX,
+		MaxX = MaxX,
+		MinZ = MinZ,
+		MaxZ = MaxZ,
+		StartX = MinX + a_Gallery.AreaEdge,
+		EndX   = MaxX - a_Gallery.AreaEdge,
+		StartZ = MinZ + a_Gallery.AreaEdge,
+		EndZ   = MaxZ - a_Gallery.AreaEdge,
+		Gallery = a_Gallery;
+	};
+	-- TODO: Store this area in the DB
+	
+	-- TODO: Add this area to Player's areas
+	
+	return Area;
 end
 
 
@@ -310,6 +378,12 @@ end
 
 
 local function HandleCmdClaim(a_Split, a_Player)
+	if (#a_Split < 3) then
+		a_Player:SendMessage("You need to specify the gallery where to claim.");
+		a_Player:SendMessage("Usage: " .. g_Config.CmdPrefix .. " claim <Gallery>");
+		return true;
+	end
+	
 	-- Find the gallery specified:
 	local Gallery = FindGallery(a_Split[3], a_Player:GetWorld():GetName());
 	if (Gallery == nil) then
@@ -324,6 +398,12 @@ local function HandleCmdClaim(a_Split, a_Player)
 	if (Area == nil) then
 		a_Player:SendMessage("Cannot claim area in gallery " .. Gallery.Name .. ": " .. ErrMsg);
 		return true;
+	end
+	
+	-- Fill the area with the schematic, if available:
+	if (Gallery.AreaTemplateSchematic ~= nil) then
+		Gallery.AreaTemplateSchematic:Write   (a_Player:GetWorld(), Area.MinX, 0,               Area.MinZ);
+		Gallery.AreaTemplateSchematicTop:Write(a_Player:GetWorld(), Area.MinX, Gallery.AreaTop, Area.MinZ);
 	end
 	
 	-- TODO: Teleport to the area:
@@ -377,7 +457,7 @@ local g_Subcommands =
 	},
 	goto =
 	{
-		Params = "<areaID>",
+		Params = "<gallery> <areaID>",
 		Help = "teleports you to specified gallery area",
 		Permission = "gallery.goto",
 		Handler = HandleCmdGoto,
@@ -412,6 +492,7 @@ local function HandleGalleryCmd(a_Split, a_Player)
 		SendUsage(a_Player, "Unknown verb: " .. a_Split[2]);
 		return true;
 	end
+	-- TODO: Check permission
 	return Subcommand.Handler(a_Split, a_Player);
 end
 
@@ -689,13 +770,14 @@ function OpenDB()
 	{
 		"ID INTEGER PRIMARY KEY AUTOINCREMENT",
 		"MinX", "MaxX", "MinZ", "MaxZ",
+		"StartX", "EndX", "StartZ", "EndZ",
 		"WorldName",
 		"PlayerName",
 	};
 	local GalleryEndColumns =
 	{
 		"GalleryName",
-		"LastAreaIdx",
+		"NextAreaIdx",
 	};
 	if (
 		not(CreateDBTable("Areas", AreasColumns)) or
@@ -713,18 +795,18 @@ end
 local function InitGalleries()
 	-- Load the last used area index for each gallery:
 	for idx, gallery in ipairs(g_Galleries) do
-		DBExec("SELECT LastAreaIdx FROM GalleryEnd WHERE GalleryName = \"" .. gallery.Name .. "\"",
+		DBExec("SELECT NextAreaIdx FROM GalleryEnd WHERE GalleryName = \"" .. gallery.Name .. "\"",
 			function (UserData, NumCols, Values, Names)
 				for i = 1, NumCols do
-					if (Names[i] == LastAreaIdx) then
-						gallery.LastAreaIdx = tonumber(Values[i]);
+					if (Names[i] == NextAreaIdx) then
+						gallery.NextAreaIdx = tonumber(Values[i]);
 						return;
 					end
 				end
 			end
 		);
-		if (gallery.LastAreaIdx == nil) then
-			gallery.LastAreaIdx = 0;
+		if (gallery.NextAreaIdx == nil) then
+			gallery.NextAreaIdx = 0;
 		end
 	end
 end

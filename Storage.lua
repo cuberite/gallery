@@ -109,26 +109,37 @@ function LoadPlayerAreas(a_WorldName, a_PlayerName)
 	end
 
 	local res = {};
-	local stmt = g_DB:prepare("SELECT MinX, MaxX, MinZ, MaxZ FROM Areas WHERE PlayerName = ? AND WorldName = ?");
+	local ToDelete = {};  -- List of IDs to delete because of missing Gallery
+	local stmt = g_DB:prepare("SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex FROM Areas WHERE PlayerName = ? AND WorldName = ?");
 	stmt:bind_values(a_PlayerName, a_WorldName);
 	for v in stmt:rows() do
-		table.insert(res, {MinX = v[1], MaxX = v[2], MinZ = v[3], MaxZ = v[4],});
+		local area =
+		{
+			ID = v[1],
+			MinX = v[2], MaxX = v[3], MinZ = v[4], MaxZ = v[5],
+			StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
+			Gallery = FindGalleryByName(a_WorldName, v[10]),
+			GalleryIndex = v[11],
+		};
+		if (area.Gallery == nil) then
+			table.insert(ToDelete, v[1]);
+		else
+			table.insert(res, area);
+		end
 	end
 	stmt:finalize();
-	return res;
 	
-	--[[
-	-- DEBUG: return a dummy area to test prevention:
-	return
-	{
-		{
-			MinX = 102,
-			MaxX = 115,
-			MinZ = 102,
-			MaxZ = 115,
-		}
-	};
-	--]]
+	-- Remove areas that reference non-existent galleries:
+	if (#ToDelete > 0) then
+		local stmt = g_DB:prepare("DELETE FROM Areas WHERE ID = ?");
+		for idx, id in ipairs(ToDelete) do
+			stmt:bind_values(id);
+			stmt:step();
+		end
+		stmt:finalize();
+	end
+	
+	return res;
 end
 
 
@@ -148,10 +159,12 @@ function OpenDB()
 	local AreasColumns =
 	{
 		"ID INTEGER PRIMARY KEY AUTOINCREMENT",
-		"MinX", "MaxX", "MinZ", "MaxZ",
-		"StartX", "EndX", "StartZ", "EndZ",
-		"WorldName",
-		"PlayerName",
+		"MinX", "MaxX", "MinZ", "MaxZ",      -- The bounds of this area, including the non-buildable "sidewalk"
+		"StartX", "EndX", "StartZ", "EndZ",  -- The buildable bounds of this area
+		"WorldName",                         -- Name of the world where the area belongs
+		"PlayerName",                        -- Name of the owner
+		"GalleryName",                       -- Name of the gallery from which the area has been claimed
+		"GalleryIndex"                       -- Index of the area in the gallery from which this area has been claimed
 	};
 	local GalleryEndColumns =
 	{

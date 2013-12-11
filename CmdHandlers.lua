@@ -35,7 +35,7 @@ function ListPlayerAreasInWorld(a_Player)
 	
 	-- Send list:
 	for idx, area in ipairs(Areas) do
-		a_Player:SendMessage("  " .. area.Gallery.Name .. " " .. area.Index);
+		a_Player:SendMessage("  " .. area.Gallery.Name .. " " .. area.GalleryIndex);
 	end
 end
 
@@ -92,7 +92,7 @@ function HandleCmdClaim(a_Split, a_Player)
 	end
 	
 	-- Find the gallery specified:
-	local Gallery = FindGallery(a_Split[3], a_Player:GetWorld():GetName());
+	local Gallery = LastGalleryByName(a_Split[3], a_Player:GetWorld():GetName());
 	if (Gallery == nil) then
 		a_Player:SendMessage("There's no gallery " .. a_Split[3]);
 		-- Be nice, send the list of galleries to the player:

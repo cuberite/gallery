@@ -103,7 +103,6 @@ function ClaimArea(a_Player, a_Gallery)
 	a_Player:SendMessage("  block-coords: {" .. MinX .. ", " .. MinZ .. "} - {" .. MaxX .. ", " .. MaxZ .. "}");
 
 	local Area = {
-		Index = a_Gallery.NextAreaIdx;
 		MinX = MinX,
 		MaxX = MaxX,
 		MinZ = MinZ,
@@ -113,6 +112,7 @@ function ClaimArea(a_Player, a_Gallery)
 		StartZ = MinZ + a_Gallery.AreaEdge,
 		EndZ   = MaxZ - a_Gallery.AreaEdge,
 		Gallery = a_Gallery;
+		GalleryIndex = a_Gallery.NextAreaIdx;
 	};
 	-- TODO: Store this area in the DB
 	
@@ -130,9 +130,20 @@ end
 
 
 --- Returns the gallery of the specified name in the specified world
-function FindGallery(a_GalleryName, a_WorldName)
+local LastGalleryByName = nil;
+function FindGalleryByName(a_GalleryName, a_WorldName)
+	-- use a cache of size 1 to improve performance for area loading
+	if (
+		(LastGalleryByName ~= nil) and
+		(LastGalleryByName.Name == a_GalleryName) and
+		(LastGalleryByName.WorldName == a_WorldName)
+	) then
+		return LastGalleryByName;
+	end
+	
 	for idx, gal in ipairs(g_Galleries) do
 		if ((gal.Name == a_GalleryName) and (gal.WorldName == a_WorldName)) then
+			LastGalleryByName = gal;
 			return gal;
 		end
 	end

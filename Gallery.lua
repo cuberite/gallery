@@ -13,9 +13,6 @@ g_Galleries = {};
 --- The per-world per-player list of owned areas. Access as "g_Areas[WorldName][PlayerEntityID]"
 g_PlayerAreas = {};
 
---- The DB connection that provides the player areas
-g_DB = nil;
-
 
 
 
@@ -186,10 +183,10 @@ end
 
 function IsInArea(a_Area, a_BlockX, a_BlockZ)
 	return (
-		(a_BlockX >= a_Area.MinX) and
-		(a_BlockX <= a_Area.MaxX) and
-		(a_BlockZ >= a_Area.MinZ) and
-		(a_BlockZ <= a_Area.MaxZ)
+		(a_BlockX >= a_Area.StartX) and
+		(a_BlockX <  a_Area.EndX) and
+		(a_BlockZ >= a_Area.StartZ) and
+		(a_BlockZ <  a_Area.EndZ)
 	)
 end
 

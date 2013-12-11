@@ -7,6 +7,13 @@
 
 
 
+--- The DB connection that provides the player areas
+g_DB = nil;
+
+
+
+
+
 function InitStorage()
 	-- TODO: Query g_Config for the DB engine to use - SQLite (built-in) or MySQL (via LuaRocks)
 	OpenDB();

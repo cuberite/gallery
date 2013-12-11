@@ -1,9 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project>
   <file>
+    <filename>CmdHandlers.lua</filename>
+  </file>
+  <file>
+    <filename>Config.lua</filename>
+  </file>
+  <file>
     <filename>Gallery.lua</filename>
   </file>
   <file>
-    <filename>Gallery_init.lua</filename>
+    <filename>HookHandlers.lua</filename>
+  </file>
+  <file>
+    <filename>Init.lua</filename>
+  </file>
+  <file>
+    <filename>Settings.lua</filename>
+  </file>
+  <file>
+    <filename>example.cfg</filename>
   </file>
 </project>

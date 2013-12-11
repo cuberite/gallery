@@ -323,7 +323,8 @@ local function ClaimArea(a_Player, a_Gallery)
 	};
 	-- TODO: Store this area in the DB
 	
-	-- TODO: Add this area to Player's areas
+	-- Add this area to Player's areas:
+	table.insert(g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()], Area);
 	
 	return Area;
 end

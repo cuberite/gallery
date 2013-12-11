@@ -307,10 +307,8 @@ local function ClaimArea(a_Player, a_Gallery)
 	a_Player:SendMessage("Claiming area #" .. NextAreaIdx .. " at area-coords [" .. AreaX .. ", " .. AreaZ .. "]");
 	a_Player:SendMessage("  block-coords: {" .. MinX .. ", " .. MinZ .. "} - {" .. MaxX .. ", " .. MaxZ .. "}");
 
-	a_Gallery.NextAreaIdx = NextAreaIdx + 1;
-	-- TODO: Update this in the storage
-
 	local Area = {
+		Index = a_Gallery.NextAreaIdx;
 		MinX = MinX,
 		MaxX = MaxX,
 		MinZ = MinZ,
@@ -323,6 +321,9 @@ local function ClaimArea(a_Player, a_Gallery)
 	};
 	-- TODO: Store this area in the DB
 	
+	a_Gallery.NextAreaIdx = NextAreaIdx + 1;
+	-- TODO: Update this in the storage
+
 	-- Add this area to Player's areas:
 	table.insert(g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()], Area);
 	
@@ -341,6 +342,39 @@ local function FindGallery(a_GalleryName, a_WorldName)
 		end
 	end
 	return nil;
+end
+
+
+
+
+
+--- Lists all areas that the player owns in their current world
+local function ListPlayerAreasInWorld(a_Player)
+	local Areas = g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()];
+	
+	-- Send count:
+	if (#Areas == 0) then
+		a_Player:SendMessage("You own no areas in this world");
+	elseif (#Areas == 1) then
+		a_Player:SendMessage("You own 1 area in this world:");
+	else
+		a_Player:SendMessage("You own " .. #Areas .. " areas in this world:");
+	end
+	
+	-- Send list:
+	for idx, area in ipairs(Areas) do
+		a_Player:SendMessage("  " .. area.Gallery.Name .. " " .. area.Index);
+	end
+end
+
+
+
+
+
+--- Lists all areas that the player owns in the specified gallery
+-- Note that the gallery may be in a different world, DB is used for the listing
+local function ListPlayerAreasInGallery(a_Player, a_GalleryName)
+	-- TODO
 end
 
 
@@ -416,7 +450,15 @@ end
 
 
 local function HandleCmdMy(a_Split, a_Player)
-	-- TODO
+	if (#a_Split == 2) then
+		-- "/gal my" command, list all areas in this world
+		ListPlayerAreasInWorld(a_Player);
+		return true;
+	end
+	
+	-- "/gal my <gallery>" command, list all areas in the specified gallery
+	-- Note that the gallery may be in a different world, need to list using DB Storage
+	ListPlayerAreasInGallery(a_Player, a_Split[3]);
 	return true;
 end
 

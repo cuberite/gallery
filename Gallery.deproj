@@ -19,6 +19,9 @@
     <filename>Settings.lua</filename>
   </file>
   <file>
+    <filename>Storage.lua</filename>
+  </file>
+  <file>
     <filename>example.cfg</filename>
   </file>
 </project>

@@ -17,8 +17,8 @@ function Initialize(a_Plugin)
 	VerifyGalleries();
 	VerifyConfig();
 
-	-- Open the DB connection:
-	OpenDB();
+	-- Initialize the DB storage:
+	InitStorage();
 
 	-- Initialize the values in galleries stored in the DB:
 	InitGalleries();

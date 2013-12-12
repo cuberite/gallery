@@ -92,7 +92,7 @@ function HandleCmdClaim(a_Split, a_Player)
 	end
 	
 	-- Find the gallery specified:
-	local Gallery = LastGalleryByName(a_Split[3], a_Player:GetWorld():GetName());
+	local Gallery = FindGalleryByName(a_Split[3], a_Player:GetWorld():GetName());
 	if (Gallery == nil) then
 		a_Player:SendMessage("There's no gallery " .. a_Split[3]);
 		-- Be nice, send the list of galleries to the player:

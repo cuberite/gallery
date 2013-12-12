@@ -21,7 +21,7 @@ function Initialize(a_Plugin)
 	InitStorage();
 
 	-- Initialize the values in galleries stored in the DB:
-	InitGalleries();
+	g_DB:LoadGalleries();
 
 	-- Load per-player list of areas for all currently connected players:
 	LoadAllPlayersAreas();

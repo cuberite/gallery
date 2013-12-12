@@ -161,6 +161,8 @@ end
 --- Checks if g_Config has all the keys it needs, adds defaults for the missing ones
 function VerifyConfig()
 	g_Config.CommandPrefix = g_Config.CommandPrefix or "/gallery";
+	g_Config.DatabaseEngine = g_Config.DatabaseEngine or "sqlite";
+	g_Config.DatabaseParams = g_Config.DatabaseParams or {};
 end
 
 

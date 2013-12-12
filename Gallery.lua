@@ -113,8 +113,9 @@ function ClaimArea(a_Player, a_Gallery)
 		EndZ   = MaxZ - a_Gallery.AreaEdge,
 		Gallery = a_Gallery;
 		GalleryIndex = a_Gallery.NextAreaIdx;
+		PlayerName = a_Player:GetName();
 	};
-	-- TODO: Store this area in the DB
+	g_DB:StoreArea(Area);
 	
 	a_Gallery.NextAreaIdx = NextAreaIdx + 1;
 	-- TODO: Update this in the storage
@@ -132,21 +133,26 @@ end
 --- Returns the gallery of the specified name in the specified world
 local LastGalleryByName = nil;
 function FindGalleryByName(a_GalleryName, a_WorldName)
+	LOG("Finding gallery by name: \"" .. a_GalleryName .. "\" in world \"" .. a_WorldName .. "\":");
 	-- use a cache of size 1 to improve performance for area loading
 	if (
 		(LastGalleryByName ~= nil) and
 		(LastGalleryByName.Name == a_GalleryName) and
 		(LastGalleryByName.WorldName == a_WorldName)
 	) then
+		LOG("Using last gallery");
 		return LastGalleryByName;
 	end
 	
 	for idx, gal in ipairs(g_Galleries) do
+		LOG("Trying \"" .. gal.Name .. "\" in world \"" .. gal.WorldName .. "\".");
 		if ((gal.Name == a_GalleryName) and (gal.WorldName == a_WorldName)) then
+			LOG("Matched");
 			LastGalleryByName = gal;
 			return gal;
 		end
 	end
+	LOG("Not found");
 	return nil;
 end
 
@@ -160,7 +166,7 @@ function LoadAllPlayersAreas()
 			local WorldAreas = {}
 			a_World:ForEachPlayer(
 				function (a_Player)
-					WorldAreas[a_Player:GetUniqueID()] = LoadPlayerAreas(a_World:GetName(), a_Player:GetName());
+					WorldAreas[a_Player:GetUniqueID()] = g_DB:LoadPlayerAreas(a_World:GetName(), a_Player:GetName());
 				end
 			);
 			g_PlayerAreas[a_World:GetName()] = WorldAreas;
@@ -229,29 +235,6 @@ function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	
 	-- Not this player's area, disallow:
 	return false;
-end
-
-
-
-
-
-function InitGalleries()
-	-- Load the last used area index for each gallery:
-	for idx, gallery in ipairs(g_Galleries) do
-		DBExec("SELECT NextAreaIdx FROM GalleryEnd WHERE GalleryName = \"" .. gallery.Name .. "\"",
-			function (UserData, NumCols, Values, Names)
-				for i = 1, NumCols do
-					if (Names[i] == NextAreaIdx) then
-						gallery.NextAreaIdx = tonumber(Values[i]);
-						return;
-					end
-				end
-			end
-		);
-		if (gallery.NextAreaIdx == nil) then
-			gallery.NextAreaIdx = 0;
-		end
-	end
 end
 
 

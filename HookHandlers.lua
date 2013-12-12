@@ -60,7 +60,7 @@ end
 
 function OnPlayerSpawned(a_Player)
 	-- Read this player's areas for this world:
-	g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()] = LoadPlayerAreas(a_Player:GetWorld():GetName(), a_Player:GetName());
+	g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()] = g_DB:LoadPlayerAreas(a_Player:GetWorld():GetName(), a_Player:GetName());
 	return false;
 end
 

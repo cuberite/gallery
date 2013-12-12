@@ -8,9 +8,6 @@
 
 
 
---- The file with the player areas database:
-DATABASE_FILE = "Galleries.sqlite";
-
 --- The file from which the galleries and the configuration is read
 CONFIG_FILE = "Galleries.cfg";
 

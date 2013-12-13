@@ -106,7 +106,7 @@ function SQLite:LoadPlayerAreas(a_WorldName, a_PlayerName)
 			ID = v[1],
 			MinX = v[2], MaxX = v[3], MinZ = v[4], MaxZ = v[5],
 			StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
-			Gallery = FindGalleryByName(a_WorldName, v[10]),
+			Gallery = FindGalleryByName(v[10], a_WorldName),
 			GalleryIndex = v[11],
 		};
 		if (area.Gallery == nil) then

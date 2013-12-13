@@ -118,7 +118,7 @@ function ClaimArea(a_Player, a_Gallery)
 	g_DB:StoreArea(Area);
 	
 	a_Gallery.NextAreaIdx = NextAreaIdx + 1;
-	-- TODO: Update this in the storage
+	g_DB:UpdateGallery(a_Gallery);
 
 	-- Add this area to Player's areas:
 	table.insert(g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()], Area);
@@ -133,26 +133,21 @@ end
 --- Returns the gallery of the specified name in the specified world
 local LastGalleryByName = nil;
 function FindGalleryByName(a_GalleryName, a_WorldName)
-	LOG("Finding gallery by name: \"" .. a_GalleryName .. "\" in world \"" .. a_WorldName .. "\":");
 	-- use a cache of size 1 to improve performance for area loading
 	if (
 		(LastGalleryByName ~= nil) and
 		(LastGalleryByName.Name == a_GalleryName) and
 		(LastGalleryByName.WorldName == a_WorldName)
 	) then
-		LOG("Using last gallery");
 		return LastGalleryByName;
 	end
 	
 	for idx, gal in ipairs(g_Galleries) do
-		LOG("Trying \"" .. gal.Name .. "\" in world \"" .. gal.WorldName .. "\".");
 		if ((gal.Name == a_GalleryName) and (gal.WorldName == a_WorldName)) then
-			LOG("Matched");
 			LastGalleryByName = gal;
 			return gal;
 		end
 	end
-	LOG("Not found");
 	return nil;
 end
 

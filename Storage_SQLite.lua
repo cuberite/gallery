@@ -31,6 +31,23 @@ end
 
 
 
+--- Executes the SQL statement, substituting "?" in the SQL with the specified params
+function SQLite:ExecuteStatement(a_SQL, a_Params)
+	local Stmt, ErrCode, ErrMsg = self.DB:prepare(a_SQL);
+	if (Stmt == nil) then
+		LOGWARNING("Cannot execute SQL \"" .. a_SQL .. "\": " .. ErrCode .. " (" .. ErrMsg .. ")");
+		return nil, ErrMsg;
+	end
+	Stmt:bind_values(unpack(a_Params));
+	Stmt:step();
+	Stmt:finalize();
+	return true;
+end
+
+
+
+
+
 --- Creates the table of the specified name and columns[]
 -- If the table exists, any columns missing are added; existing data is kept
 function SQLite:CreateDBTable(a_TableName, a_Columns)
@@ -137,7 +154,8 @@ end
 --- Loads the next area index for each gallery
 function SQLite:LoadGalleries()
 	for idx, gallery in ipairs(g_Galleries) do
-		self:DBExec("SELECT NextAreaIdx FROM GalleryEnd WHERE GalleryName = \"" .. gallery.Name .. "\"",
+		local SQL = "SELECT NextAreaIdx FROM GalleryEnd WHERE GalleryName = \"" .. gallery.Name .. "\"";
+		self:DBExec(SQL,
 			function (UserData, NumCols, Values, Names)
 				for i = 1, NumCols do
 					if (Names[i] == "NextAreaIdx") then
@@ -159,17 +177,31 @@ end
 
 --- Stores the specified area in the DB. Called as a member function of the g_DB object, hence the self param.
 function SQLite:StoreArea(a_Area)
-	local stmt = self.DB:prepare("INSERT INTO Areas (MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, PlayerName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-	stmt:bind_values(
-		a_Area.MinX, a_Area.MaxX, a_Area.MinZ, a_Area.MaxZ,
-		a_Area.StartX, a_Area.EndX, a_Area.StartZ, a_Area.EndZ,
-		a_Area.Gallery.Name, a_Area.GalleryIndex,
-		a_Area.Gallery.WorldName,
-		a_Area.PlayerName
+	self:ExecuteStatement(
+		"INSERT INTO Areas (MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, PlayerName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		{
+			a_Area.MinX, a_Area.MaxX, a_Area.MinZ, a_Area.MaxZ,
+			a_Area.StartX, a_Area.EndX, a_Area.StartZ, a_Area.EndZ,
+			a_Area.Gallery.Name, a_Area.GalleryIndex,
+			a_Area.Gallery.WorldName,
+			a_Area.PlayerName
+		}
 	);
-	stmt:step();
-	stmt:finalize();
 	a_Area.ID = self.DB:last_insert_rowid();
+end
+
+
+
+
+
+function SQLite:UpdateGallery(a_Gallery)
+	self:ExecuteStatement(
+		"UPDATE GalleryEnd SET NextAreaIdx = ? WHERE GalleryName = ?",
+		{
+			a_Gallery.NextAreaIdx,
+			a_Gallery.Name
+		}
+	);
 end
 
 

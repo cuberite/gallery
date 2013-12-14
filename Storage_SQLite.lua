@@ -160,12 +160,14 @@ function SQLite:LoadGalleries()
 				for i = 1, NumCols do
 					if (Names[i] == "NextAreaIdx") then
 						gallery.NextAreaIdx = tonumber(Values[i]);
-						return;
+						return 0;
 					end
 				end
+				return 0;
 			end
 		);
 		if (gallery.NextAreaIdx == nil) then
+			LOGWARNING("Gallery \"" .. gallery.Name .. "\" doesn't have its NextAreaIdx set in the database, will be reset to zero");
 			gallery.NextAreaIdx = 0;
 		end
 	end

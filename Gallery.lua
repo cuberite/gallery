@@ -172,6 +172,7 @@ end
 
 
 
+--- Returns the gallery that intersects the specified coords, or nil if no such gallery
 function FindGalleryByCoords(a_World, a_BlockX, a_BlockZ)
 	for idx, gallery in ipairs(g_Galleries) do
 		if (gallery.World == a_World) then
@@ -192,6 +193,17 @@ end
 
 
 
+--- Returns the list of all areas that the specified player owns in this world
+-- The list has been preloaded from the DB on player's spawn
+function GetPlayerAreas(a_Player)
+	return g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()] or {};
+end
+
+
+
+
+
+--- Returns true if the specified block lies within the area's buildable space
 function IsInArea(a_Area, a_BlockX, a_BlockZ)
 	return (
 		(a_BlockX >= a_Area.StartX) and
@@ -205,6 +217,9 @@ end
 
 
 
+--- Returns true if the specified player can interact with the specified block
+-- This takes into account the areas owned by the player
+-- TODO: Allow permission-based overrides, global for all galleries and per-gallery
 function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	-- If the player is outside all galleries, bail out:
 	local Gallery = FindGalleryByCoords(a_Player:GetWorld(), a_BlockX, a_BlockZ);

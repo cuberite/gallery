@@ -174,7 +174,37 @@ end
 
 
 function HandleCmdGoto(a_Split, a_Player)
-	-- TODO
+	-- Basic parameter check:
+	if (#a_Split < 4) then
+		a_Player:SendMessage("Not enough parameters");
+		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " goto <gallery> <areaId>");
+		return true;
+	end
+	
+	-- Resolve the gallery:
+	local Gallery = FindGalleryByName(a_Split[3]);
+	if (Gallery == nil) then
+		a_Player:SendMessage("There's no gallery " .. a_Split[3]);
+		-- Be nice, send the list of galleries to the player:
+		HandleCmdList({"/gal", "list"}, a_Player);
+		return true;
+	end
+	if (Gallery.World ~= a_Player:GetWorld()) then
+		a_Player:SendMessage("The gallery " .. a_Split[3] .. " is in a different world. You need to first go to that world");
+		return true;
+	end
+	
+	-- Find the area:
+	local ReqGalleryIndex = tonumber(a_Split[4]);
+	for idx, area in ipairs(GetPlayerAreas(a_Player)) do
+		if (area.GalleryIndex == ReqGalleryIndex) then
+			-- This is the area, teleport to it:
+			a_Player:TeleportToCoords(area.MinX + 0.5, area.Gallery.TeleportCoordY + 0.1, area.MinZ + 0.5);
+			return true;
+		end
+	end
+	
+	a_Player:SendMessage("You do not own that area");
 	return true;
 end
 

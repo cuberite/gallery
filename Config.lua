@@ -38,6 +38,19 @@ local g_GalleryOptionalParams =
 
 
 
+local function GetSchematicHighestNonAirBlock(a_Schematic)
+	for y = a_Schematic:GetSizeY() - 1, 0, -1 do
+		if (a_Schematic:GetRelBlockType(0, y, 0) ~= E_BLOCK_AIR) then
+			return y;
+		end
+	end
+	return 0;
+end
+
+
+
+
+
 --- Returns true if the gallery has all the minimum settings it needs
 -- a_Index is used instead of gallery name if the name is not present
 -- Also loads the gallery's schematic file and calculates helper dimensions
@@ -97,12 +110,14 @@ function CheckGallery(a_Gallery, a_Index)
 		a_Gallery.AreaTop   = Schematic:GetSizeY();
 		a_Gallery.AreaTemplateSchematicTop = cBlockArea();
 		a_Gallery.AreaTemplateSchematicTop:Create(a_Gallery.AreaSizeX, 255 - a_Gallery.AreaTop, a_Gallery.AreaSizeZ);
+		a_Gallery.TeleportCoordY = GetSchematicHighestNonAirBlock(Schematic) + 1;
 	else
 		-- If no schematic is given, the area sizes must be specified:
 		if ((a_Gallery.AreaSizeX == nil) or (a_Gallery.AreaSizeZ == nil)) then
 			LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\" has neither AreaTemplate nor AreaSizeX / AreaSizeZ set.");
 			return false;
 		end
+		a_Gallery.TeleportCoordY = 256;
 	end
 	
 	-- Calculate and check the number of areas per X / Z dimension:

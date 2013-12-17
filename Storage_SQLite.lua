@@ -112,7 +112,8 @@ end
 
 
 --- Loads the areas for a single player in the specified world
-function SQLite:LoadPlayerAreas(a_WorldName, a_PlayerName)
+-- Also deletes areas with invalid gallery from the DB (TODO: move this to a separate function?)
+function SQLite:LoadPlayerAreasInWorld(a_WorldName, a_PlayerName)
 	local res = {};
 	local ToDelete = {};  -- List of IDs to delete because of missing Gallery
 	local stmt = self.DB:prepare("SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex FROM Areas WHERE PlayerName = ? AND WorldName = ?");
@@ -123,7 +124,7 @@ function SQLite:LoadPlayerAreas(a_WorldName, a_PlayerName)
 			ID = v[1],
 			MinX = v[2], MaxX = v[3], MinZ = v[4], MaxZ = v[5],
 			StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
-			Gallery = FindGalleryByName(v[10], a_WorldName),
+			Gallery = FindGalleryByName(v[10]),
 			GalleryIndex = v[11],
 		};
 		if (area.Gallery == nil) then
@@ -143,6 +144,37 @@ function SQLite:LoadPlayerAreas(a_WorldName, a_PlayerName)
 		end
 		stmt:finalize();
 	end
+	
+	return res;
+end
+
+
+
+
+
+--- Loads the areas for a single player in the specified gallery
+function SQLite:LoadPlayerAreasInGallery(a_GalleryName, a_PlayerName)
+	local Gallery = FindGalleryByName(a_GalleryName);
+	if (Gallery == nil) then
+		-- no such gallery
+		return {};
+	end
+	
+	local res = {};
+	local stmt = self.DB:prepare("SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryIndex FROM Areas WHERE PlayerName = ? AND GalleryName = ?");
+	stmt:bind_values(a_PlayerName, a_GalleryName);
+	for v in stmt:rows() do
+		local area =
+		{
+			ID = v[1],
+			MinX = v[2], MaxX = v[3], MinZ = v[4], MaxZ = v[5],
+			StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
+			Gallery = Gallery,
+			GalleryIndex = v[10],
+		};
+		table.insert(res, area);
+	end
+	stmt:finalize();
 	
 	return res;
 end

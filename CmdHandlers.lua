@@ -20,6 +20,16 @@ end
 
 
 
+--- Returns a human-readable description of an area, used for area listings
+function DescribeArea(a_Area)
+	-- TODO: When area-naming is implemented, append area name, too
+	return a_Area.Gallery.Name .. " " .. a_Area.GalleryIndex;
+end
+
+
+
+
+
 --- Lists all areas that the player owns in their current world
 function ListPlayerAreasInWorld(a_Player)
 	local Areas = g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()];
@@ -35,7 +45,7 @@ function ListPlayerAreasInWorld(a_Player)
 	
 	-- Send list:
 	for idx, area in ipairs(Areas) do
-		a_Player:SendMessage("  " .. area.Gallery.Name .. " " .. area.GalleryIndex);
+		a_Player:SendMessage("  " .. DescribeArea(area));
 	end
 end
 
@@ -46,7 +56,28 @@ end
 --- Lists all areas that the player owns in the specified gallery
 -- Note that the gallery may be in a different world, DB is used for the listing
 function ListPlayerAreasInGallery(a_Player, a_GalleryName)
-	-- TODO
+	-- Retrieve all areas in the gallery from the DB:
+	local Gallery = FindGalleryByName(a_GalleryName);
+	if (Gallery == nil) then
+		a_Player:SendMessage("There is no gallery of that name.");
+		-- TODO: As a courtesy for the player, list ALL the galleries available throughout the worlds
+		return true;
+	end
+	local Areas = g_DB:LoadPlayerAreasInGallery(a_GalleryName, a_Player:GetName());
+	
+	-- Send count:
+	if (#Areas == 0) then
+		a_Player:SendMessage("You own no areas in that gallery");
+	elseif (#Areas == 1) then
+		a_Player:SendMessage("You own 1 area in that gallery:");
+	else
+		a_Player:SendMessage("You own " .. #Areas .. " areas in that gallery:");
+	end
+
+	-- Send list:
+	for idx, area in ipairs(Areas) do
+		a_Player:SendMessage("  " .. DescribeArea(area));
+	end
 end
 
 
@@ -92,11 +123,15 @@ function HandleCmdClaim(a_Split, a_Player)
 	end
 	
 	-- Find the gallery specified:
-	local Gallery = FindGalleryByName(a_Split[3], a_Player:GetWorld():GetName());
+	local Gallery = FindGalleryByName(a_Split[3]);
 	if (Gallery == nil) then
 		a_Player:SendMessage("There's no gallery " .. a_Split[3]);
 		-- Be nice, send the list of galleries to the player:
 		HandleCmdList({"/gal", "list"}, a_Player);
+		return true;
+	end
+	if (Gallery.WorldName ~= a_Player:GetWorld():GetName()) then
+		a_Player:SendMessage("That gallery is in world " .. Gallery.WorldName .. ", you need to go to that world before claiming.");
 		return true;
 	end
 	

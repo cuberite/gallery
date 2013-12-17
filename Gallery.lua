@@ -132,18 +132,17 @@ end
 
 --- Returns the gallery of the specified name in the specified world
 local LastGalleryByName = nil;
-function FindGalleryByName(a_GalleryName, a_WorldName)
+function FindGalleryByName(a_GalleryName)
 	-- use a cache of size 1 to improve performance for area loading
 	if (
 		(LastGalleryByName ~= nil) and
-		(LastGalleryByName.Name == a_GalleryName) and
-		(LastGalleryByName.WorldName == a_WorldName)
+		(LastGalleryByName.Name == a_GalleryName)
 	) then
 		return LastGalleryByName;
 	end
 	
 	for idx, gal in ipairs(g_Galleries) do
-		if ((gal.Name == a_GalleryName) and (gal.WorldName == a_WorldName)) then
+		if (gal.Name == a_GalleryName) then
 			LastGalleryByName = gal;
 			return gal;
 		end
@@ -161,7 +160,7 @@ function LoadAllPlayersAreas()
 			local WorldAreas = {}
 			a_World:ForEachPlayer(
 				function (a_Player)
-					WorldAreas[a_Player:GetUniqueID()] = g_DB:LoadPlayerAreas(a_World:GetName(), a_Player:GetName());
+					WorldAreas[a_Player:GetUniqueID()] = g_DB:LoadPlayerAreasInWorld(a_World:GetName(), a_Player:GetName());
 				end
 			);
 			g_PlayerAreas[a_World:GetName()] = WorldAreas;

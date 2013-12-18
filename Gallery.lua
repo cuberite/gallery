@@ -122,7 +122,9 @@ function ClaimArea(a_Player, a_Gallery)
 	g_DB:UpdateGallery(a_Gallery);
 
 	-- Add this area to Player's areas:
-	table.insert(g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()], Area);
+	local PlayerAreas = GetPlayerAreas(a_Player);
+	table.insert(PlayerAreas, Area);
+	PlayerAreas[Area.Name] = Area;
 	
 	return Area;
 end
@@ -161,10 +163,9 @@ function LoadAllPlayersAreas()
 			local WorldAreas = {}
 			a_World:ForEachPlayer(
 				function (a_Player)
-					WorldAreas[a_Player:GetUniqueID()] = g_DB:LoadPlayerAreasInWorld(a_World:GetName(), a_Player:GetName());
+					SetPlayerAreas(a_Player, g_DB:LoadPlayerAreasInWorld(a_World:GetName(), a_Player:GetName()));
 				end
 			);
-			g_PlayerAreas[a_World:GetName()] = WorldAreas;
 		end
 	);
 end
@@ -195,9 +196,29 @@ end
 
 
 --- Returns the list of all areas that the specified player owns in this world
--- The list has been preloaded from the DB on player's spawn
+-- The table has been preloaded from the DB on player's spawn
+-- If for any reason the table doesn't exist, return an empty table
 function GetPlayerAreas(a_Player)
-	return g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()] or {};
+	local res = g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetName()];
+	if (res == nil) then
+		res = {};
+		g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetName()] = res;
+	end
+	return res;
+end
+
+
+
+
+
+--- Sets the player areas for the specified player in the global area table
+function SetPlayerAreas(a_Player, a_Areas)
+	local WorldAreas = g_PlayerAreas[a_Player:GetWorld():GetName()];
+	if (WorldAreas == nil) then
+		WorldAreas = {};
+		g_PlayerAreas[a_Player:GetWorld():GetName()] = WorldAreas;
+	end
+	WorldAreas[a_Player:GetName()] = a_Areas;
 end
 
 

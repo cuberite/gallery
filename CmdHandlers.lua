@@ -31,7 +31,7 @@ end
 
 --- Lists all areas that the player owns in their current world
 function ListPlayerAreasInWorld(a_Player)
-	local Areas = g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()];
+	local Areas = GetPlayerAreas(a_Player);
 	
 	-- Send count:
 	if (#Areas == 0) then
@@ -174,36 +174,20 @@ end
 
 local function HandleCmdGoto(a_Split, a_Player)
 	-- Basic parameter check:
-	if (#a_Split < 4) then
+	if (#a_Split < 3) then
 		a_Player:SendMessage("Not enough parameters");
-		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " goto <gallery> <areaId>");
+		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " goto <areaName>");
 		return true;
 	end
 	
-	-- Resolve the gallery:
-	local Gallery = FindGalleryByName(a_Split[3]);
-	if (Gallery == nil) then
-		a_Player:SendMessage("There's no gallery " .. a_Split[3]);
-		-- Be nice, send the list of galleries to the player:
-		HandleCmdList({"/gal", "list"}, a_Player);
-		return true;
-	end
-	if (Gallery.World ~= a_Player:GetWorld()) then
-		a_Player:SendMessage("The gallery " .. a_Split[3] .. " is in a different world. You need to first go to that world");
+	local ReqAreaName = table.concat(a_Split, " ", 3);
+	local Area = GetPlayerAreas(a_Player)[ReqAreaName];
+	if (Area == nil) then
+		a_Player:SendMessage("You don't own an area of that name.");
 		return true;
 	end
 	
-	-- Find the area:
-	local ReqGalleryIndex = tonumber(a_Split[4]);
-	for idx, area in ipairs(GetPlayerAreas(a_Player)) do
-		if (area.GalleryIndex == ReqGalleryIndex) then
-			-- This is the area, teleport to it:
-			a_Player:TeleportToCoords(area.MinX + 0.5, area.Gallery.TeleportCoordY + 0.001, area.MinZ + 0.5);
-			return true;
-		end
-	end
-	
-	a_Player:SendMessage("You do not own that area");
+	a_Player:TeleportToCoords(Area.MinX + 0.5, Area.Gallery.TeleportCoordY + 0.001, Area.MinZ + 0.5);
 	return true;
 end
 
@@ -238,15 +222,22 @@ local function HandleCmdName(a_Split, a_Player)
 		return true;
 	end
 	
+	-- Check the DB for duplicate name:
 	local OldName = Area.Name;
 	if (g_DB:IsAreaNameUsed(a_Player:GetName(), a_Player:GetWorld():GetName(), NewName)) then
 		a_Player:SendMessage("This area name is already used, pick another one.");
 		return true;
 	end
 	
-	if (g_DB:NameArea(Area, NewName)) then
-		Area.Name = NewName;
-	end
+	-- Rename in the DB:
+	g_DB:NameArea(Area, NewName);
+	
+	-- Rename in the loaded table:
+	local PlayerAreas = GetPlayerAreas(a_Player);
+	PlayerAreas[OldName] = nil;
+	PlayerAreas[NewName] = Area;
+	Area.Name = NewName;
+	
 	a_Player:SendMessage("Area '" .. OldName .. "' renamed to '" .. NewName .. "'.");
 	return true;
 end
@@ -292,6 +283,13 @@ local g_Subcommands =
 		Permission = "gallery.name",
 		Handler = HandleCmdName,
 	}
+	--[[info =
+	{
+		Help = "prints information on the area you're currently standing at",
+		Permission = "gallery.info",
+		Handler = HandleCmdInfo,
+	}
+	--]]
 } ;
 
 
@@ -303,7 +301,7 @@ function SendUsage(a_Player, a_Message)
 		a_Player:SendMessage(a_Message);
 	end
 	for cmd, info in pairs(g_Subcommands) do
-		a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " " .. cmd .. " " .. info.Params .. " - " .. info.Help);
+		a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " " .. cmd .. " " .. (info.Params or "") .. " - " .. info.Help);
 	end
 end
 

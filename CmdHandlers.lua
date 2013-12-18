@@ -22,8 +22,7 @@ end
 
 --- Returns a human-readable description of an area, used for area listings
 function DescribeArea(a_Area)
-	-- TODO: When area-naming is implemented, append area name, too
-	return a_Area.Gallery.Name .. " " .. a_Area.GalleryIndex;
+	return a_Area.Name .. " (" .. a_Area.Gallery.Name .. " " .. a_Area.GalleryIndex .. ")";
 end
 
 
@@ -173,7 +172,7 @@ end
 
 
 
-function HandleCmdGoto(a_Split, a_Player)
+local function HandleCmdGoto(a_Split, a_Player)
 	-- Basic parameter check:
 	if (#a_Split < 4) then
 		a_Player:SendMessage("Not enough parameters");
@@ -199,12 +198,56 @@ function HandleCmdGoto(a_Split, a_Player)
 	for idx, area in ipairs(GetPlayerAreas(a_Player)) do
 		if (area.GalleryIndex == ReqGalleryIndex) then
 			-- This is the area, teleport to it:
-			a_Player:TeleportToCoords(area.MinX + 0.5, area.Gallery.TeleportCoordY + 0.1, area.MinZ + 0.5);
+			a_Player:TeleportToCoords(area.MinX + 0.5, area.Gallery.TeleportCoordY + 0.001, area.MinZ + 0.5);
 			return true;
 		end
 	end
 	
 	a_Player:SendMessage("You do not own that area");
+	return true;
+end
+
+
+
+
+
+local function HandleCmdName(a_Split, a_Player)
+	-- Check the params:
+	if (#a_Split ~= 3) then
+		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " name <areaName>");
+		a_Player:SendMessage("areaName may contain only a-z, A-Z, 0-9, +, -, /, * and _");
+		return true;
+	end
+	local NewName = a_Split[3];
+	local Unacceptable = NewName:gsub("[a-zA-Z0-9%-_/*+]", "");  -- Erase all valid chars, all that's left is unacceptable
+	if (Unacceptable ~= "") then
+		a_Player:SendMessage("The following characters are not acceptable in an area name: " .. Unacceptable);
+		return true;
+	end
+	
+	-- Check what the current area is:
+	local Area = FindPlayerAreaByCoords(a_Player, a_Player:GetPosX(), a_Player:GetPosZ());
+	if (Area == nil) then
+		a_Player:SendMessage("You can only name your areas. Stand in your area and then issue the command again");
+		return true;
+	end
+	
+	-- Renaming to same name?
+	if (Area.Name == NewName) then
+		a_Player:SendMessage("This area is already named '" .. NewName .. "'.");
+		return true;
+	end
+	
+	local OldName = Area.Name;
+	if (g_DB:IsAreaNameUsed(a_Player:GetName(), a_Player:GetWorld():GetName(), NewName)) then
+		a_Player:SendMessage("This area name is already used, pick another one.");
+		return true;
+	end
+	
+	if (g_DB:NameArea(Area, NewName)) then
+		Area.Name = NewName;
+	end
+	a_Player:SendMessage("Area '" .. OldName .. "' renamed to '" .. NewName .. "'.");
 	return true;
 end
 
@@ -242,6 +285,13 @@ local g_Subcommands =
 		Permission = "gallery.goto",
 		Handler = HandleCmdGoto,
 	},
+	name = 
+	{
+		Params = "<newName>",
+		Help = "renames the area you're currently standing at",
+		Permission = "gallery.name",
+		Handler = HandleCmdName,
+	}
 } ;
 
 

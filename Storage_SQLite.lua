@@ -16,6 +16,8 @@ local SQLite = {};
 
 --- Executes an SQL query on the SQLite DB
 function SQLite:DBExec(a_SQL, a_Callback, a_CallbackParam)
+	assert(a_SQL ~= nil);
+	
 	local ErrCode = self.DB:exec(a_SQL, a_Callback, a_CallbackParam);
 	if (ErrCode ~= sqlite3.OK) then
 		LOGWARNING(PLUGIN_PREFIX .. "Error " .. ErrCode .. " (" .. self.DB:errmsg() ..
@@ -31,15 +33,24 @@ end
 
 
 
---- Executes the SQL statement, substituting "?" in the SQL with the specified params
-function SQLite:ExecuteStatement(a_SQL, a_Params)
+--- Executes the SQL statement, substituting "?" in the SQL with the specified params; calls a_Callback for each row
+function SQLite:ExecuteStatement(a_SQL, a_Params, a_Callback)
+	assert(a_SQL ~= nil);
+	assert(a_Params ~= nil);
+	
 	local Stmt, ErrCode, ErrMsg = self.DB:prepare(a_SQL);
 	if (Stmt == nil) then
 		LOGWARNING("Cannot execute SQL \"" .. a_SQL .. "\": " .. ErrCode .. " (" .. ErrMsg .. ")");
 		return nil, ErrMsg;
 	end
 	Stmt:bind_values(unpack(a_Params));
-	Stmt:step();
+	if (a_Callback == nil) then
+		Stmt:step();
+	else
+		for v in Stmt:rows() do
+			a_Callback(v);
+		end
+	end
 	Stmt:finalize();
 	return true;
 end
@@ -51,6 +62,9 @@ end
 --- Creates the table of the specified name and columns[]
 -- If the table exists, any columns missing are added; existing data is kept
 function SQLite:CreateDBTable(a_TableName, a_Columns)
+	assert(a_TableName ~= nil);
+	assert(a_Columns ~= nil);
+	
 	-- Try to create the table first
 	local sql = "CREATE TABLE IF NOT EXISTS '" .. a_TableName .. "' (";
 	sql = sql .. table.concat(a_Columns, ", ");
@@ -114,23 +128,34 @@ end
 --- Loads the areas for a single player in the specified world
 -- Also deletes areas with invalid gallery from the DB (TODO: move this to a separate function?)
 function SQLite:LoadPlayerAreasInWorld(a_WorldName, a_PlayerName)
+	assert(a_WorldName ~= nil);
+	assert(a_PlayerName ~= nil);
+	
 	local res = {};
 	local ToDelete = {};  -- List of IDs to delete because of missing Gallery
-	local stmt = self.DB:prepare("SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex FROM Areas WHERE PlayerName = ? AND WorldName = ?");
+	local stmt = self.DB:prepare("SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, Name FROM Areas WHERE PlayerName = ? AND WorldName = ?");
 	stmt:bind_values(a_PlayerName, a_WorldName);
 	for v in stmt:rows() do
-		local area =
-		{
-			ID = v[1],
-			MinX = v[2], MaxX = v[3], MinZ = v[4], MaxZ = v[5],
-			StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
-			Gallery = FindGalleryByName(v[10]),
-			GalleryIndex = v[11],
-		};
-		if (area.Gallery == nil) then
+		local Gallery = FindGalleryByName(v[10]);
+		if (Gallery == nil) then
 			table.insert(ToDelete, v[1]);
 		else
+			local Name = v[12];
+			if ((Name == nil) or (Name == "")) then
+				Name = Gallery.Name .. " " .. tostring(v[11]);
+			end
+			local area =
+			{
+				ID = v[1],
+				MinX = v[2], MaxX = v[3], MinZ = v[4], MaxZ = v[5],
+				StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
+				Gallery = Gallery,
+				GalleryIndex = v[11],
+				Name = Name,
+				PlayerName = a_PlayerName,
+			};
 			table.insert(res, area);
+			res[area.Name] = area;
 		end
 	end
 	stmt:finalize();
@@ -154,6 +179,9 @@ end
 
 --- Loads the areas for a single player in the specified gallery
 function SQLite:LoadPlayerAreasInGallery(a_GalleryName, a_PlayerName)
+	assert(a_Galleryname ~= nil);
+	assert(a_PlayerName ~= nil);
+	
 	local Gallery = FindGalleryByName(a_GalleryName);
 	if (Gallery == nil) then
 		-- no such gallery
@@ -161,9 +189,13 @@ function SQLite:LoadPlayerAreasInGallery(a_GalleryName, a_PlayerName)
 	end
 	
 	local res = {};
-	local stmt = self.DB:prepare("SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryIndex FROM Areas WHERE PlayerName = ? AND GalleryName = ?");
+	local stmt = self.DB:prepare("SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryIndex, Name FROM Areas WHERE PlayerName = ? AND GalleryName = ?");
 	stmt:bind_values(a_PlayerName, a_GalleryName);
 	for v in stmt:rows() do
+		local Name = v[11];
+		if ((Name == nil) or (Name == "")) then
+			Name = a_GalleryName .. " " .. tostring(v[10]);
+		end
 		local area =
 		{
 			ID = v[1],
@@ -173,6 +205,7 @@ function SQLite:LoadPlayerAreasInGallery(a_GalleryName, a_PlayerName)
 			GalleryIndex = v[10],
 		};
 		table.insert(res, area);
+		res[area.Name] = area;
 	end
 	stmt:finalize();
 	
@@ -209,19 +242,73 @@ end
 
 
 
---- Stores the specified area in the DB. Called as a member function of the g_DB object, hence the self param.
-function SQLite:StoreArea(a_Area)
+--- Stores a new area into the DB
+function SQLite:AddArea(a_Area)
+	assert(a_Area ~= nil);
+	
 	self:ExecuteStatement(
-		"INSERT INTO Areas (MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, PlayerName) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO Areas (MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, PlayerName, Name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		{
 			a_Area.MinX, a_Area.MaxX, a_Area.MinZ, a_Area.MaxZ,
 			a_Area.StartX, a_Area.EndX, a_Area.StartZ, a_Area.EndZ,
 			a_Area.Gallery.Name, a_Area.GalleryIndex,
 			a_Area.Gallery.WorldName,
-			a_Area.PlayerName
+			a_Area.PlayerName,
+			a_Area.Name,
 		}
 	);
 	a_Area.ID = self.DB:last_insert_rowid();
+end
+
+
+
+
+
+function SQLite:IsAreaNameUsed(a_PlayerName, a_WorldName, a_AreaName)
+	assert(a_PlayerName ~= nil);
+	assert(a_WorldName ~= nil);
+	assert(a_AreaName ~= nil);
+	
+	local IsNameUsed = false;
+	self:ExecuteStatement(
+		"SELECT ID FROM Areas WHERE WorldName = ? AND PlayerName = ? AND Name = ?",
+		{
+			a_WorldName,
+			a_PlayerName,
+			a_AreaName,
+		},
+		function (a_Values)
+			IsNameUsed = true;
+		end
+	);
+	return IsNameUsed;
+end
+
+
+
+
+
+--- Modifies an existing area's name, if it doesn't collide with any other existing area names
+-- If the name is already used, returns false; returns true if renamed successfully
+function SQLite:NameArea(a_Area, a_NewName)
+	assert(a_Area ~= nil);
+	assert(a_NewName ~= nil);
+	
+	-- Check if the name is already used:
+	if (self:IsAreaNameUsed(a_Area.PlayerName, a_Area.Gallery.WorldName, a_NewName)) then
+		return false
+	end
+	
+	-- Rename the area:
+	self:ExecuteStatement(
+		"UPDATE Areas SET Name = ? WHERE GalleryName = ? AND ID = ?",
+		{
+			a_NewName,
+			a_Area.Gallery.Name,
+			a_Area.ID,
+		}
+	);
+	return true;
 end
 
 
@@ -260,6 +347,7 @@ function SQLite_CreateStorage(a_Params)
 		"ID INTEGER PRIMARY KEY AUTOINCREMENT",
 		"MinX", "MaxX", "MinZ", "MaxZ",      -- The bounds of this area, including the non-buildable "sidewalk"
 		"StartX", "EndX", "StartZ", "EndZ",  -- The buildable bounds of this area
+		"Name",                              -- The name given to the area
 		"WorldName",                         -- Name of the world where the area belongs
 		"PlayerName",                        -- Name of the owner
 		"GalleryName",                       -- Name of the gallery from which the area has been claimed
@@ -281,3 +369,7 @@ function SQLite_CreateStorage(a_Params)
 	-- Returns the initialized database access object
 	return DB;
 end
+
+
+
+

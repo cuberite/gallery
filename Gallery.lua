@@ -114,8 +114,9 @@ function ClaimArea(a_Player, a_Gallery)
 		Gallery = a_Gallery;
 		GalleryIndex = a_Gallery.NextAreaIdx;
 		PlayerName = a_Player:GetName();
+		Name = a_Gallery.Name .. " " .. tostring(a_Gallery.NextAreaIdx);
 	};
-	g_DB:StoreArea(Area);
+	g_DB:AddArea(Area);
 	
 	a_Gallery.NextAreaIdx = NextAreaIdx + 1;
 	g_DB:UpdateGallery(a_Gallery);
@@ -229,21 +230,27 @@ function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	end
 	
 	-- Inside a gallery, retrieve the areas:
-	local Areas = g_PlayerAreas[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()];
-	if (Areas == nil) then
-		-- The player is an admin who can interact with anything anywhere
-		return true;
+	local Area = FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ);
+	if (Area == nil) then
+		-- Not this player's area, disable interaction
+		return false;
 	end
-	
-	for idx, area in ipairs(Areas) do
-		if (IsInArea(area, a_BlockX, a_BlockZ)) then
-			-- This player's area, allow them
-			return true;
+	-- This player's area, allow them
+	return true;
+end
+
+
+
+
+
+--- Returns the player-owned area for the specified coords, or nil if no such area
+function FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ)
+	for idx, area in ipairs(GetPlayerAreas(a_Player)) do
+		if ((a_BlockX >= area.MinX) and (a_BlockX < area.MaxX) and (a_BlockZ >= area.MinZ) and (a_BlockZ < area.MaxZ)) then
+			return area;
 		end
 	end
-	
-	-- Not this player's area, disallow:
-	return false;
+	return nil;
 end
 
 

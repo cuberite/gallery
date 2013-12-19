@@ -22,7 +22,22 @@ end
 
 --- Returns a human-readable description of an area, used for area listings
 function DescribeArea(a_Area)
-	return a_Area.Name .. " (" .. a_Area.Gallery.Name .. " " .. a_Area.GalleryIndex .. ")";
+	return a_Area.Name .. "   (" .. a_Area.Gallery.Name .. " " .. a_Area.GalleryIndex .. ")";
+end
+
+
+
+
+
+local function SendAreaDetails(a_Player, a_Area, a_LeadingText)
+	assert(a_Player ~= nil);
+	assert(a_Area ~= nil);
+	assert(a_LeadingText ~= nil);
+	
+	a_Player:SendMessage(a_LeadingText .. DescribeArea(a_Area) .. ":");
+	a_Player:SendMessage("  Boundaries: {" .. a_Area.MinX .. ", " .. a_Area.MinZ .. "} - {" .. tostring(a_Area.MaxX - 1) .. ", " .. tostring(a_Area.MaxZ - 1) .. "}");
+	a_Player:SendMessage("  Buildable region: {" .. a_Area.StartX .. ", " .. a_Area.StartZ .. "} - {" .. tostring(a_Area.EndX - 1) .. ", " .. tostring(a_Area.EndZ - 1) .. "}");
+	a_Player:SendMessage("  Unbuildable edge: " .. tostring(a_Area.StartX - a_Area.MinX) .. " blocks");
 end
 
 
@@ -83,7 +98,7 @@ end
 
 
 
-function HandleCmdList(a_Split, a_Player)
+local function HandleCmdList(a_Split, a_Player)
 	local WorldName = a_Player:GetWorld():GetName();
 
 	-- First count the galleries in this world:
@@ -114,7 +129,7 @@ end
 
 
 
-function HandleCmdClaim(a_Split, a_Player)
+local function HandleCmdClaim(a_Split, a_Player)
 	if (#a_Split < 3) then
 		a_Player:SendMessage("You need to specify the gallery where to claim.");
 		a_Player:SendMessage("Usage: " .. g_Config.CmdPrefix .. " claim <Gallery>");
@@ -155,7 +170,7 @@ end
 
 
 
-function HandleCmdMy(a_Split, a_Player)
+local function HandleCmdMy(a_Split, a_Player)
 	if (#a_Split == 2) then
 		-- "/gal my" command, list all areas in this world
 		ListPlayerAreasInWorld(a_Player);
@@ -203,7 +218,7 @@ local function HandleCmdName(a_Split, a_Player)
 		return true;
 	end
 	local NewName = a_Split[3];
-	local Unacceptable = NewName:gsub("[a-zA-Z0-9%-_/*+]", "");  -- Erase all valid chars, all that's left is unacceptable
+	local Unacceptable = NewName:gsub("[a-zA-Z0-9%-_/*+%.]", "");  -- Erase all valid chars, all that's left is unacceptable
 	if (Unacceptable ~= "") then
 		a_Player:SendMessage("The following characters are not acceptable in an area name: " .. Unacceptable);
 		return true;
@@ -239,6 +254,25 @@ local function HandleCmdName(a_Split, a_Player)
 	Area.Name = NewName;
 	
 	a_Player:SendMessage("Area '" .. OldName .. "' renamed to '" .. NewName .. "'.");
+	return true;
+end
+
+
+
+
+
+local function HandleCmdInfo(a_Split, a_Player)
+	-- TODO: Admin-level info tool, if the player has the necessary permissions
+	
+	local BlockX = math.floor(a_Player:GetPosX());
+	local BlockZ = math.floor(a_Player:GetPosZ());
+	local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
+	if (Area == nil) then
+		a_Player:SendMessage("This isn't your area.");
+		return true;
+	else
+		SendAreaDetails(a_Player, Area, "This is your area ");
+	end
 	return true;
 end
 
@@ -282,14 +316,13 @@ local g_Subcommands =
 		Help = "renames the area you're currently standing at",
 		Permission = "gallery.name",
 		Handler = HandleCmdName,
-	}
-	--[[info =
+	},
+	info =
 	{
 		Help = "prints information on the area you're currently standing at",
 		Permission = "gallery.info",
 		Handler = HandleCmdInfo,
-	}
-	--]]
+	},
 } ;
 
 

@@ -162,7 +162,8 @@ local function HandleCmdClaim(a_Split, a_Player)
 		Gallery.AreaTemplateSchematicTop:Write(a_Player:GetWorld(), Area.MinX, Gallery.AreaTop, Area.MinZ);
 	end
 	
-	-- TODO: Teleport to the area:
+	-- Teleport to the area:
+	a_Player:TeleportToCoords(Area.MinX + 0.5, Area.Gallery.TeleportCoordY + 0.001, Area.MinZ + 0.5);
 	return true;
 end
 

@@ -10,7 +10,7 @@
 --- Registers all the command handlers
 function InitCmdHandlers()
 	-- Register the generic "gallery" command that will actually handle all the /gallery commands:
-	cPluginManager.BindCommand(g_Config.CommandPrefix, "gallery.*", HandleGalleryCmd, "");
+	cPluginManager.BindCommand(g_Config.CommandPrefix, "", HandleGalleryCmd, "");  -- Must not use any permission!
 
 	-- Register the subcommands, so that they are listed in the help:
 	RegisterSubcommands();
@@ -344,17 +344,26 @@ end
 
 
 function HandleGalleryCmd(a_Split, a_Player)
+	-- Verify that a subcommand has been given:
 	if (#a_Split <= 1) then
 		SendUsage(a_Player, "The " .. g_Config.CommandPrefix .. " command requires an additional verb:");
 		return true;
 	end
 	
+	-- Find the subcommand:
 	local Subcommand = g_Subcommands[a_Split[2]];
 	if (Subcommand == nil) then
 		SendUsage(a_Player, "Unknown verb: " .. a_Split[2]);
 		return true;
 	end
-	-- TODO: Check permission
+	
+	-- Check the permission:
+	if not(a_Player:HasPermission(Subcommand.Permission)) then
+		a_Player:SendMessage("You don't have permission to use this command");
+		return true;
+	end
+	
+	-- Execute the handler:
 	return Subcommand.Handler(a_Split, a_Player);
 end
 

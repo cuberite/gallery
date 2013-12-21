@@ -334,8 +334,15 @@ function SendUsage(a_Player, a_Message)
 	if (a_Message ~= nil) then
 		a_Player:SendMessage(a_Message);
 	end
+	local HasAnyCommands = false;
 	for cmd, info in pairs(g_Subcommands) do
-		a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " " .. cmd .. " " .. (info.Params or "") .. " - " .. info.Help);
+		if (a_Player:HasPermission(info.Permission)) then
+			a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " " .. cmd .. " " .. (info.Params or "") .. " - " .. info.Help);
+			HasAnyCommands = true;
+		end
+	end
+	if not(HasAnyCommands) then
+		a_Player:SendMessage("You are not allowed to use any subcommands.");
 	end
 end
 

@@ -254,9 +254,15 @@ function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	local Area = FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ);
 	if (Area == nil) then
 		-- Not this player's area, disable interaction
-		return false;
+		return false, "This area is owned by someone else.";
 	end
-	-- This player's area, allow them
+	
+	-- This player's area, is it within the allowed buildable space? (exclude the sidewalks):
+	if not(IsInArea(Area, a_BlockX, a_BlockZ)) then
+		return false, "This is the public sidewalk.";
+	end
+	
+	-- Allowed:
 	return true;
 end
 

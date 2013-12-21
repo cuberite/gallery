@@ -29,10 +29,11 @@ end
 
 
 function OnPlayerLeftClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockFace, a_Status)
-	if (CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)) then
+	local CanInteract, Reason = CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ);
+	if (CanInteract) then
 		return false;
 	end
-	a_Player:SendMessage("You are not allowed to dig here");
+	a_Player:SendMessage("You are not allowed to dig here. " .. Reason);
 	return true;
 end
 
@@ -47,10 +48,12 @@ function OnPlayerRightClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockFace,
 	end
 	
 	local BlockX, BlockY, BlockZ = AddFaceDirection(a_BlockX, a_BlockY, a_BlockZ, a_BlockFace);
-	if (CanPlayerInteractWithBlock(a_Player, BlockX, BlockY, BlockZ)) then
+	local CanInteract, Reason = CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ);
+	if (CanInteract) then
 		return false;
 	end
-	a_Player:SendMessage("You are not allowed to build here");
+	
+	a_Player:SendMessage("You are not allowed to build here. " .. Reason);
 	return true;
 end
 

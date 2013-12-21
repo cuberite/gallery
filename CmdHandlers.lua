@@ -239,6 +239,34 @@ end
 
 
 
+--- Handles the admin version of the goto command
+local function HandleCmdGotoAdmin(a_Split, a_Player)
+	-- "/gal goto @playername <areaname>"
+	-- Check param count:
+	if (#a_Split ~= 4) then
+		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " goto @playername <areaName>");
+		return true;
+	end
+	
+	-- Check permission:
+	if not(a_Player:HasPermission("gallery.admin.goto")) then
+		a_Player:SendMessage("You do not have the required permission to use this command");
+		return true;
+	end
+	
+	local Area = g_DB:LoadPlayerAreaByName(a_Split[3]:sub(2), a_Split[4]);
+	if (Area == nil) then
+		a_Player:SendMessage("They don't have such an area.");
+		-- Do NOT send the area list - the player may not have sufficient rights
+		return true;
+	end
+	a_Player:TeleportToCoords(Area.MinX + 0.5, Area.Gallery.TeleportCoordY + 0.001, Area.MinZ + 0.5);
+end
+
+
+
+
+
 local function HandleCmdGoto(a_Split, a_Player)
 	-- Basic parameter check:
 	if (#a_Split < 3) then
@@ -247,7 +275,12 @@ local function HandleCmdGoto(a_Split, a_Player)
 		return true;
 	end
 	
-	local ReqAreaName = table.concat(a_Split, " ", 3);
+	-- If the first char is a @, it is the admin override:
+	if (a_Split[3]:sub(1, 1) == '@') then
+		return HandleCmdGotoAdmin(a_Split, a_Player);
+	end
+	
+	local ReqAreaName = a_Split[3];
 	local Area = GetPlayerAreas(a_Player)[ReqAreaName];
 	if (Area == nil) then
 		a_Player:SendMessage("You don't own an area of that name.");

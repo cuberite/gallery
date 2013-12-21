@@ -34,6 +34,7 @@ end
 
 
 --- Executes the SQL statement, substituting "?" in the SQL with the specified params; calls a_Callback for each row
+-- The callback receives a dictionary table containing the row values (stmt:nrows())
 function SQLite:ExecuteStatement(a_SQL, a_Params, a_Callback)
 	assert(a_SQL ~= nil);
 	assert(a_Params ~= nil);
@@ -47,7 +48,7 @@ function SQLite:ExecuteStatement(a_SQL, a_Params, a_Callback)
 	if (a_Callback == nil) then
 		Stmt:step();
 	else
-		for v in Stmt:rows() do
+		for v in Stmt:nrows() do
 			a_Callback(v);
 		end
 	end
@@ -245,6 +246,40 @@ function SQLite:LoadAllPlayerAreas(a_PlayerName)
 		end
 	end
 	stmt:finalize();
+	
+	return res;
+end
+
+
+
+
+
+--- Loads an area of the specified name owned by the specified player
+function SQLite:LoadPlayerAreaByName(a_PlayerName, a_AreaName)
+	assert(a_PlayerName ~= nil);
+	assert(a_AreaName ~= nil);
+	assert(a_AreaName ~= "");
+	
+	local res = nil;
+	self:ExecuteStatement(
+		"SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex FROM Areas WHERE PlayerName = ? AND Name = ?",
+		{a_PlayerName, a_AreaName},
+		function (a_Values)
+			local Gallery = FindGalleryByName(a_Values.GalleryName);
+			if (Gallery == nil) then
+				return;
+			end
+			res =
+			{
+				ID = a_Values.ID,
+				MinX = a_Values.MinX, MaxX = a_Values.MaxX, MinZ = a_Values.MinZ, MaxZ = a_Values.MaxZ,
+				StartX = a_Values.StartX, EndX = a_Values.EndX, StartZ = a_Values.StartZ, EndZ = a_Values.EndZ,
+				Gallery = Gallery,
+				GalleryIndex = a_Values.GalleryIndex,
+				Name = a_AreaName,
+			};
+		end
+	);
 	
 	return res;
 end

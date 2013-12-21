@@ -179,7 +179,7 @@ end
 
 --- Loads the areas for a single player in the specified gallery
 function SQLite:LoadPlayerAreasInGallery(a_GalleryName, a_PlayerName)
-	assert(a_Galleryname ~= nil);
+	assert(a_GalleryName ~= nil);
 	assert(a_PlayerName ~= nil);
 	
 	local Gallery = FindGalleryByName(a_GalleryName);
@@ -203,9 +203,46 @@ function SQLite:LoadPlayerAreasInGallery(a_GalleryName, a_PlayerName)
 			StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
 			Gallery = Gallery,
 			GalleryIndex = v[10],
+			Name = Name,
 		};
 		table.insert(res, area);
 		res[area.Name] = area;
+	end
+	stmt:finalize();
+	
+	return res;
+end
+
+
+
+
+
+--- Loads all the areas for a single player
+function SQLite:LoadAllPlayerAreas(a_PlayerName)
+	assert(a_PlayerName ~= nil);
+	
+	local res = {};
+	local stmt = self.DB:prepare("SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, Name FROM Areas WHERE PlayerName = ?");
+	stmt:bind_values(a_PlayerName);
+	for v in stmt:rows() do
+		local Gallery = FindGalleryByName(v[10]);
+		if (Gallery ~= nil) then
+			local Name = v[12];
+			if ((Name == nil) or (Name == "")) then
+				Name = v[10] .. " " .. tostring(v[11]);
+			end
+			local area =
+			{
+				ID = v[1],
+				MinX = v[2], MaxX = v[3], MinZ = v[4], MaxZ = v[5],
+				StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
+				Gallery = Gallery,
+				GalleryIndex = v[11],
+				Name = Name,
+			};
+			table.insert(res, area);
+			res[area.Name] = area;
+		end
 	end
 	stmt:finalize();
 	

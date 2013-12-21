@@ -244,7 +244,7 @@ end
 -- TODO: Allow permission-based overrides, global for all galleries and per-gallery
 function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	-- If the player has the admin permission, allow them:
-	if (a_Player:HasPermission("gallery.buildanywhere")) then
+	if (a_Player:HasPermission("gallery.admin.buildanywhere")) then
 		return true;
 	end
 	

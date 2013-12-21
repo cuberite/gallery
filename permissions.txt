@@ -1,0 +1,13 @@
+Permissions.txt
+
+This file describes all the available permissions for this plugin.
+
+gallery.admin.*   - admin-level permissions, see each individual permission below for details
+gallery.admin.buildanywhere - build in other people's areas and the public sidewalks
+gallery.admin.my            - view list of areas for other players, using the "/gal my @playername [<galleryname>]" form
+gallery.claim               - claim a new area in any gallery
+gallery.goto                - teleport to an area owned by self
+gallery.list                - view list of available galleries
+gallery.info                - view information on an area owned by self
+gallery.my                  - view list of areas owned by self
+gallery.name                - rename an area owned by self

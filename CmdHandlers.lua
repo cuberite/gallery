@@ -98,6 +98,47 @@ end
 
 
 
+--- Lists all the areas that a_Owner has in a_GalleryName (may be nil)
+-- The list is sent to a_Player
+-- "/gal my @playername [<galleryname>]" command
+local function ListOtherPlayerAreas(a_Player, a_OwnerName, a_GalleryName)
+	-- If GalleryName is given, check that it exists:
+	if (a_GalleryName ~= nil) then
+		local Gallery = FindGalleryByName(a_GalleryName);
+		if (Gallery == nil) then
+			a_Player:SendMessage("There is no gallery of that name.");
+			-- TODO: As a courtesy for the player, list ALL the galleries available throughout the worlds
+			return true;
+		end
+	end
+
+	-- Retrieve all areas in the gallery from the DB:
+	local Areas;
+	if (a_GalleryName == nil) then
+		Areas = g_DB:LoadAllPlayerAreas(a_OwnerName);
+	else
+		Areas = g_DB:LoadPlayerAreasInGallery(a_GalleryName, a_OwnerName);
+	end
+	
+	-- Send count:
+	if (#Areas == 0) then
+		a_Player:SendMessage("They own no areas");
+	elseif (#Areas == 1) then
+		a_Player:SendMessage("They own 1 area:");
+	else
+		a_Player:SendMessage("They own " .. #Areas .. " areas:");
+	end
+
+	-- Send list:
+	for idx, area in ipairs(Areas) do
+		a_Player:SendMessage("  " .. DescribeArea(area));
+	end
+end
+
+
+
+
+
 local function HandleCmdList(a_Split, a_Player)
 	local WorldName = a_Player:GetWorld():GetName();
 
@@ -175,6 +216,16 @@ local function HandleCmdMy(a_Split, a_Player)
 	if (#a_Split == 2) then
 		-- "/gal my" command, list all areas in this world
 		ListPlayerAreasInWorld(a_Player);
+		return true;
+	end
+	
+	if (a_Split[3]:sub(1, 1) == '@') then
+		-- "/gal my @playername [<gallery>]" command, available only to admins
+		if not(a_Player:HasPermission("gallery.admin.my")) then
+			a_Player:SendMessage("You do not have the required permission to use this command");
+			return true;
+		end
+		ListOtherPlayerAreas(a_Player, a_Split[3]:sub(2), a_Split[4]);
 		return true;
 	end
 	

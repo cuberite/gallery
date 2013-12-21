@@ -243,6 +243,11 @@ end
 -- This takes into account the areas owned by the player
 -- TODO: Allow permission-based overrides, global for all galleries and per-gallery
 function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
+	-- If the player has the admin permission, allow them:
+	if (a_Player:HasPermission("gallery.buildanywhere")) then
+		return true;
+	end
+	
 	-- If the player is outside all galleries, bail out:
 	local Gallery = FindGalleryByCoords(a_Player:GetWorld(), a_BlockX, a_BlockZ);
 	if (Gallery == nil) then

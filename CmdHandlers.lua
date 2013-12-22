@@ -139,6 +139,50 @@ end
 
 
 
+--- Renames an area for the specified player from the old name to the new name
+-- Returns true if successful, false and reason string if not
+local function RenamePlayerArea(a_PlayerName, a_AreaWorldName, a_OldAreaName, a_NewAreaName)
+	assert(a_PlayerName ~= nil);
+	assert(a_AreaWorldName ~= nil);
+	assert(a_OldAreaName ~= nil);
+	assert(a_NewAreaName ~= nil);
+	
+	-- Check the new name for invalid chars:
+	local Unacceptable = a_NewAreaName:gsub("[a-zA-Z0-9%-_/*+%.]", "");  -- Erase all valid chars, all that's left is unacceptable
+	if (Unacceptable ~= "") then
+		return false, "The following characters are not acceptable in an area name: " .. Unacceptable;
+	end
+	
+	-- Renaming to same name?
+	if (a_OldAreaName == a_NewAreaName) then
+		return false, "This area is already named '" .. a_NewAreaName .. "'.";
+	end
+	
+	-- Check the DB for duplicate name:
+	if (g_DB:IsAreaNameUsed(a_PlayerName, a_AreaWorldName, a_NewAreaName)) then
+		return false, "This area name is already used, pick another one.";
+	end
+	
+	-- Rename in the DB:
+	g_DB:RenameArea(a_PlayerName, a_OldAreaName, a_NewAreaName);
+	
+	-- Rename in the loaded table, if it exists (player connected):
+	local PlayerAreas = g_PlayerAreas[a_AreaWorldName][a_PlayerName];
+	if (PlayerAreas ~= nil) then
+		local Area = PlayerAreas[a_OldAreaName];
+		assert(Area ~= nil);
+		PlayerAreas[a_OldAreaName] = nil;
+		PlayerAreas[a_NewAreaName] = Area;
+		Area.Name = a_NewAreaName;
+	end
+	
+	return true, "Area '" .. a_OldAreaName .. "' renamed to '" .. a_NewAreaName .. "'.";
+end
+
+
+
+
+
 local function HandleCmdList(a_Split, a_Player)
 	local WorldName = a_Player:GetWorld():GetName();
 
@@ -295,50 +339,106 @@ end
 
 
 
-local function HandleCmdName(a_Split, a_Player)
-	-- Check the params:
-	if (#a_Split ~= 3) then
+local function HandleCmdNameAdmin(a_Split, a_Player)
+	-- Basic params check:
+	if (#a_Split < 3) then
 		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " name <areaName>");
 		a_Player:SendMessage("areaName may contain only a-z, A-Z, 0-9, +, -, /, * and _");
 		return true;
 	end
-	local NewName = a_Split[3];
-	local Unacceptable = NewName:gsub("[a-zA-Z0-9%-_/*+%.]", "");  -- Erase all valid chars, all that's left is unacceptable
-	if (Unacceptable ~= "") then
-		a_Player:SendMessage("The following characters are not acceptable in an area name: " .. Unacceptable);
+	
+	-- Is the first arg a @playername?
+	if (a_Split[3]:sub(1, 1) == '@') then
+		if (#a_Split ~= 5) then
+			a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " name @playername <oldareaname> <newareaname>");
+			return true
+		end
+		local IsSuccess, Msg = RenamePlayerArea(a_Split[3]:sub(2), a_Player:GetWorld():GetName(), a_Split[4], a_Split[5]);
+		if (Msg ~= nil) then
+			a_Player:SendMessage(Msg);
+		end
 		return true;
 	end
 	
-	-- Check what the current area is:
-	local Area = FindPlayerAreaByCoords(a_Player, a_Player:GetPosX(), a_Player:GetPosZ());
-	if (Area == nil) then
-		a_Player:SendMessage("You can only name your areas. Stand in your area and then issue the command again");
+	local Area = nil;
+	local NewName = nil;
+	if (#a_Split == 3) then
+		-- "/gal name <newareaname>", allow renaming any player's area
+		Area = g_DB:LoadAreaByPos(a_Player:GetWorld():GetName(), a_Player:GetPosX(), a_Player:GetPosZ());
+		if (Area == nil) then
+			a_Player:SendMessage("There's no area claimed here");
+			return true;
+		end
+		NewName = a_Split[3];
+	elseif (#a_Split == 4) then
+		-- "/gal name <MyOldAreaName> <MyNewAreaName>", only for my areas
+		Area = GetPlayerAreas(a_Player)[a_Split[3]];
+		if (Area == nil) then
+			a_Player:SendMessage("You don't own an area of name '" .. a_Split[3] .. "'.");
+			return true;
+		end
+		NewName = a_Split[4];
+	else
+		-- Unknown syntax
+		a_Player:SendMessage("Usage (pick one):");
+		a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " name @PlayerName <OldAreaName> <NewAreaName>");
+		a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " name <MyOldAreaName> <MyNewAreaName>");
+		a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " name <ThisAreaNewName>");
 		return true;
 	end
 	
-	-- Renaming to same name?
-	if (Area.Name == NewName) then
-		a_Player:SendMessage("This area is already named '" .. NewName .. "'.");
+	-- Do the actual rename:
+	local IsSuccess, Msg = RenamePlayerArea(Area.PlayerName, Area.Gallery.WorldName, Area.Name, NewName);
+	if (Msg ~= nil) then
+		a_Player:SendMessage(Msg);
+	end
+	return true;
+end
+
+
+
+
+
+local function HandleCmdName(a_Split, a_Player)
+	-- Check the admin-level access (can rename others' areas):
+	if (a_Player:HasPermission("gallery.admin.name")) then
+		return HandleCmdNameAdmin(a_Split, a_Player);
+	end
+	
+	-- Basic params check:
+	if (#a_Split < 3) then
+		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " name <areaName>");
+		a_Player:SendMessage("areaName may contain only a-z, A-Z, 0-9, +, -, /, * and _");
 		return true;
 	end
 	
-	-- Check the DB for duplicate name:
-	local OldName = Area.Name;
-	if (g_DB:IsAreaNameUsed(a_Player:GetName(), a_Player:GetWorld():GetName(), NewName)) then
-		a_Player:SendMessage("This area name is already used, pick another one.");
-		return true;
+	-- Get the area to rename:
+	local Area = nil;
+	if (#a_Split == 3) then
+		-- Rename by position:
+		Area = FindPlayerAreaByCoords(a_Player, a_Player:GetPosX(), a_Player:GetPosZ());
+		if (Area == nil) then
+			a_Player:SendMessage(
+				"You can only name your areas. Stand in your area and then issue the command again, or specify the old name (" ..
+				g_Config.CommandPrefix .. " name <oldname> <newname>)"
+			);
+			return true;
+		end
+	else
+		-- Rename by old name:
+		Area = GetPlayerAreas(a_Player)[a_Split[3]];
+		if (Area == nil) then
+			a_Player:SendMessage("You don't own an area of name '" .. a_Split[3] .. "'.");
+			return true;
+		end
 	end
 	
-	-- Rename in the DB:
-	g_DB:NameArea(Area, NewName);
+	-- Rename:
+	local IsSuccess, Msg = RenamePlayerArea(a_Player:GetName(), Area.Name, a_Split[4]);
+	if (Msg ~= nil) then
+		a_Player:SendMessage(Msg);
+	end
 	
-	-- Rename in the loaded table:
-	local PlayerAreas = GetPlayerAreas(a_Player);
-	PlayerAreas[OldName] = nil;
-	PlayerAreas[NewName] = Area;
-	Area.Name = NewName;
-	
-	a_Player:SendMessage("Area '" .. OldName .. "' renamed to '" .. NewName .. "'.");
 	return true;
 end
 

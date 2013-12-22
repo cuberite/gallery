@@ -204,6 +204,7 @@ function SQLite:LoadPlayerAreasInGallery(a_GalleryName, a_PlayerName)
 			StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
 			Gallery = Gallery,
 			GalleryIndex = v[10],
+			PlayerName = a_PlayerName,
 			Name = Name,
 		};
 		table.insert(res, area);
@@ -239,6 +240,7 @@ function SQLite:LoadAllPlayerAreas(a_PlayerName)
 				StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
 				Gallery = Gallery,
 				GalleryIndex = v[11],
+				PlayerName = a_PlayerName,
 				Name = Name,
 			};
 			table.insert(res, area);
@@ -276,7 +278,47 @@ function SQLite:LoadPlayerAreaByName(a_PlayerName, a_AreaName)
 				StartX = a_Values.StartX, EndX = a_Values.EndX, StartZ = a_Values.StartZ, EndZ = a_Values.EndZ,
 				Gallery = Gallery,
 				GalleryIndex = a_Values.GalleryIndex,
+				PlayerName = a_PlayerName,
 				Name = a_AreaName,
+			};
+		end
+	);
+	
+	return res;
+end
+
+
+
+
+
+--- Loads whatever area intersects the given block coords.
+-- Returns the loaded area, or nil if there's no area
+function SQLite:LoadAreaByPos(a_WorldName, a_BlockX, a_BlockZ)
+	assert(a_WorldName ~= nil);
+	assert(a_BlockX ~= nil);
+	assert(a_BlockZ ~= nil);
+	
+	a_BlockX = math.floor(a_BlockX);
+	a_BlockZ = math.floor(a_BlockZ);
+	
+	local res = nil;
+	self:ExecuteStatement(
+		"SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, PlayerName, Name FROM Areas WHERE WorldName = ? AND MinX <= ? AND MaxX > ? AND MinZ <= ? AND MaxZ > ?",
+		{a_WorldName, a_BlockX, a_BlockX, a_BlockZ, a_BlockZ},
+		function (a_Values)
+			local Gallery = FindGalleryByName(a_Values.GalleryName);
+			if (Gallery == nil) then
+				return;
+			end
+			res =
+			{
+				ID = a_Values.ID,
+				MinX = a_Values.MinX, MaxX = a_Values.MaxX, MinZ = a_Values.MinZ, MaxZ = a_Values.MaxZ,
+				StartX = a_Values.StartX, EndX = a_Values.EndX, StartZ = a_Values.StartZ, EndZ = a_Values.EndZ,
+				Gallery = Gallery,
+				GalleryIndex = a_Values.GalleryIndex,
+				PlayerName = a_Values.PlayerName,
+				Name = a_Values.Name,
 			};
 		end
 	);
@@ -362,12 +404,19 @@ end
 
 --- Modifies an existing area's name, if it doesn't collide with any other existing area names
 -- If the name is already used, returns false; returns true if renamed successfully
-function SQLite:NameArea(a_Area, a_NewName)
-	assert(a_Area ~= nil);
+function SQLite:RenameArea(a_PlayerName, a_AreaName, a_NewName)
+	assert(a_PlayerName ~= nil);
+	assert(a_AreaName ~= nil);
 	assert(a_NewName ~= nil);
 	
+	-- Load the area:
+	local Area = self:LoadPlayerAreaByName(a_PlayerName, a_AreaName);
+	if (Area == nil) then
+		return false, "Area doesn't exist";
+	end
+	
 	-- Check if the name is already used:
-	if (self:IsAreaNameUsed(a_Area.PlayerName, a_Area.Gallery.WorldName, a_NewName)) then
+	if (self:IsAreaNameUsed(a_PlayerName, Area.Gallery.WorldName, a_NewName)) then
 		return false
 	end
 	
@@ -376,8 +425,8 @@ function SQLite:NameArea(a_Area, a_NewName)
 		"UPDATE Areas SET Name = ? WHERE GalleryName = ? AND ID = ?",
 		{
 			a_NewName,
-			a_Area.Gallery.Name,
-			a_Area.ID,
+			Area.Gallery.Name,
+			Area.ID,
 		}
 	);
 	return true;

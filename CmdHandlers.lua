@@ -447,17 +447,32 @@ end
 
 
 local function HandleCmdInfo(a_Split, a_Player)
-	-- TODO: Admin-level info tool, if the player has the necessary permissions
-	
 	local BlockX = math.floor(a_Player:GetPosX());
 	local BlockZ = math.floor(a_Player:GetPosZ());
-	local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
-	if (Area == nil) then
-		a_Player:SendMessage("This isn't your area.");
-		return true;
+
+	local Area = nil;
+	local LeadingLine = nil;
+	if (a_Player:HasPermission("gallery.admin.info")) then
+		-- Admin-level info tool, if the player has the necessary permissions, print info about anyone's area:
+		Area = g_DB:LoadAreaByPos(a_Player:GetWorld():GetName(), BlockX, BlockZ);
+		if (Area == nil) then
+			a_Player:SendMessage("There is no claimed area here.");
+			return true;
+		end;
+		LeadingLine = "This is " .. Area.PlayerName .. "'s area ";
 	else
-		SendAreaDetails(a_Player, Area, "This is your area ");
+		-- Default infotool - print only info on own areas:
+		Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
+		if (Area == nil) then
+			a_Player:SendMessage("This isn't your area.");
+			return true;
+		end
+		LeadingLine = "This is your area ";
 	end
+
+	assert(Area ~= nil);
+	assert(LeadingLine ~= nil);
+	SendAreaDetails(a_Player, Area, LeadingLine);
 	return true;
 end
 

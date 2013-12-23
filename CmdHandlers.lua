@@ -480,8 +480,33 @@ end
 
 
 
+local function HandleCmdHelp(a_Split, a_Player)
+	-- For the parameter-less invocation, list all the subcommands:
+	if (#a_Split == 2) then
+		SendUsage(a_Player, "Listing all subcommands, use " .. g_Config.CommandPrefix .. " help <subcommand> for more info on a specific subcommand");
+		return true;
+	end
+	
+	-- Find the requested subcommand:
+	assert(g_Subcommands ~= nil);
+	local Subcommand = g_Subcommands[a_Split[3]];
+	if ((Subcommand == nil) or not(a_Player:HasPermission(Subcommand.Permission))) then
+		-- Not found or no permission to use that subcommand
+		SendUsage(a_Player);
+	end;
+	
+	-- TODO: Print detailed help on the subcommand
+	return true;
+end
+
+
+
+
+
+
 --- The list of subcommands, their handler functions and metadata:
-local g_Subcommands =
+-- Must not be local, because it is used in HandleCmdHelp(), which is referenced in this table (kinda circular dependency)
+g_Subcommands =
 {
 	list =
 	{
@@ -523,6 +548,13 @@ local g_Subcommands =
 		Permission = "gallery.info",
 		Handler = HandleCmdInfo,
 	},
+	help =
+	{
+		Params = "[<subcommand>]",
+		Help = "prints detailed help for the subcommand",
+		Permission = "gallery.help",
+		Handler = HandleCmdHelp,
+	}
 } ;
 
 

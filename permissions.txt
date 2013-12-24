@@ -7,7 +7,14 @@ gallery.admin.buildanywhere - build in other people's areas and the public sidew
 gallery.admin.my            - view list of areas for other players, using the "/gal my @playername [<galleryname>]" form
 gallery.claim               - claim a new area in any gallery
 gallery.goto                - teleport to an area owned by self
-gallery.list                - view list of available galleries
+gallery.help                - display help for subcommands
 gallery.info                - view information on an area owned by self
+gallery.list                - view list of available galleries
 gallery.my                  - view list of areas owned by self
 gallery.name                - rename an area owned by self
+
+
+Note that each gallery.admin.X permission requires its respective gallery.X to become effective - an admin cannot use "/gal my @playername" if they cannot use "/gal my".
+
+
+

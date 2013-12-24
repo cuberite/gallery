@@ -481,9 +481,13 @@ end
 
 
 local function HandleCmdHelp(a_Split, a_Player)
+	local ColCmd    = cChatColor.Green;
+	local ColParams = cChatColor.Blue;
+	local ColText   = cChatColor.White;
+	
 	-- For the parameter-less invocation, list all the subcommands:
 	if (#a_Split == 2) then
-		SendUsage(a_Player, "Listing all subcommands, use " .. g_Config.CommandPrefix .. " help <subcommand> for more info on a specific subcommand");
+		SendUsage(a_Player, "Listing all subcommands, use " .. ColCmd .. g_Config.CommandPrefix .. " help " .. ColParams .. "<subcommand>" .. ColText .. " for more info on a specific subcommand");
 		return true;
 	end
 	
@@ -495,7 +499,24 @@ local function HandleCmdHelp(a_Split, a_Player)
 		SendUsage(a_Player);
 	end;
 	
-	-- TODO: Print detailed help on the subcommand
+	-- Print detailed help on the subcommand:
+	local CommonPrefix = ColCmd .. g_Config.CommandPrefix .. " " .. a_Split[3];
+	a_Player:SendMessage(CommonPrefix .. ColText .. " - " .. Subcommand.Help);
+	local Variants = {};
+	for idx, variant in ipairs(Subcommand.DetailedHelp or {}) do
+		if ((variant.Permission == nil) or a_Player:HasPermission(variant.Permission)) then
+			table.insert(Variants, "  " .. CommonPrefix .. " " .. ColParams .. (variant.Params or "") .. ColText .. " - " .. variant.Help);
+		end
+	end
+	if (#Variants == 0) then
+		a_Player:SendMessage("There is no specific parameter combination");
+	else
+		a_Player:SendMessage("The following parameter combinations are recognized:");
+		for idx, txt in ipairs(Variants) do
+			a_Player:SendMessage(txt);
+		end
+	end
+	
 	return true;
 end
 
@@ -514,46 +535,119 @@ g_Subcommands =
 		Permission = "gallery.list",
 		Handler = HandleCmdList,
 	},
+	
 	claim =
 	{
-		Params = "<gallery>",
-		Help = "claims a new area in the <gallery>",
+		Help = "claims a new area",
 		Permission = "gallery.claim",
 		Handler = HandleCmdClaim,
+		DetailedHelp =
+		{
+			{
+				Params = "GalleryName",
+				Help = "claims a new area in the specified gallery. The gallery must be in the current world.",
+			},
+		},
 	},
+	
 	my =
 	{
-		Params = "[<gallery>]",
-		Help = "lists all your areas [in the <gallery>]",
+		Help = "lists all your areas",
 		Permission = "gallery.my",
 		Handler = HandleCmdMy,
+		DetailedHelp =
+		{
+			{
+				Params = "",
+				Help = "lists all your owned areas in this world",
+			},
+			{
+				Params = "GalleryName",
+				Help = "lists all your owned areas in the specified gallery",
+			},
+			{
+				Params = "@PlayerName",
+				Help = "lists all areas owned by the player in this world.",
+				Permission = "gallery.admin.my",
+			},
+			{
+				Params = "@PlayerName GalleryName",
+				Help = "lists all areas owned by the player in the specified gallery",
+				Permission = "gallery.admin.my",
+			},
+		},
 	},
+	
 	goto =
 	{
-		Params = "<gallery> <areaID>",
 		Help = "teleports you to specified gallery area",
 		Permission = "gallery.goto",
 		Handler = HandleCmdGoto,
+		DetailedHelp =
+		{
+			{
+				Params = "AreaName",
+				Help = "teleports you to the specified area",
+			},
+			{
+				Params = "@PlayerName AreaName",
+				Help = "teleports you to the specified area owned by the player",
+				Permission = "gallery.admin.goto",
+			},
+		},
 	},
+	
 	name = 
 	{
-		Params = "<newName>",
 		Help = "renames the area you're currently standing at",
 		Permission = "gallery.name",
 		Handler = HandleCmdName,
+		DetailedHelp =
+		{
+			{
+				Params = "NewName",
+				Help = "renames your area you're currently standing in",
+			},
+			{
+				Params = "OldName NewName",
+				Help = "renames your area OldName to NewName",
+			},
+			{
+				Params = "NewName",
+				Help = "renames the area you're currently standing in (regardless of ownership)",
+				Permission = "gallery.admin.name",
+			},
+			{
+				Params = "@PlayerName OldName NewName",
+				Help = "renames Player's area from OldName to NewName",
+				Permission = "gallery.admin.name",
+			},
+		},
 	},
+	
 	info =
 	{
 		Help = "prints information on the area you're currently standing at",
 		Permission = "gallery.info",
 		Handler = HandleCmdInfo,
 	},
+	
 	help =
 	{
-		Params = "[<subcommand>]",
 		Help = "prints detailed help for the subcommand",
 		Permission = "gallery.help",
 		Handler = HandleCmdHelp,
+		DetailedHelp =  -- fun part - make "/gal help help" work as expected
+		{
+			{
+				Params = "",
+				Help = "displays list of subcommands with basic help for each",
+			},
+			{
+				Params = "Subcommand",
+				Help = "displays detailed help for the subcommand, including all the parameter combinations",
+			},
+		},
 	}
 } ;
 
@@ -568,7 +662,7 @@ function SendUsage(a_Player, a_Message)
 	local HasAnyCommands = false;
 	for cmd, info in pairs(g_Subcommands) do
 		if (a_Player:HasPermission(info.Permission)) then
-			a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " " .. cmd .. " " .. (info.Params or "") .. " - " .. info.Help);
+			a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " " .. cmd .. " - " .. info.Help);
 			HasAnyCommands = true;
 		end
 	end

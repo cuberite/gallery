@@ -187,17 +187,20 @@ end
 --- Loads the galleries from the config file CONFIG_FILE
 function LoadConfig()
 	if not(cFile:Exists(CONFIG_FILE)) then
-		-- No file to read from, silently bail out
+		-- No file to read from, bail out with a log message
 		-- But first copy our example file to the folder, to let the admin know the format:
 		local PluginFolder = cPluginManager:Get():GetCurrentPlugin():GetLocalFolder()
-		cFile:Copy(PluginFolder .. "/example.cfg", (CONFIG_FILE:gsub(".cfg", ".example.cfg")));
+		local ExampleFile = CONFIG_FILE:gsub(".cfg", ".example.cfg");
+		cFile:Copy(PluginFolder .. "/example.cfg", ExampleFile);
+		LOGWARNING(PLUGIN_PREFIX .. "The config file '" .. CONFIG_FILE .. "' doesn't exist. An example configuration file '" .. ExampleFile .. "' has been created for you.");
+		LOGWARNING(PLUGIN_PREFIX .. "No galleries were loaded");
 		return;
 	end
 	
 	-- Load and compile the config file:
 	local cfg, err = loadfile(CONFIG_FILE);
 	if (cfg == nil) then
-		LOGWARNING(PLUGIN_PREFIX .. "Cannot open " .. CONFIG_FILE .. ": " .. err);
+		LOGWARNING(PLUGIN_PREFIX .. "Cannot open '" .. CONFIG_FILE .. "': " .. err);
 		LOGWARNING(PLUGIN_PREFIX .. "No galleries were loaded");
 		return;
 	end

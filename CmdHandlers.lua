@@ -547,6 +547,9 @@ local function HandleCmdTemplate(a_Split, a_Player)
 					" command to retry exporting the selection, or " .. cChatColor.Green .. g_Config.CommandPrefix ..
 					" template cancel" .. cChatColor.White .. " to cancel the export and return to normal gameplay."
 				);
+			else
+				CancelTemplating(a_Player);
+				a_Player:SendMessage("You are now back in normal gameplay.");
 			end
 		elseif (
 			(Third == "cancel") or

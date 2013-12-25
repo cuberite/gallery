@@ -154,7 +154,7 @@ function ExportTemplate(a_Player)
 		return false, "Cannot save schematic";
 	end
 	
-	return true;
+	return true, "Template has been exported to '" .. PlayerTemplate.FileName .. "'.";
 end
 
 

@@ -346,8 +346,21 @@ function SQLite:LoadGalleries()
 			end
 		);
 		if (gallery.NextAreaIdx == nil) then
-			LOGWARNING("Gallery \"" .. gallery.Name .. "\" doesn't have its NextAreaIdx set in the database, will be reset to zero");
-			gallery.NextAreaIdx = 0;
+			self:ExecuteStatement(
+				"SELECT MAX(GalleryIndex) as mx FROM Areas WHERE GalleryName = ?",
+				{ gallery.Name },
+				function (a_Values)
+					gallery.NextAreaIdx = a_Values.mx;
+				end
+			);
+			if (gallery.NextAreaIdx == nil) then
+				-- This is normal for when the gallery was created for the very first time. Create the record in the DB.
+				gallery.NextAreaIdx = 0;
+			else
+				-- This is not normal, warn the admin about possible DB corruption:
+				LOGWARNING("Gallery \"" .. gallery.Name .. "\" doesn't have its NextAreaIdx set in the database, will be reset to " .. gallery.NextAreaIdx);
+			end
+			self:ExecuteStatement("INSERT INTO GalleryEnd (GalleryName, NextAreaIdx) VALUES (?, ?)", {gallery.Name, gallery.NextAreaIdx});
 		end
 	end
 end

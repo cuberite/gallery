@@ -525,6 +525,55 @@ end
 
 
 
+local function HandleCmdTemplate(a_Split, a_Player)
+	local Third = a_Split[3];
+	local Usage =
+		"Left-click and right-click on blocks to set the corners of the area to export, then use " ..
+		cChatColor.Green .. g_Config.CommandPrefix .. " template export" .. cChatColor.White ..
+		" command to export the selection. You can also use " .. cChatColor.Green .. g_Config.CommandPrefix ..
+		" template cancel" .. cChatColor.White .. " to cancel the export and return to normal gameplay. Further hints will be provided as you go.";
+
+	if (IsPlayerTemplating(a_Player)) then
+		if (
+			(Third == "export") or
+			(Third == "done") or
+			(Third == "yes")
+		) then
+			local IsSuccess, Msg = ExportTemplate(a_Player);
+			a_Player:SendMessage(Msg);
+			if not(IsSuccess) then
+				a_Player:SendMessage(
+					"Use " .. cChatColor.Green .. g_Config.CommandPrefix .. " template export" .. cChatColor.White ..
+					" command to retry exporting the selection, or " .. cChatColor.Green .. g_Config.CommandPrefix ..
+					" template cancel" .. cChatColor.White .. " to cancel the export and return to normal gameplay."
+				);
+			end
+		elseif (
+			(Third == "cancel") or
+			(Third == "abort") or
+			(Third == "no")
+		) then
+			CancelTemplating(a_Player);
+			a_Player:SendMessage("The previous template command has been aborted. You are now playing normally.");
+		else
+			a_Player:SendMessage("Unrecognized parameter!");
+			a_Player:SendMessage("You are currently in the templating mode. " .. Usage);
+		end
+	else
+		if (Third == nil) then
+			a_Player:SendMessage("This subcommand requires a parameter - the base file name to save to.");
+			return true;
+		end
+		BeginTemplating(a_Player, Third .. ".schematic");
+		a_Player:SendMessage("You have switched to templating mode. " .. Usage);
+	end
+	return true;
+end
+
+
+
+
+
 --- The list of subcommands, their handler functions and metadata:
 -- Must not be local, because it is used in HandleCmdHelp(), which is referenced in this table (kinda circular dependency)
 g_Subcommands =
@@ -648,7 +697,21 @@ g_Subcommands =
 				Help = "displays detailed help for the subcommand, including all the parameter combinations",
 			},
 		},
-	}
+	},
+	
+	template =
+	{
+		Help = "creates new .schematic template based on your selection",
+		Permission = "gallery.admin.template",
+		Handler = HandleCmdTemplate,
+		DetailedHelp =
+		{
+			{
+				Params = "FileName",
+				Help = "Let's you select an arbitrary square area, then saves its contents into a file, FileName.schematic",
+			},
+		},
+	},
 } ;
 
 
@@ -660,14 +723,19 @@ function SendUsage(a_Player, a_Message)
 		a_Player:SendMessage(a_Message);
 	end
 	local HasAnyCommands = false;
+	local Commands = {};
 	for cmd, info in pairs(g_Subcommands) do
 		if (a_Player:HasPermission(info.Permission)) then
-			a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " " .. cmd .. " - " .. info.Help);
-			HasAnyCommands = true;
+			table.insert(Commands, "  " .. cChatColor.Green .. g_Config.CommandPrefix .. " " .. cmd .. cChatColor.White .. " - " .. info.Help);
 		end
 	end
-	if not(HasAnyCommands) then
+	if (#Commands == 0) then
 		a_Player:SendMessage("You are not allowed to use any subcommands.");
+	else
+		table.sort(Commands);
+		for idx, cmd in ipairs(Commands) do
+			a_Player:SendMessage(cmd);
+		end
 	end
 end
 

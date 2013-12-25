@@ -25,6 +25,9 @@
     <filename>Storage_SQLite.lua</filename>
   </file>
   <file>
+    <filename>Templates.lua</filename>
+  </file>
+  <file>
     <filename>example.cfg</filename>
   </file>
 </project>

@@ -29,6 +29,10 @@ end
 
 
 function OnPlayerLeftClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockFace, a_Status)
+	if ((a_BlockFace >= 0) and (HandleTemplatingLeftClick(a_Player, a_BlockX, a_BlockZ))) then
+		return true;
+	end
+	
 	local CanInteract, Reason = CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ);
 	if (CanInteract) then
 		return false;
@@ -44,6 +48,10 @@ function OnPlayerRightClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockFace,
 	if (a_BlockFace < 0) then
 		-- This really means "use item" and no valid coords are given
 		return false;
+	end
+	
+	if (HandleTemplatingRightClick(a_Player, a_BlockX, a_BlockZ)) then
+		return true;
 	end
 	
 	local BlockX, BlockY, BlockZ = AddFaceDirection(a_BlockX, a_BlockY, a_BlockZ, a_BlockFace);

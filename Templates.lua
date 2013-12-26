@@ -133,19 +133,17 @@ function ExportTemplate(a_Player)
 	if (MinZ > MaxZ) then
 		MinZ, MaxZ = MaxZ, MinZ;  -- swap them
 	end
-	MaxX = MaxX + 1;
-	MaxZ = MaxZ + 1;
 
 	-- Read the template from the world:
 	local BlockArea = cBlockArea();
-	if not(BlockArea:Read(a_Player:GetWorld(), MinX, MaxX, 0, 255, MinZ, MaxZ, cBlockArea.baTypes or cBlockArea.baMetas)) then
+	if not(BlockArea:Read(a_Player:GetWorld(), MinX, MaxX, 0, 255, MinZ, MaxZ, cBlockArea.baTypes + cBlockArea.baMetas)) then
 		return false, "Cannot read the template data.";
 	end
 	
 	-- Crop the area up to the max height:
 	local AreaHeight = GetAreaHeight(BlockArea);
 	local CroppedArea = cBlockArea();
-	CroppedArea:Create(MaxX - MinX, AreaHeight + 1, MaxZ - MinZ);
+	CroppedArea:Create(MaxX - MinX + 1, AreaHeight + 1, MaxZ - MinZ + 1, cBlockArea.baTypes + cBlockArea.baMetas);
 	CroppedArea:Merge(BlockArea, 0, 0, 0, cBlockArea.msOverwrite);
 	
 	-- Save to file:

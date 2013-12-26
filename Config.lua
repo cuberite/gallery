@@ -85,6 +85,20 @@ function CheckGallery(a_Gallery, a_Index)
 		end
 	end
 	
+	-- Check the FillStrategy param:
+	local AllowedStrategies = {"x+z+", "x-z+", "x+z-", "x-z-", "z+x+", "z+x-", "z-x+", "z-x-"};
+	local ReqStrategy = a_Gallery.FillStrategy;
+	local IsStrategyValid = false;
+	for idx, strategy in ipairs(AllowedStrategies) do
+		if (ReqStrategy == strategy) then
+			IsStrategyValid = true;
+		end
+	end
+	if not(IsStrategyValid) then
+		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\"'s FillStrategy is not recognized. The gallery is disabled.");
+		return false;
+	end
+	
 	-- Assign the world:
 	a_Gallery.World = cRoot:Get():GetWorld(a_Gallery.WorldName);
 	if (a_Gallery.World == nil) then

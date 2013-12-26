@@ -52,7 +52,7 @@ function AreaIndexToCoords(a_Index, a_Gallery)
 		local AreaZ = a_Gallery.NumAreasPerZ - math.floor(a_Index / a_Gallery.NumAreasPerX) - 1;
 		return AreaX, AreaZ;
 	end
-	-- TODO: This shouldn't happen, the FillStrategy should be checked in CheckGallery()
+	-- This shouldn't happen, the FillStrategy is be checked in CheckGallery()
 	LOGWARNING("Unknown FillStrategy: \"" .. a_Gallery.FillStrategy .. "\"");
 end
 
@@ -252,6 +252,11 @@ function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	local Gallery = FindGalleryByCoords(a_Player:GetWorld(), a_BlockX, a_BlockZ);
 	if (Gallery == nil) then
 		-- Allowed to do anything outside the galleries
+		return true;
+	end
+	
+	-- If the player has the admin permission for this gallery, allow them:
+	if (a_Player:HasPermission("gallery.admin.buildanywhere." .. Gallery.Name)) then
 		return true;
 	end
 	

@@ -15,7 +15,20 @@ function RegisterPluginInfoCommands()
 		
 		for cmd, info in pairs(a_Subcommands) do
 			local CmdName = a_Prefix .. cmd;
-			cPluginManager.BindCommand(cmd, info.Permission or "", info.Handler, info.HelpString or "");
+			if (info.Handler == nil) then
+				LOGWARNING(g_PluginInfo.Name .. ": Invalid handler for command " .. CmdName .. ", command will not be registered.");
+			else
+				cPluginManager.BindCommand(cmd, info.Permission or "", info.Handler, info.HelpString or "");
+				-- Register all aliases for the command:
+				if (info.Alias ~= nil) then
+					if (type(info.Alias) == "string") then
+						info.Alias = {info.Alias};
+					end
+					for idx, alias in ipairs(info.Alias) do
+						cPluginManager.BindCommand(a_Prefix .. alias, info.Permission or "", info.Handler, info.HelpString or "");
+					end
+				end
+			end
 			-- Recursively register any subcommands:
 			if (info.Subcommands ~= nil) then
 				RegisterSubcommands(a_Prefix .. cmd .. " ", info.Subcommands);
@@ -24,7 +37,7 @@ function RegisterPluginInfoCommands()
 	end
 	
 	-- Loop through all commands in the plugin info, register each:
-	RegisterSubcommands("/", g_PluginInfo.Commands);
+	RegisterSubcommands("", g_PluginInfo.Commands);
 end
 
 
@@ -49,7 +62,7 @@ function RegisterPluginInfoConsoleCommands()
 	end
 	
 	-- Loop through all commands in the plugin info, register each:
-	RegisterSubcommands("/", g_PluginInfo.ConsoleCommands);
+	RegisterSubcommands("", g_PluginInfo.ConsoleCommands);
 end
 
 

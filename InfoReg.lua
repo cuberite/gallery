@@ -30,3 +30,28 @@ end
 
 
 
+
+--- Registers all console commands specified in the g_PluginInfo.ConsoleCommands
+function RegisterPluginInfoConsoleCommands()
+	-- A sub-function that registers all subcommands of a single command, using the command's Subcommands table
+	-- The a_Prefix param already contains the space after the previous command
+	local function RegisterSubcommands(a_Prefix, a_Subcommands)
+		assert(a_Subcommands ~= nil);
+		
+		for cmd, info in pairs(a_Subcommands) do
+			local CmdName = a_Prefix .. cmd;
+			cPluginManager.BindConsoleCommand(cmd, info.Handler, info.HelpString or "");
+			-- Recursively register any subcommands:
+			if (info.Subcommands ~= nil) then
+				RegisterSubcommands(a_Prefix .. cmd .. " ", info.Subcommands);
+			end
+		end
+	end
+	
+	-- Loop through all commands in the plugin info, register each:
+	RegisterSubcommands("/", g_PluginInfo.ConsoleCommands);
+end
+
+
+
+

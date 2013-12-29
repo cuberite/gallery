@@ -196,11 +196,9 @@ function VerifyConfig()
 	-- Apply the CommandPrefix - change the actual g_PluginInfo table:
 	g_Config.CommandPrefix = g_Config.CommandPrefix or "/gal";
 	if (g_Config.CommandPrefix ~= "/gal") then
-		LOG("Renaming /gal to " .. g_Config.CommandPrefix);
 		g_PluginInfo.Commands[g_Config.CommandPrefix] = g_PluginInfo.Commands["/gal"];
 		g_PluginInfo.Commands["/gal"] = nil;
 	end
-	LOG("Gallery command prefix is " .. g_Config.CommandPrefix);
 end
 
 

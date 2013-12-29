@@ -7,19 +7,6 @@
 
 
 
---- Registers all the command handlers
-function InitCmdHandlers()
-	-- Register the generic "gallery" command that will actually handle all the /gallery commands:
-	cPluginManager.BindCommand(g_Config.CommandPrefix, "", HandleGalleryCmd, "");  -- Must not use any permission!
-
-	-- Register the subcommands, so that they are listed in the help:
-	RegisterSubcommands();
-end
-
-
-
-
-
 --- Returns a human-readable description of an area, used for area listings
 function DescribeArea(a_Area)
 	return a_Area.Name .. "   (" .. a_Area.Gallery.Name .. " " .. a_Area.GalleryIndex .. ")";
@@ -183,7 +170,7 @@ end
 
 
 
-local function HandleCmdList(a_Split, a_Player)
+function HandleCmdList(a_Split, a_Player)
 	local WorldName = a_Player:GetWorld():GetName();
 
 	-- First count the galleries in this world:
@@ -214,7 +201,7 @@ end
 
 
 
-local function HandleCmdClaim(a_Split, a_Player)
+function HandleCmdClaim(a_Split, a_Player)
 	if (#a_Split < 3) then
 		a_Player:SendMessage("You need to specify the gallery where to claim.");
 		a_Player:SendMessage("Usage: " .. g_Config.CmdPrefix .. " claim <Gallery>");
@@ -256,7 +243,7 @@ end
 
 
 
-local function HandleCmdMy(a_Split, a_Player)
+function HandleCmdMy(a_Split, a_Player)
 	if (#a_Split == 2) then
 		-- "/gal my" command, list all areas in this world
 		ListPlayerAreasInWorld(a_Player);
@@ -311,7 +298,7 @@ end
 
 
 
-local function HandleCmdGoto(a_Split, a_Player)
+function HandleCmdGoto(a_Split, a_Player)
 	-- Basic parameter check:
 	if (#a_Split < 3) then
 		a_Player:SendMessage("Not enough parameters");
@@ -399,7 +386,7 @@ end
 
 
 
-local function HandleCmdName(a_Split, a_Player)
+function HandleCmdName(a_Split, a_Player)
 	-- Check the admin-level access (can rename others' areas):
 	if (a_Player:HasPermission("gallery.admin.name")) then
 		return HandleCmdNameAdmin(a_Split, a_Player);
@@ -446,7 +433,7 @@ end
 
 
 
-local function HandleCmdInfo(a_Split, a_Player)
+function HandleCmdInfo(a_Split, a_Player)
 	local BlockX = math.floor(a_Player:GetPosX());
 	local BlockZ = math.floor(a_Player:GetPosZ());
 
@@ -480,7 +467,7 @@ end
 
 
 
-local function HandleCmdHelp(a_Split, a_Player)
+function HandleCmdHelp(a_Split, a_Player)
 	local ColCmd    = cChatColor.Green;
 	local ColParams = cChatColor.Blue;
 	local ColText   = cChatColor.White;
@@ -525,7 +512,7 @@ end
 
 
 
-local function HandleCmdTemplate(a_Split, a_Player)
+function HandleCmdTemplate(a_Split, a_Player)
 	local Third = a_Split[3];
 	local Usage =
 		"Left-click and right-click on blocks to set the corners of the area to export, then use " ..
@@ -577,157 +564,18 @@ end
 
 
 
---- The list of subcommands, their handler functions and metadata:
--- Must not be local, because it is used in HandleCmdHelp(), which is referenced in this table (kinda circular dependency)
-g_Subcommands =
-{
-	list =
-	{
-		Help = "lists all available galleries",
-		Permission = "gallery.list",
-		Handler = HandleCmdList,
-	},
-	
-	claim =
-	{
-		Help = "claims a new area",
-		Permission = "gallery.claim",
-		Handler = HandleCmdClaim,
-		DetailedHelp =
-		{
-			{
-				Params = "GalleryName",
-				Help = "claims a new area in the specified gallery. The gallery must be in the current world.",
-			},
-		},
-	},
-	
-	my =
-	{
-		Help = "lists all your areas",
-		Permission = "gallery.my",
-		Handler = HandleCmdMy,
-		DetailedHelp =
-		{
-			{
-				Params = "",
-				Help = "lists all your owned areas in this world",
-			},
-			{
-				Params = "GalleryName",
-				Help = "lists all your owned areas in the specified gallery",
-			},
-			{
-				Params = "@PlayerName",
-				Help = "lists all areas owned by the player in this world.",
-				Permission = "gallery.admin.my",
-			},
-			{
-				Params = "@PlayerName GalleryName",
-				Help = "lists all areas owned by the player in the specified gallery",
-				Permission = "gallery.admin.my",
-			},
-		},
-	},
-	
-	goto =
-	{
-		Help = "teleports you to specified gallery area",
-		Permission = "gallery.goto",
-		Handler = HandleCmdGoto,
-		DetailedHelp =
-		{
-			{
-				Params = "AreaName",
-				Help = "teleports you to the specified area",
-			},
-			{
-				Params = "@PlayerName AreaName",
-				Help = "teleports you to the specified area owned by the player",
-				Permission = "gallery.admin.goto",
-			},
-		},
-	},
-	
-	name = 
-	{
-		Help = "renames the area you're currently standing at",
-		Permission = "gallery.name",
-		Handler = HandleCmdName,
-		DetailedHelp =
-		{
-			{
-				Params = "NewName",
-				Help = "renames your area you're currently standing in",
-			},
-			{
-				Params = "OldName NewName",
-				Help = "renames your area OldName to NewName",
-			},
-			{
-				Params = "NewName",
-				Help = "renames the area you're currently standing in (regardless of ownership)",
-				Permission = "gallery.admin.name",
-			},
-			{
-				Params = "@PlayerName OldName NewName",
-				Help = "renames Player's area from OldName to NewName",
-				Permission = "gallery.admin.name",
-			},
-		},
-	},
-	
-	info =
-	{
-		Help = "prints information on the area you're currently standing at",
-		Permission = "gallery.info",
-		Handler = HandleCmdInfo,
-	},
-	
-	help =
-	{
-		Help = "prints detailed help for the subcommand",
-		Permission = "gallery.help",
-		Handler = HandleCmdHelp,
-		DetailedHelp =  -- fun part - make "/gal help help" work as expected
-		{
-			{
-				Params = "",
-				Help = "displays list of subcommands with basic help for each",
-			},
-			{
-				Params = "Subcommand",
-				Help = "displays detailed help for the subcommand, including all the parameter combinations",
-			},
-		},
-	},
-	
-	template =
-	{
-		Help = "creates new .schematic template based on your selection",
-		Permission = "gallery.admin.template",
-		Handler = HandleCmdTemplate,
-		DetailedHelp =
-		{
-			{
-				Params = "FileName",
-				Help = "Let's you select an arbitrary square area, then saves its contents into a file, FileName.schematic",
-			},
-		},
-	},
-} ;
-
-
-
-
-
 function SendUsage(a_Player, a_Message)
 	if (a_Message ~= nil) then
 		a_Player:SendMessage(a_Message);
 	end
 	local HasAnyCommands = false;
 	local Commands = {};
-	for cmd, info in pairs(g_Subcommands) do
+	local Command = g_PluginInfo.Commands[g_Config.CommandPrefix];
+	if (Command == nil) then
+		a_Player:SendMessage("Unhandled command");
+		return;
+	end
+	for cmd, info in pairs(Command.Subcommands) do
 		if (a_Player:HasPermission(info.Permission)) then
 			table.insert(Commands, "  " .. cChatColor.Green .. g_Config.CommandPrefix .. " " .. cmd .. cChatColor.White .. " - " .. info.Help);
 		end
@@ -754,7 +602,13 @@ function HandleGalleryCmd(a_Split, a_Player)
 	end
 	
 	-- Find the subcommand:
-	local Subcommand = g_Subcommands[a_Split[2]];
+	local Command = g_PluginInfo.Commands[a_Split[1]];
+	if (Command == nil) then
+		-- How did we end up here? Our command should be registered, so it should be in the list
+		LOG("Weird command received: '" .. a_Split[1] .. "'");
+		return false;
+	end
+	local Subcommand = Command.Subcommands[a_Split[2]];
 	if (Subcommand == nil) then
 		SendUsage(a_Player, "Unknown verb: " .. a_Split[2]);
 		return true;
@@ -769,23 +623,6 @@ function HandleGalleryCmd(a_Split, a_Player)
 	-- Execute the handler:
 	return Subcommand.Handler(a_Split, a_Player);
 end
-
-
-
-
-
-function RegisterSubcommands()
-	local CP = g_Config.CommandPrefix;
-	for cmd, info in pairs(g_Subcommands) do
-		local FullCmd = CP .. " " .. cmd;
-		if ((info.Params ~= nil) and (info.Params ~= "")) then
-			FullCmd = FullCmd .. " " .. info.Params;
-		end
-		local HelpString = " - " .. info.Help;
-		cPluginManager.BindCommand(FullCmd, info.Permission, HandleGalleryCmd, HelpString);
-	end
-end
-
 
 
 

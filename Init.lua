@@ -27,7 +27,7 @@ function Initialize(a_Plugin)
 	LoadAllPlayersAreas();
 
 	-- Initialize in-game commands:
-	InitCmdHandlers();
+	RegisterPluginInfoCommands();
 	
 	-- Hook to the player interaction events so that we can disable them:
 	InitHookHandlers();

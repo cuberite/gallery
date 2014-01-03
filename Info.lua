@@ -27,14 +27,14 @@ g_PluginInfo =
 			{
 				list =
 				{
-					Help = "lists all available galleries",
+					HelpString = "lists all available galleries",
 					Permission = "gallery.list",
 					Handler = HandleCmdList,
 				},
 				
 				claim =
 				{
-					Help = "claims a new area",
+					HelpString = "claims a new area",
 					Permission = "gallery.claim",
 					Handler = HandleCmdClaim,
 					DetailedHelp =
@@ -48,7 +48,7 @@ g_PluginInfo =
 				
 				my =
 				{
-					Help = "lists all your areas",
+					HelpString = "lists all your areas",
 					Permission = "gallery.my",
 					Handler = HandleCmdMy,
 					DetailedHelp =
@@ -76,7 +76,7 @@ g_PluginInfo =
 				
 				goto =
 				{
-					Help = "teleports you to specified gallery area",
+					HelpString = "teleports you to specified gallery area",
 					Permission = "gallery.goto",
 					Handler = HandleCmdGoto,
 					DetailedHelp =
@@ -95,7 +95,7 @@ g_PluginInfo =
 				
 				name = 
 				{
-					Help = "renames the area you're currently standing at",
+					HelpString = "renames the area you're currently standing at",
 					Permission = "gallery.name",
 					Handler = HandleCmdName,
 					DetailedHelp =
@@ -123,14 +123,14 @@ g_PluginInfo =
 				
 				info =
 				{
-					Help = "prints information on the area you're currently standing at",
+					HelpString = "prints information on the area you're currently standing at",
 					Permission = "gallery.info",
 					Handler = HandleCmdInfo,
 				},
 				
 				help =
 				{
-					Help = "prints detailed help for the subcommand",
+					HelpString = "prints detailed help for the subcommand",
 					Permission = "gallery.help",
 					Handler = HandleCmdHelp,
 					DetailedHelp =  -- fun part - make "/gal help help" work as expected
@@ -148,7 +148,7 @@ g_PluginInfo =
 				
 				template =
 				{
-					Help = "creates new .schematic template based on your selection",
+					HelpString = "creates new .schematic template based on your selection",
 					Permission = "gallery.admin.template",
 					Handler = HandleCmdTemplate,
 					DetailedHelp =

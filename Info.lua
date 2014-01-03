@@ -22,7 +22,7 @@ g_PluginInfo =
 			-- Due to having subcommands, this command does not use either Permission nor HelpString
 			Permission = "",
 			HelpString = "",
-			Handler = HandleGalleryCmd,
+			Handler = nil,
 			Subcommands =
 			{
 				list =

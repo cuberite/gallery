@@ -204,7 +204,7 @@ end
 function HandleCmdClaim(a_Split, a_Player)
 	if (#a_Split < 3) then
 		a_Player:SendMessage("You need to specify the gallery where to claim.");
-		a_Player:SendMessage("Usage: " .. g_Config.CmdPrefix .. " claim <Gallery>");
+		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " claim <Gallery>");
 		return true;
 	end
 	
@@ -590,39 +590,6 @@ function SendUsage(a_Player, a_Message)
 	end
 end
 
-
-
-
-
-function HandleGalleryCmd(a_Split, a_Player)
-	-- Verify that a subcommand has been given:
-	if (#a_Split <= 1) then
-		SendUsage(a_Player, "The " .. g_Config.CommandPrefix .. " command requires an additional verb:");
-		return true;
-	end
-	
-	-- Find the subcommand:
-	local Command = g_PluginInfo.Commands[a_Split[1]];
-	if (Command == nil) then
-		-- How did we end up here? Our command should be registered, so it should be in the list
-		LOG("Weird command received: '" .. a_Split[1] .. "'");
-		return false;
-	end
-	local Subcommand = Command.Subcommands[a_Split[2]];
-	if (Subcommand == nil) then
-		SendUsage(a_Player, "Unknown verb: " .. a_Split[2]);
-		return true;
-	end
-	
-	-- Check the permission:
-	if not(a_Player:HasPermission(Subcommand.Permission)) then
-		a_Player:SendMessage("You don't have permission to use this command");
-		return true;
-	end
-	
-	-- Execute the handler:
-	return Subcommand.Handler(a_Split, a_Player);
-end
 
 
 

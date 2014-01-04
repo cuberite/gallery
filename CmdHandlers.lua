@@ -479,16 +479,19 @@ function HandleCmdHelp(a_Split, a_Player)
 	end
 	
 	-- Find the requested subcommand:
-	assert(g_Subcommands ~= nil);
-	local Subcommand = g_Subcommands[a_Split[3]];
+	local Subcommands = g_PluginInfo.Commands[a_Split[1]].Subcommands;
+	assert(Subcommands ~= nil);
+	local Subcommand = Subcommands[a_Split[3]];
 	if ((Subcommand == nil) or not(a_Player:HasPermission(Subcommand.Permission))) then
 		-- Not found or no permission to use that subcommand
+		a_Player:SendMessage("Subcommand " .. a_Split[3] .. " not found.");
 		SendUsage(a_Player);
+		return
 	end;
 	
 	-- Print detailed help on the subcommand:
 	local CommonPrefix = ColCmd .. g_Config.CommandPrefix .. " " .. a_Split[3];
-	a_Player:SendMessage(CommonPrefix .. ColText .. " - " .. Subcommand.Help);
+	a_Player:SendMessage(CommonPrefix .. ColText .. " - " .. Subcommand.HelpString);
 	local Variants = {};
 	for idx, variant in ipairs(Subcommand.DetailedHelp or {}) do
 		if ((variant.Permission == nil) or a_Player:HasPermission(variant.Permission)) then
@@ -577,7 +580,7 @@ function SendUsage(a_Player, a_Message)
 	end
 	for cmd, info in pairs(Command.Subcommands) do
 		if (a_Player:HasPermission(info.Permission)) then
-			table.insert(Commands, "  " .. cChatColor.Green .. g_Config.CommandPrefix .. " " .. cmd .. cChatColor.White .. " - " .. info.Help);
+			table.insert(Commands, "  " .. cChatColor.Green .. g_Config.CommandPrefix .. " " .. cmd .. cChatColor.White .. " - " .. info.HelpString);
 		end
 	end
 	if (#Commands == 0) then

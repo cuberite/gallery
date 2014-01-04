@@ -126,7 +126,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 	
 	Commands =
 	{
-		["/gal"] =
+		["/gallery"] =
 		{
 			-- Due to having subcommands, this command does not use either Permission nor HelpString
 			Permission = "",

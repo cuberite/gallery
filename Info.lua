@@ -12,9 +12,80 @@ g_PluginInfo =
 	Name = "Gallery",
 	Date = "2013-12-29",
 	Description = [[
-		This plugin allows users to automatically claim areas from a predefined "pool" of areas (galleries). Each such area
-		is then protected so that only the area owner can interact with the area.
+This plugin allows users to automatically claim areas from a predefined "pool" of areas (galleries). Each such area
+is then protected so that only the area owner can interact with the area.
 	]],
+	
+	AdditionalInfo =
+	{
+		{
+			Title = "Setting up galleries",
+			Contents = [[
+Before the plugin can be fully used, the server admin needs to set up the galleries - define the galleries
+where players are allowed to claim areas. Some other configuration options are available, too.
+The configuration is read from the Galleries.cfg file located in the same folder as the MCServer executable.
+If the file doesn't exist, the plugin outputs a message in the server console and stays inactive. The plugin
+also creates an example configuration file named Galleries.example.cfg located next to the MCServer
+executable. This file contains an example configuration with documentation on all of the used variables. You
+might want to consult that file while continuing to read this description.
+
+The config file contains settings that are formatted as Lua code. No worries, the code is very easy to
+understand and modify. There are two sections, Galleries and Config. The Config section allows the admin to
+change the configuration for the entire plugin, such as the command prefix that the plugin uses, or the
+database engine to use. The Galleries section contains the definitions for all the galleries.
+
+Each gallery needs to be enclosed in an extra pair of braces. It needs to contain the following values in
+order to become functional: Name, WorldName, MinX, MinZ, MaxX, MaxZ, FillStrategy and either AreaTemplate or
+AreaSizeX and AreaSizeZ. There is an optional AreaEdge parameter, too. Note that the plugin will tell you if
+it detects any problems in the gallery definition.
+
+The Name parameter identifies the gallery. It needs to be unique for each gallery. Note that it cannot
+contain "funny symbols", stay safe and use only letters, numbers and underscores. Also note that this is the
+name that the users will type in their "claim" command. Good names are short and descriptive.
+
+The WorldName parameter specifies the world in which the gallery resides. The MinX, MinZ, MaxX anx MaxZ
+parameters specify the position and dimensions of the gallery in that world. Note that it is a good idea to
+make the dimensions perfectly divisible by the size of the area, otherwise the gallery will contain empty
+space where no-one except the server admins will be allowed to build.
+
+The FillStrategy parameter specifies the order in which the areas are claimed within the gallery. The value
+is a string containing the letters x, z and symbols + and -. The x and z specify the axis and + or - specify
+the direction on that axis, so "x+" means "along the x axis towards the positive numbers", while "z-" means
+"along the z axis towards the negative numbers". Two such directions, one for each axis, are joined together
+to make up the FillStrategy. The first direction is used first, once the areas reach the end of that
+direction, it is reset back and the second direction is applied. For example, setting the FillStrategy to
+"z-x+" means that the first area will start at [MinX, MaxZ], the next area claimed will be at [MinX, MaxZ -
+AreaSizeZ], the third area at [MinX, MaxZ - 2 * AreaSizeZ] etc.; once the Z coord reaches MinZ, the next
+area will be at [MinX + AreaSizeX, MaxZ].
+
+Areas can be either left as the world generator generates them, or the plugin can fill them with a
+predefined "image" loaded from a .schematic file. To leave the world as it was generated, fill in the
+AreaSizeX and AreaSizeZ values. These indicate how large each area will be. On the other hand, if the
+AreaTemplate parameter is specified, the image is loaded from the given file and its size is used for
+AreaSizeX and AreaSizeZ (so there's no need to specify those when using AreaTemplate), and the image is
+pasted onto the area when it is claimed.
+
+The AreaEdge parameter allows you to specify that each area should have an "edge" where even its owner
+cannot build. This is useful for templates that include paths along the template's border. The value
+represents the number of blocks from each of the area's boundaries that are unbuildable.
+
+The Config section can contain the value CommandPrefix. Other values, such as for specifying the DB storage
+engine, are planned but not yet implemented.
+
+The CommandPrefix specifies the common part of the in-game commands that the users and admins use with this
+plugin. If not specified, the plugin uses "/gallery" as its value; this would make it register the commands
+"/gallery claim", "/gallery info", "/gallery my" etc. Changing the value to "/gal", for example, would make
+the plugin register "/gal claim", "/gal info", "/gal my" and so on.
+]]
+		},
+		{
+			Title = "Setting up permissions",
+			Contents = [[
+TBD
+]]
+		},
+	},  -- AdditionalInfo
+	
 	Commands =
 	{
 		["/gal"] =

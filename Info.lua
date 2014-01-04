@@ -11,16 +11,18 @@ g_PluginInfo =
 {
 	Name = "Gallery",
 	Date = "2013-12-29",
-	Description = [[
+	Description =
+[[
 This plugin allows users to automatically claim areas from a predefined "pool" of areas (galleries). Each such area
 is then protected so that only the area owner can interact with the area.
-	]],
+]],
 	
 	AdditionalInfo =
 	{
 		{
-			Title = "Setting up galleries",
-			Contents = [[
+			Title = "Setting up: galleries",
+			Contents =
+[[
 Before the plugin can be fully used, the server admin needs to set up the galleries - define the galleries
 where players are allowed to claim areas. Some other configuration options are available, too.
 The configuration is read from the Galleries.cfg file located in the same folder as the MCServer executable.
@@ -79,9 +81,45 @@ the plugin register "/gal claim", "/gal info", "/gal my" and so on.
 ]]
 		},
 		{
-			Title = "Setting up permissions",
-			Contents = [[
-TBD
+			Title = "Setting up: permissions",
+			Contents =
+[[
+Caution! Pay attention when setting up permissions, since giving someone the wrong permissions could allow
+them to wreck entire galleries for everyone.
+
+The permissions system specifies which users are allowed to interact with what level of the gallery plugin.
+There are basically four levels, each comprising a group of commands that can be used. The first level is
+"normal users". Users with this level of access can claim areas and build stuff in their owned areas. This
+is the level where you want most of your users. Second level is "restricted users", these don't have any
+permissions and thus cannot interact with the Gallery plugin at all, thus they cannot claim areas. Consider
+this level a "punishment" level. The third level is "VIPs", player with these permissions can view
+information about other players' areas, can list and teleport to other players' areas by their name. The
+highest level, "admins", can rename anyone's areas, build and destroy anywhere, transfer or remove area
+ownership and reset anyone's area.
+
+The following list contains all currently implemented permissions, with their recommended level and the
+effect they have:
+
+{%list}
+{%li}{%b}gallery.admin.*{%/b} - Admin-level permissions, see each individual permission below for details. Recommended level: admins{%/li}
+{%li}{%b}gallery.admin.buildanywhere{%/b} - Build in other people's areas and the public sidewalks. Recommended level: admins, mods{%/li}
+{%li}{%b}gallery.admin.buildanywhere.<GalleryName>{%/b} - Build in other people's areas and the public sidewalks in the specific gallery. Recommended level: local admins, local mods{%/li}
+{%li}{%b}gallery.admin.goto{%/b} - Teleport to any player's area. Recommended level: VIPs{%/li}
+{%li}{%b}gallery.admin.info{%/b} - View information on any area. Recommended level: VIPs{%/li}
+{%li}{%b}gallery.admin.my{%/b} - View list of areas for other players, using the "/gallery my @playername [<galleryname>]" form. Recommended level: VIPs{%/li}
+{%li}{%b}gallery.admin.name{%/b} - Rename any area for any player. Recommended level: admins, mods{%/li}
+{%li}{%b}gallery.admin.template{%/b} - Create a .schematic file out of an in-game cuboid. Recommended level: admins{%/li}
+{%li}{%b}gallery.claim{%/b} - Claim an area in any gallery. Recommended level: normal users{%/li}
+{%li}{%b}gallery.goto{%/b} - Teleport to an area owned by self. Recommended level: normal users{%/li}
+{%li}{%b}gallery.help{%/b} - Display help for subcommands. Recommended level: everyone{%/li}
+{%li}{%b}gallery.info{%/b} - View information on an area owned by self. Recommended level: normal users{%/li}
+{%li}{%b}gallery.list{%/b} - List available gallery. Recommended level: normal users{%/li}
+{%li}{%b}gallery.my{%/b} - List all my owned areas. Recommended level: normal users{%/li}
+{%li}{%b}gallery.name{%/b} - Rename an area owned by self. Recommended level: normal users{%/li}
+{%/list}
+
+Note that most admin-level permissions need their non-admin-level permissions in order to work. If you give
+someone "gallery.admin.goto" but not "gallery.goto", they will not be able to use the goto command at all.
 ]]
 		},
 	},  -- AdditionalInfo

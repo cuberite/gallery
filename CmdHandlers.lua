@@ -493,7 +493,7 @@ function HandleCmdHelp(a_Split, a_Player)
 	local CommonPrefix = ColCmd .. g_Config.CommandPrefix .. " " .. a_Split[3];
 	a_Player:SendMessage(CommonPrefix .. ColText .. " - " .. Subcommand.HelpString);
 	local Variants = {};
-	for idx, variant in ipairs(Subcommand.DetailedHelp or {}) do
+	for idx, variant in ipairs(Subcommand.ParameterCombinations or {}) do
 		if ((variant.Permission == nil) or a_Player:HasPermission(variant.Permission)) then
 			table.insert(Variants, "  " .. CommonPrefix .. " " .. ColParams .. (variant.Params or "") .. ColText .. " - " .. variant.Help);
 		end

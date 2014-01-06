@@ -146,7 +146,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					HelpString = "claims a new area",
 					Permission = "gallery.claim",
 					Handler = HandleCmdClaim,
-					DetailedHelp =
+					ParameterCombinations =
 					{
 						{
 							Params = "GalleryName",
@@ -160,7 +160,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					HelpString = "lists all your areas",
 					Permission = "gallery.my",
 					Handler = HandleCmdMy,
-					DetailedHelp =
+					ParameterCombinations =
 					{
 						{
 							Params = "",
@@ -188,7 +188,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					HelpString = "teleports you to specified gallery area",
 					Permission = "gallery.goto",
 					Handler = HandleCmdGoto,
-					DetailedHelp =
+					ParameterCombinations =
 					{
 						{
 							Params = "AreaName",
@@ -207,7 +207,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					HelpString = "renames the area you're currently standing at",
 					Permission = "gallery.name",
 					Handler = HandleCmdName,
-					DetailedHelp =
+					ParameterCombinations =
 					{
 						{
 							Params = "NewName",
@@ -242,7 +242,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					HelpString = "prints detailed help for the subcommand",
 					Permission = "gallery.help",
 					Handler = HandleCmdHelp,
-					DetailedHelp =  -- fun part - make "/gal help help" work as expected
+					ParameterCombinations =  -- fun part - make "/gal help help" work as expected
 					{
 						{
 							Params = "",
@@ -260,7 +260,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					HelpString = "creates new .schematic template based on your selection",
 					Permission = "gallery.admin.template",
 					Handler = HandleCmdTemplate,
-					DetailedHelp =
+					ParameterCombinations =
 					{
 						{
 							Params = "FileName",

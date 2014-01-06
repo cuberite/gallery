@@ -6,13 +6,14 @@
 
 
 
+
 --- Lists all the subcommands that the player has permissions for
 local function ListSubcommands(a_Player, a_Subcommands, a_CmdString)
 	a_Player:SendMessage("The " .. a_CmdString .. " command requires another verb:");
 	local Verbs = {};
-	for cmd, info in pairs(a_CmdInfo.Subcommands) do
+	for cmd, info in pairs(a_Subcommands) do
 		if (a_Player:HasPermission(info.Permission or "")) then
-			table.insert(Verbs, a_CmdString .. cmd);
+			table.insert(Verbs, a_CmdString .. " " .. cmd);
 		end
 	end
 	table.sort(Verbs);
@@ -97,7 +98,7 @@ function RegisterPluginInfoCommands()
 			if (Handler == nil) then
 				LOGWARNING(g_PluginInfo.Name .. ": Invalid handler for command " .. CmdName .. ", command will not be registered.");
 			else
-				cPluginManager.BindCommand(cmd, info.Permission or "", Handler, info.HelpString or "");
+				cPluginManager.BindCommand(CmdName, info.Permission or "", Handler, info.HelpString or "");
 				-- Register all aliases for the command:
 				if (info.Alias ~= nil) then
 					if (type(info.Alias) == "string") then

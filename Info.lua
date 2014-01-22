@@ -10,7 +10,7 @@
 g_PluginInfo = 
 {
 	Name = "Gallery",
-	Date = "2013-12-29",
+	Date = "2014-01-22",
 	Description =
 [[
 This plugin allows users to automatically claim areas from a predefined "pool" of areas (galleries). Each such area
@@ -96,27 +96,6 @@ this level a "punishment" level. The third level is "VIPs", player with these pe
 information about other players' areas, can list and teleport to other players' areas by their name. The
 highest level, "admins", can rename anyone's areas, build and destroy anywhere, transfer or remove area
 ownership and reset anyone's area.
-
-The following list contains all currently implemented permissions, with their recommended level and the
-effect they have:
-
-{%list}
-{%li}{%b}gallery.admin.*{%/b} - Admin-level permissions, see each individual permission below for details. Recommended level: admins{%/li}
-{%li}{%b}gallery.admin.buildanywhere{%/b} - Build in other people's areas and the public sidewalks. Recommended level: admins, mods{%/li}
-{%li}{%b}gallery.admin.buildanywhere.<GalleryName>{%/b} - Build in other people's areas and the public sidewalks in the specific gallery. Recommended level: local admins, local mods{%/li}
-{%li}{%b}gallery.admin.goto{%/b} - Teleport to any player's area. Recommended level: VIPs{%/li}
-{%li}{%b}gallery.admin.info{%/b} - View information on any area. Recommended level: VIPs{%/li}
-{%li}{%b}gallery.admin.my{%/b} - View list of areas for other players, using the "/gallery my @playername [<galleryname>]" form. Recommended level: VIPs{%/li}
-{%li}{%b}gallery.admin.name{%/b} - Rename any area for any player. Recommended level: admins, mods{%/li}
-{%li}{%b}gallery.admin.template{%/b} - Create a .schematic file out of an in-game cuboid. Recommended level: admins{%/li}
-{%li}{%b}gallery.claim{%/b} - Claim an area in any gallery. Recommended level: normal users{%/li}
-{%li}{%b}gallery.goto{%/b} - Teleport to an area owned by self. Recommended level: normal users{%/li}
-{%li}{%b}gallery.help{%/b} - Display help for subcommands. Recommended level: everyone{%/li}
-{%li}{%b}gallery.info{%/b} - View information on an area owned by self. Recommended level: normal users{%/li}
-{%li}{%b}gallery.list{%/b} - List available gallery. Recommended level: normal users{%/li}
-{%li}{%b}gallery.my{%/b} - List all my owned areas. Recommended level: normal users{%/li}
-{%li}{%b}gallery.name{%/b} - Rename an area owned by self. Recommended level: normal users{%/li}
-{%/list}
 
 Note that most admin-level permissions need their non-admin-level permissions in order to work. If you give
 someone "gallery.admin.goto" but not "gallery.goto", they will not be able to use the goto command at all.
@@ -269,8 +248,82 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					},
 				},  -- template
 			},  -- Subcommands
-		},  -- gal
+		},  -- ["/gallery"]
 	},  -- Commands
+	
+	Permissions =
+	{
+		["gallery.admin.buildanywhere"] =
+		{
+			Description = "Build in other people's areas and the public sidewalks.",
+			RecommendedGroups = "admins, mods",
+		},
+		["gallery.admin.buildanywhere.<GalleryName>"] =
+		{
+			Description = "Build in other people's areas and the public sidewalks in the specific gallery.",
+			RecommendedGroups = "local admins, local mods",
+		},
+		["gallery.admin.goto"] =
+		{
+			Description = "Teleport to any player's area.",
+			RecommendedGroups = "VIPs",
+		},
+		["gallery.admin.info"] =
+		{
+			Description = "View information on any area.",
+			RecommendedGroups = "VIPs",
+			CommandsAffected = { "/gallery info", },
+		},
+		["gallery.admin.my"] =
+		{
+			Description = "View list of areas for other players, using the \"/gallery my @playername [<galleryname>]\" form.",
+			RecommendedGroups = "VIPs", },
+		["gallery.admin.name"] =
+		{
+			Description = "Rename any area for any player.",
+			RecommendedGroups = "admins, mods",
+		},
+		["gallery.admin.template"] =
+		{
+			Description = "Create a .schematic file out of an in-game cuboid.",
+			RecommendedGroups = "admins",
+		},
+		["gallery.claim"] =
+		{
+			Description = "Claim an area in any gallery.",
+			RecommendedGroups = "normal users",
+		},
+		["gallery.goto"] =
+		{
+			Description = "Teleport to an area owned by self.",
+			RecommendedGroups = "normal users",
+		},
+		["gallery.help"] =
+		{
+			Description = "Display help for subcommands.",
+			RecommendedGroups = "everyone",
+		},
+		["gallery.info"] =
+		{
+			Description = "View information on an area owned by self.",
+			RecommendedGroups = "normal users",
+		},
+		["gallery.list"] =
+		{
+			Description = "List available gallery.",
+			RecommendedGroups = "normal users",
+		},
+		["gallery.my"] =
+		{
+			Description = "List all my owned areas.",
+			RecommendedGroups = "normal users",
+		},
+		["gallery.name"] =
+		{
+			Description = "Rename an area owned by self.",
+			RecommendedGroups = "normal users",
+		},
+	},
 };  -- g_PluginInfo
 
 

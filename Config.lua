@@ -7,7 +7,6 @@
 
 
 
-
 --- The configuration
 g_Config = {};
 
@@ -161,6 +160,27 @@ function CheckGallery(a_Gallery, a_Index)
 		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. " has AreaEdge greater than Z size: " ..
 			"AreaEdge = " .. a_Gallery.AreaEdge .. ", GallerySizeZ = " .. a_Gallery.AreaSizeZ .. ". Gallery is disabled");
 		return false;
+	end
+	
+	-- Set the gallery's minimum and maximum area coords
+	-- (that is, minima and maxima rounded to the area coords)
+	if (a_Gallery.FillStrategy:find("x%+")) then
+		-- "x+" direction, the areas are calculated from the MinX side of the gallery
+		a_Gallery.AreaMinX = a_Gallery.MinX;
+		a_Gallery.AreaMaxX = a_Gallery.MinX + a_Gallery.AreaSizeX * a_Gallery.NumAreasPerX;
+	else
+		-- "x-" direction, the areas are calculated from the MaxX side of the gallery
+		a_Gallery.AreaMinX = a_Gallery.MaxX - a_Gallery.AreaSizeX * a_Gallery.NumAreasPerX;
+		a_Gallery.AreaMaxX = a_Gallery.MaxX;
+	end
+	if (a_Gallery.FillStrategy:find("z%+")) then
+		-- "z+" direction, the areas are calculated from the MinZ side of the gallery
+		a_Gallery.AreaMinZ = a_Gallery.MinZ;
+		a_Gallery.AreaMaxZ = a_Gallery.MinZ + a_Gallery.AreaSizeZ * a_Gallery.NumAreasPerZ;
+	else
+		-- "z-" direction, the areas are calculated from the MaxZ side of the gallery
+		a_Gallery.AreaMinZ = a_Gallery.MaxZ - a_Gallery.AreaSizeZ * a_Gallery.NumAreasPerZ;
+		a_Gallery.AreaMaxZ = a_Gallery.MaxZ;
 	end
 
 	-- All okay

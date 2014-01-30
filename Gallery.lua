@@ -17,6 +17,34 @@ g_PlayerAreas = {};
 
 
 
+--[[
+The g_Galleries table is an array of the individual galleries. Each gallery is loaded from the config file,
+checked for validity and preprocessed to contain the following members:
+{
+	AreaEdge -- Edge of each area that is "public", i. e. non-buildable even by area's owner.
+	AreaMaxX, AreaMaxZ, AreaMinX, AreaMinZ -- The (tight) bounding box for all the areas in the gallery
+	AreaSizeX, AreaSizeZ -- Dimensions of each area in the gallery
+	FillStrategy -- Strategy used for allocating the areas in the gallery.
+	MaxAreaIdx -- The maximum index of a valid area in this gallery
+	MinX, MinZ, MaxX, MaxZ -- Dimensions of the gallery, in block coords
+	Name -- Name of the gallery, as used in the commands
+	NumAreasPerX, NumAreasPerZ -- Number of areas in the X and Z directions
+	TeleportCoordY  -- Y coord where the player is teleported upon claiming.
+	World -- The cWorld where the gallery is placed
+	WorldName -- Name of the world for which the gallery is defined.
+	
+	-- Optional members:
+	AreaTemplate -- The name of the schematic file that will be used to initialize new areas within the gallery
+	AreaTemplateSchematic -- The loaded schematic used for new areas
+	AreaTemplateSchematicTop -- An empty schematic that fills the space from the AreaTemplateSchematic to the top of the world
+	AreaTop -- The Y size of the AreaTemplateSchematic
+}
+--]]
+
+
+
+
+
 --- Converts area index to area coords in the specified gallery
 function AreaIndexToCoords(a_Index, a_Gallery)
 	if (a_Gallery.FillStrategy == "z+x+") then

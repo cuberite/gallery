@@ -80,6 +80,8 @@ end
 
 
 
+--- Returns the gallery that covers the entire chunk's area
+-- Returns nil if no such gallery
 function GetGalleryForEntireChunk(a_ChunkX, a_ChunkZ)
 	local MinX = a_ChunkX * 16;
 	local MinZ = a_ChunkZ * 16;
@@ -100,7 +102,9 @@ end
 
 
 
-function ImprintChunkWithGallery(a_MinX, a_MinZ, a_MaxX, a_MaxZ, a_ChunkDesc, a_Gallery)
+--- Imprints the specified chunk with the specified gallery's template, where (if) they intersect
+-- If a_ClearAbove is true, the AreaTemplateSchematicTop is applied, too
+function ImprintChunkWithGallery(a_MinX, a_MinZ, a_MaxX, a_MaxZ, a_ChunkDesc, a_Gallery, a_ClearAbove)
 	if (a_Gallery.AreaTemplateSchematic == nil) then
 		-- This gallery doesn't have a template
 		return;
@@ -120,28 +124,37 @@ function ImprintChunkWithGallery(a_MinX, a_MinZ, a_MaxX, a_MaxZ, a_ChunkDesc, a_
 	local EndX   = a_Gallery.AreaMinX + SizeX * math.ceil ((a_MaxX - a_Gallery.AreaMinX) / SizeX);
 	local StartZ = a_Gallery.AreaMinZ + SizeZ * math.floor((a_MinZ - a_Gallery.AreaMinZ) / SizeZ);
 	local EndZ   = a_Gallery.AreaMinZ + SizeZ * math.ceil ((a_MaxZ - a_Gallery.AreaMinZ) / SizeZ);
-	if (StartX <  a_Gallery.AreaMinX) then
+	if (StartX < a_Gallery.AreaMinX) then
 		StartX = a_Gallery.AreaMinX
 	end
-	if (EndX >= a_Gallery.AreaMaxX) then
+	if (EndX > a_Gallery.AreaMaxX) then
 		EndX = a_Gallery.AreaMaxX
 	end
-	if (StartZ <  a_Gallery.AreaMinZ) then
+	if (StartZ < a_Gallery.AreaMinZ) then
 		StartZ = a_Gallery.AreaMinZ
 	end
-	if (EndZ >= a_Gallery.AreaMaxZ) then
+	if (EndZ > a_Gallery.AreaMaxZ) then
 		EndZ = a_Gallery.AreaMaxZ
 	end
 	local FromX = StartX - a_ChunkDesc:GetChunkX() * 16;
-	local ToX   = EndX   - a_ChunkDesc:GetChunkX() * 16;
+	local ToX   = EndX   - a_ChunkDesc:GetChunkX() * 16 - 1;
 	local FromZ = StartZ - a_ChunkDesc:GetChunkZ() * 16;
-	local ToZ   = EndZ   - a_ChunkDesc:GetChunkZ() * 16;
+	local ToZ   = EndZ   - a_ChunkDesc:GetChunkZ() * 16 - 1;
 	
 	-- Imprint the schematic into the chunk
+	LOG("Imprinting galery, chunk [" .. a_ChunkDesc:GetChunkX() .. ", " .. a_ChunkDesc:GetChunkZ() .. "]");
+	LOG("FromX = " .. FromX .. ", ToX = " .. ToX .. ", FromZ = " .. FromZ .. ", ToZ = " .. ToZ);
+	LOG("StartX = " .. StartX .. ", EndX = " .. EndX .. ", StartZ = " .. StartZ .. ", EndZ = " .. EndZ);
 	local Template = a_Gallery.AreaTemplateSchematic;
+	local TemplateTop = a_Gallery.AreaTemplateSchematicTop;
+	local Top = a_Gallery.AreaTop;
 	for z = FromZ, ToZ, a_Gallery.AreaSizeZ do
 		for x = FromX, ToX, a_Gallery.AreaSizeX do
+			LOG("Writing area at {" .. x .. ", " .. z .. "}");
 			a_ChunkDesc:WriteBlockArea(Template, x, 0, z);
+			if (a_ClearAbove) then
+				a_ChunkDesc:WriteBlockArea(TemplateTop, x, Top, z);
+			end
 		end
 	end
 	
@@ -153,13 +166,15 @@ end
 
 
 
-function ImprintChunk(a_ChunkX, a_ChunkZ, a_ChunkDesc)
+--- Imprints the specified chunk with all the intersecting galleries' templates
+-- if a_ClearAbove is true, the AreaTemplateSchematicTop is applied, too
+function ImprintChunk(a_ChunkX, a_ChunkZ, a_ChunkDesc, a_ClearAbove)
 	local MinX = a_ChunkX * 16;
 	local MinZ = a_ChunkZ * 16;
 	local MaxX = MinX + 16;
 	local MaxZ = MinZ + 16;
 	for idx, gal in ipairs(g_Galleries) do
-		ImprintChunkWithGallery(MinX, MinZ, MaxX, MaxZ, a_ChunkDesc, gal);
+		ImprintChunkWithGallery(MinX, MinZ, MaxX, MaxZ, a_ChunkDesc, gal, a_ClearAbove);
 	end
 end
 
@@ -168,6 +183,14 @@ end
 
 
 function OnChunkGenerated(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
+	local Gallery = GetGalleryForEntireChunk(a_ChunkX, a_ChunkZ);
+	if ((Gallery ~= nil) and (Gallery.AreaTemplateSchematic ~= nil)) then
+		-- The chunk has already been generated in OnChunkGenerating(), skip it
+		return false;
+	end
+	
+	-- Imprint whatever galleries intersect the chunk:
+	ImprintChunk(a_ChunkX, a_ChunkZ, a_ChunkDesc, true);
 end
 
 
@@ -175,16 +198,19 @@ end
 
 
 function OnChunkGenerating(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
-	if (GetGalleryForEntireChunk(a_ChunkX, a_ChunkZ) ~= nil) then
-		-- The entire chunk is in a single gallery. Imprint the gallery schematic:
-		a_ChunkDesc:SetUseDefaultComposition(false);
-		a_ChunkDesc:SetUseDefaultHeight(false);
-		a_ChunkDesc:SetUseDefaultStructures(false);
-		a_ChunkDesc:SetUseDefaultFinish(false);
-		ImprintChunk(a_ChunkX, a_ChunkZ, a_ChunkDesc);
-		return true;
+	local Gallery = GetGalleryForEntireChunk(a_ChunkX, a_ChunkZ);
+	if ((Gallery == nil) or (Gallery.AreaTemplateSchematic == nil)) then
+		-- The chunks is not covered by one gallery, or the gallery doesn't use a schematic
+		return false;
 	end
-	return false;
+
+	-- The entire chunk is in a single gallery. Imprint the gallery schematic:
+	a_ChunkDesc:SetUseDefaultComposition(false);
+	a_ChunkDesc:SetUseDefaultHeight(false);
+	a_ChunkDesc:SetUseDefaultStructures(false);
+	a_ChunkDesc:SetUseDefaultFinish(false);
+	ImprintChunk(a_ChunkX, a_ChunkZ, a_ChunkDesc, false);
+	return true;
 end
 
 

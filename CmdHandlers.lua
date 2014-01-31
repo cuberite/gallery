@@ -567,6 +567,47 @@ end
 
 
 
+function HandleCmdReset(a_Split, a_Player)
+	-- Find the appropriate Area:
+	local BlockX = math.floor(a_Player:GetPosX());
+	local BlockZ = math.floor(a_Player:GetPosZ());
+	local Area = nil;
+	if (a_Player:HasPermission("gallery.admin.reset")) then
+		-- Admin-level reset tool, if the player has the necessary permissions, reset anyone's area:
+		Area = g_DB:LoadAreaByPos(a_Player:GetWorld():GetName(), BlockX, BlockZ);
+		if (Area == nil) then
+			a_Player:SendMessage("There is no claimed area here.");
+			return true;
+		end;
+	else
+		-- Default reset tool - reset only own areas:
+		Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
+		if (Area == nil) then
+			a_Player:SendMessage("This isn't your area.");
+			return true;
+		end
+	end
+
+	assert(Area ~= nil);
+	
+	-- Check if there is a valid schematic in the gallery:
+	local Template = Area.Gallery.AreaTemplateSchematic;
+	if (Template == nil) then
+		a_Player:SendMessage("Cannot reset this area, the gallery doesn't use schematic templates");
+		return true;
+	end
+	
+	-- Reset the area:
+	Template:Write(a_Player:GetWorld(), Area.MinX, 0, Area.MinZ);
+	Area.Gallery.AreaTemplateSchematicTop:Write(a_Player:GetWorld(), Area.MinX, Area.Gallery.AreaTop, Area.MinZ);
+	a_Player:SendMessage("Area has been reset");
+	return true;
+end
+
+
+
+
+
 function SendUsage(a_Player, a_Message)
 	if (a_Message ~= nil) then
 		a_Player:SendMessage(a_Message);

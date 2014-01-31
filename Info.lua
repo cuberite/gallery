@@ -125,7 +125,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 							Help = "claims a new area in the specified gallery. The gallery must be in the current world.",
 						},
 					},
-				},
+				},  -- claim
 				
 				goto =
 				{
@@ -144,7 +144,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 							Permission = "gallery.admin.goto",
 						},
 					},
-				},
+				},  -- goto
 				
 				help =
 				{
@@ -162,21 +162,21 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 							Help = "displays detailed help for the subcommand, including all the parameter combinations",
 						},
 					},
-				},
+				},  -- help
 				
 				info =
 				{
 					HelpString = "prints information on the area you're currently standing at",
 					Permission = "gallery.info",
 					Handler = HandleCmdInfo,
-				},
+				},  -- info
 				
 				list =
 				{
 					HelpString = "lists all available galleries",
 					Permission = "gallery.list",
 					Handler = HandleCmdList,
-				},
+				},  -- list
 				
 				my =
 				{
@@ -204,7 +204,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 							Permission = "gallery.admin.my",
 						},
 					},
-				},
+				},  -- my
 				
 				name = 
 				{
@@ -232,7 +232,25 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 							Permission = "gallery.admin.name",
 						},
 					},
-				},
+				},  -- name
+				
+				reset =
+				{
+					HelpString = "resets the area you're standing on to its original state",
+					Permission = "gallery.reset",
+					Handler = HandleCmdReset,
+					ParameterCombinations =
+					{
+						{
+							Permission = "gallery.reset",
+							Help = "If you are the owner of the area, resets it to its original state",
+						},
+						{
+							Permission = "gallery.admin.reset",
+							Help = "Resets the area you're standing on it to its original state, regardless of the ownership",
+						}
+					},
+				},  -- reset
 				
 				template =
 				{
@@ -243,7 +261,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					{
 						{
 							Params = "FileName",
-							Help = "Let's you select an arbitrary square area, then saves its contents into a file, FileName.schematic",
+							Help = "Lets you select an arbitrary square area, then saves its contents into a file, FileName.schematic",
 						},
 					},
 				},  -- template

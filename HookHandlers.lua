@@ -9,12 +9,12 @@
 
 --- Registers all hook handlers
 function InitHookHandlers()
-	cPluginManager.AddHook(cPluginManager.HOOK_CHUNK_GENERATED,    OnChunkGenerated);
-	cPluginManager.AddHook(cPluginManager.HOOK_CHUNK_GENERATING,   OnChunkGenerating);
-	cPluginManager.AddHook(cPluginManager.HOOK_DISCONNECT,         OnDisconnect);
-	cPluginManager.AddHook(cPluginManager.HOOK_PLAYER_LEFT_CLICK,  OnPlayerLeftClick);
-	cPluginManager.AddHook(cPluginManager.HOOK_PLAYER_RIGHT_CLICK, OnPlayerRightClick);
-	cPluginManager.AddHook(cPluginManager.HOOK_PLAYER_SPAWNED,     OnPlayerSpawned);
+	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATED,    OnChunkGenerated);
+	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATING,   OnChunkGenerating);
+	cPluginManager:AddHook(cPluginManager.HOOK_DISCONNECT,         OnDisconnect);
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_LEFT_CLICK,  OnPlayerLeftClick);
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_RIGHT_CLICK, OnPlayerRightClick);
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_SPAWNED,     OnPlayerSpawned);
 end
 
 

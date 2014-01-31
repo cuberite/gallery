@@ -142,15 +142,11 @@ function ImprintChunkWithGallery(a_MinX, a_MinZ, a_MaxX, a_MaxZ, a_ChunkDesc, a_
 	local ToZ   = EndZ   - a_ChunkDesc:GetChunkZ() * 16 - 1;
 	
 	-- Imprint the schematic into the chunk
-	LOG("Imprinting galery, chunk [" .. a_ChunkDesc:GetChunkX() .. ", " .. a_ChunkDesc:GetChunkZ() .. "]");
-	LOG("FromX = " .. FromX .. ", ToX = " .. ToX .. ", FromZ = " .. FromZ .. ", ToZ = " .. ToZ);
-	LOG("StartX = " .. StartX .. ", EndX = " .. EndX .. ", StartZ = " .. StartZ .. ", EndZ = " .. EndZ);
 	local Template = a_Gallery.AreaTemplateSchematic;
 	local TemplateTop = a_Gallery.AreaTemplateSchematicTop;
 	local Top = a_Gallery.AreaTop;
 	for z = FromZ, ToZ, a_Gallery.AreaSizeZ do
 		for x = FromX, ToX, a_Gallery.AreaSizeX do
-			LOG("Writing area at {" .. x .. ", " .. z .. "}");
 			a_ChunkDesc:WriteBlockArea(Template, x, 0, z);
 			if (a_ClearAbove) then
 				a_ChunkDesc:WriteBlockArea(TemplateTop, x, Top, z);

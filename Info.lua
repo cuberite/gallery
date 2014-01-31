@@ -113,13 +113,6 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 			Handler = nil,
 			Subcommands =
 			{
-				list =
-				{
-					HelpString = "lists all available galleries",
-					Permission = "gallery.list",
-					Handler = HandleCmdList,
-				},
-				
 				claim =
 				{
 					HelpString = "claims a new area",
@@ -132,6 +125,57 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 							Help = "claims a new area in the specified gallery. The gallery must be in the current world.",
 						},
 					},
+				},
+				
+				goto =
+				{
+					HelpString = "teleports you to specified gallery area",
+					Permission = "gallery.goto",
+					Handler = HandleCmdGoto,
+					ParameterCombinations =
+					{
+						{
+							Params = "AreaName",
+							Help = "teleports you to the specified area",
+						},
+						{
+							Params = "@PlayerName AreaName",
+							Help = "teleports you to the specified area owned by the player",
+							Permission = "gallery.admin.goto",
+						},
+					},
+				},
+				
+				help =
+				{
+					HelpString = "prints detailed help for the subcommand",
+					Permission = "gallery.help",
+					Handler = HandleCmdHelp,
+					ParameterCombinations =  -- fun part - make "/gal help help" work as expected
+					{
+						{
+							Params = "",
+							Help = "displays list of subcommands with basic help for each",
+						},
+						{
+							Params = "Subcommand",
+							Help = "displays detailed help for the subcommand, including all the parameter combinations",
+						},
+					},
+				},
+				
+				info =
+				{
+					HelpString = "prints information on the area you're currently standing at",
+					Permission = "gallery.info",
+					Handler = HandleCmdInfo,
+				},
+				
+				list =
+				{
+					HelpString = "lists all available galleries",
+					Permission = "gallery.list",
+					Handler = HandleCmdList,
 				},
 				
 				my =
@@ -162,25 +206,6 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					},
 				},
 				
-				goto =
-				{
-					HelpString = "teleports you to specified gallery area",
-					Permission = "gallery.goto",
-					Handler = HandleCmdGoto,
-					ParameterCombinations =
-					{
-						{
-							Params = "AreaName",
-							Help = "teleports you to the specified area",
-						},
-						{
-							Params = "@PlayerName AreaName",
-							Help = "teleports you to the specified area owned by the player",
-							Permission = "gallery.admin.goto",
-						},
-					},
-				},
-				
 				name = 
 				{
 					HelpString = "renames the area you're currently standing at",
@@ -205,31 +230,6 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 							Params = "@PlayerName OldName NewName",
 							Help = "renames Player's area from OldName to NewName",
 							Permission = "gallery.admin.name",
-						},
-					},
-				},
-				
-				info =
-				{
-					HelpString = "prints information on the area you're currently standing at",
-					Permission = "gallery.info",
-					Handler = HandleCmdInfo,
-				},
-				
-				help =
-				{
-					HelpString = "prints detailed help for the subcommand",
-					Permission = "gallery.help",
-					Handler = HandleCmdHelp,
-					ParameterCombinations =  -- fun part - make "/gal help help" work as expected
-					{
-						{
-							Params = "",
-							Help = "displays list of subcommands with basic help for each",
-						},
-						{
-							Params = "Subcommand",
-							Help = "displays detailed help for the subcommand, including all the parameter combinations",
 						},
 					},
 				},

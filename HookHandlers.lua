@@ -12,6 +12,7 @@ function InitHookHandlers()
 	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATED,    OnChunkGenerated);
 	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATING,   OnChunkGenerating);
 	cPluginManager:AddHook(cPluginManager.HOOK_DISCONNECT,         OnDisconnect);
+	cPluginManager:AddHook(cPluginManager.HOOK_EXPLODING,          OnExploding);
 	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_LEFT_CLICK,  OnPlayerLeftClick);
 	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_RIGHT_CLICK, OnPlayerRightClick);
 	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_SPAWNED,     OnPlayerSpawned);
@@ -207,6 +208,22 @@ function OnChunkGenerating(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
 	a_ChunkDesc:SetUseDefaultFinish(false);
 	ImprintChunk(a_ChunkX, a_ChunkZ, a_ChunkDesc, false);
 	return true;
+end
+
+
+
+
+
+function OnExploding(a_World, a_ExplosionSize, a_CanCauseFire, a_BlockX, a_BlockY, a_BlockZ, a_Source, a_Data)
+	local Gallery = FindGalleryByCoords(a_World, a_BlockX, a_BlockZ);
+	if (Gallery ~= nil) then
+		-- Abort the explosion
+		LOG("Aborted explosion at {" .. a_BlockX .. ", " .. a_BlockY .. ", " .. a_BlockZ .. "} due to gallery " .. Gallery.Name);
+		return true;
+	end
+	
+	-- Let it explode
+	return false;
 end
 
 

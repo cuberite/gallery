@@ -311,10 +311,10 @@ function HandleCmdGoto(a_Split, a_Player)
 		return HandleCmdGotoAdmin(a_Split, a_Player);
 	end
 	
-	local ReqAreaName = a_Split[3];
+	local ReqAreaName = table.concat(a_Split, " ", 3);  -- Support spaces in names
 	local Area = GetPlayerAreas(a_Player)[ReqAreaName];
 	if (Area == nil) then
-		a_Player:SendMessage("You don't own an area of that name.");
+		a_Player:SendMessage("You don't own an area named \"" .. ReqAreaName .. "\".");
 		return true;
 	end
 	

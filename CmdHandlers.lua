@@ -411,6 +411,7 @@ function HandleCmdName(a_Split, a_Player)
 			);
 			return true;
 		end
+		NewName = a_Split[3];
 	else
 		-- Rename by old name:
 		Area = GetPlayerAreas(a_Player)[a_Split[3]];
@@ -418,10 +419,11 @@ function HandleCmdName(a_Split, a_Player)
 			a_Player:SendMessage("You don't own an area of name '" .. a_Split[3] .. "'.");
 			return true;
 		end
+		NewName = a_Split[4];
 	end
 	
 	-- Rename:
-	local IsSuccess, Msg = RenamePlayerArea(a_Player:GetName(), Area.Name, a_Split[4]);
+	local IsSuccess, Msg = RenamePlayerArea(a_Player:GetName(), Area.Gallery.WorldName, Area.Name, NewName);
 	if (Msg ~= nil) then
 		a_Player:SendMessage(Msg);
 	end

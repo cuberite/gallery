@@ -573,35 +573,50 @@ function HandleCmdReset(a_Split, a_Player)
 	-- Find the appropriate Area:
 	local BlockX = math.floor(a_Player:GetPosX());
 	local BlockZ = math.floor(a_Player:GetPosZ());
-	local Area = nil;
+	local Template = nil;
+	local TemplateTop = nil;
+	local AreaTop = nil;
+	local MinX, MinZ;
 	if (a_Player:HasPermission("gallery.admin.reset")) then
 		-- Admin-level reset tool, if the player has the necessary permissions, reset anyone's area:
-		Area = g_DB:LoadAreaByPos(a_Player:GetWorld():GetName(), BlockX, BlockZ);
-		if (Area == nil) then
-			a_Player:SendMessage("There is no claimed area here.");
+		local Gallery = FindGalleryByCoords(a_Player:GetWorld(), BlockX, BlockZ);
+		if (Gallery == nil) then
+			a_Player:SendMessage("There is no gallery here");
 			return true;
-		end;
+		end
+		MinX, MinZ = GetAreaCoordsFromBlockCoords(Gallery, BlockX, BlockZ);
+		Template = Gallery.AreaTemplateSchematic;
+		TemplateTop = Gallery.AreaTemplateSchematicTop;
+		AreaTop = Gallery.AreaTop;
 	else
 		-- Default reset tool - reset only own areas:
-		Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
+		local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
 		if (Area == nil) then
 			a_Player:SendMessage("This isn't your area.");
 			return true;
 		end
+		MinX = Area.MinX;
+		MinZ = Area.MinZ;
+		Template = Area.Gallery.AreaTemplateSchematic;
+		TemplateTop = Area.Gallery.AreaTemplateSchematicTop;
+		AreaTop = Area.Gallery.AreaTop;
 	end
 
-	assert(Area ~= nil);
+	assert(MinX ~= nil);
+	assert(MinZ ~= nil);
+	assert(AreaTop ~= nil);
 	
 	-- Check if there is a valid schematic in the gallery:
-	local Template = Area.Gallery.AreaTemplateSchematic;
 	if (Template == nil) then
 		a_Player:SendMessage("Cannot reset this area, the gallery doesn't use schematic templates");
 		return true;
 	end
 	
+	assert(TemplateTop ~= nil);
+	
 	-- Reset the area:
-	Template:Write(a_Player:GetWorld(), Area.MinX, 0, Area.MinZ);
-	Area.Gallery.AreaTemplateSchematicTop:Write(a_Player:GetWorld(), Area.MinX, Area.Gallery.AreaTop, Area.MinZ);
+	Template:Write(a_Player:GetWorld(), MinX, 0, MinZ);
+	TemplateTop:Write(a_Player:GetWorld(), MinX, AreaTop, MinZ);
 	a_Player:SendMessage("Area has been reset");
 	return true;
 end

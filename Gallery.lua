@@ -223,6 +223,28 @@ end
 
 
 
+--- Returns MinX, MinZ, MaxX, MaxZ for a (hypothetical) area that intersects the specified coords
+-- If no area the gallery could intersect the coords, returns nothing
+function GetAreaCoordsFromBlockCoords(a_Gallery, a_BlockX, a_BlockZ)
+	if (
+		(a_BlockX < a_Gallery.AreaMinX) or (a_BlockX >= a_Gallery.AreaMaxX) or
+		(a_BlockX < a_Gallery.AreaMinX) or (a_BlockX >= a_Gallery.AreaMaxX)
+	) then
+		-- Not inside this gallery
+		return;
+	end
+	
+	local SizeX = a_Gallery.AreaSizeX;
+	local SizeZ = a_Gallery.AreaSizeZ;
+	local MinX = a_Gallery.AreaMinX + SizeX * math.floor((a_BlockX - a_Gallery.AreaMinX) / SizeX);
+	local MinZ = a_Gallery.AreaMinZ + SizeZ * math.floor((a_BlockZ - a_Gallery.AreaMinZ) / SizeZ);
+	return MinX, MinZ, MinX + SizeX, MinZ + SizeZ;
+end
+
+
+
+
+
 --- Returns the list of all areas that the specified player owns in this world
 -- The table has been preloaded from the DB on player's spawn
 -- If for any reason the table doesn't exist, return an empty table

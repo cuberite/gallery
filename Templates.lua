@@ -43,8 +43,8 @@ function SendTemplatingStatus(a_Player)
 	local msg = "You are templating with the export file set to '" .. PlayerTemplate.FileName .. "'. Left-click on a block to (re)set the first corner. Right-click on a block to (re)set the second corner. ";
 	local HasBothPoints = true;
 	if ((PlayerTemplate.FirstPoint ~= nil) and (PlayerTemplate.SecondPoint ~= nil)) then
-		local DiffX = math.abs(PlayerTemplate.FirstPoint.x - PlayerTemplate.SecondPoint.x);
-		local DiffZ = math.abs(PlayerTemplate.FirstPoint.z - PlayerTemplate.SecondPoint.z);
+		local DiffX = math.abs(PlayerTemplate.FirstPoint.x - PlayerTemplate.SecondPoint.x) + 1;
+		local DiffZ = math.abs(PlayerTemplate.FirstPoint.z - PlayerTemplate.SecondPoint.z) + 1;
 		msg =
 			"The current template is set, first corner at {" .. PlayerTemplate.FirstPoint.x .. ", " ..
 			PlayerTemplate.FirstPoint.z .. "}, second corner at {" .. PlayerTemplate.SecondPoint.x .. ", " ..

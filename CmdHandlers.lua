@@ -170,6 +170,39 @@ end
 
 
 
+function HandleCmdAllow(a_Split, a_Player)
+	-- Check the params:
+	if (#a_Split < 3) then
+		a_Player:SendMessage("You need to specify the player whom to allow here.");
+		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " allow <FriendName>");
+		return true;
+	end
+	local FriendName = a_Split[3];
+	
+	-- Get the area to be allowed:
+	local BlockX = math.floor(a_Player:GetPosX());
+	local BlockZ = math.floor(a_Player:GetPosZ());
+	local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
+	if (Area == nil) then
+		a_Player:SendMessage("You do not own this area");
+		return true;
+	end
+	
+	-- Allow the player:
+	g_DB:AllowPlayerInArea(Area, FriendName);
+	
+	-- Reload the allowed player's allowances:
+	local WorldName = a_Player:GetWorld():GetName();
+	local Allowances = GetPlayerAllowances(WorldName, FriendName);
+	if (Allowances ~= nil) then
+		ReloadPlayerAllowances(WorldName, FriendName);
+	end
+end
+
+
+
+
+
 function HandleCmdList(a_Split, a_Player)
 	local WorldName = a_Player:GetWorld():GetName();
 

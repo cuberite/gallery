@@ -10,8 +10,11 @@
 --- The main list of galleries available
 g_Galleries = {};
 
---- The per-world per-player list of owned areas. Access as "g_Areas[WorldName][PlayerEntityID]"
+--- The per-world per-player list of owned areas. Access as "g_Areas[WorldName][PlayerName]"
 g_PlayerAreas = {};
+
+--- The per-world per-player list of allowances. Access as "g_PlayerAllowances[WorldName][PlayerName]"
+g_PlayerAllowances = {};
 
 
 
@@ -188,10 +191,12 @@ end
 function LoadAllPlayersAreas()
 	cRoot:Get():ForEachWorld(
 		function (a_World)
-			local WorldAreas = {}
+			local WorldName = a_World:GetName();
 			a_World:ForEachPlayer(
 				function (a_Player)
-					SetPlayerAreas(a_Player, g_DB:LoadPlayerAreasInWorld(a_World:GetName(), a_Player:GetName()));
+					local PlayerName = a_Player:GetName();
+					SetPlayerAreas(a_Player, g_DB:LoadPlayerAreasInWorld(WorldName, PlayerName));
+					SetPlayerAllowances(a_Player, g_DB:LoadPlayerAllowancesInWorld(WorldName, PlayerName));
 				end
 			);
 		end
@@ -275,6 +280,32 @@ end
 
 
 
+function GetPlayerAllowances(a_WorldName, a_PlayerName)
+	local res = g_PlayerAllowances[a_WorldName][a_PlayerName];
+	if (res == nil) then
+		res = {};
+		g_PlayerAllowances[a_WorldName][a_PlayerName] = res;
+	end
+	return res;
+end
+
+
+
+
+
+function SetPlayerAllowances(a_Player, a_Allowances)
+	local WorldAllowances = g_PlayerAllowances[a_Player:GetWorld():GetName()];
+	if (WorldAllowances == nil) then
+		WorldAllowances = {};
+		g_PlayerAllowances[a_Player:GetWorld():GetName()] = WorldAllowances;
+	end
+	WorldAllowances[a_Player:GetName()] = a_Allowances;
+end
+
+
+
+
+
 --- Returns true if the specified block lies within the area's buildable space
 function IsInArea(a_Area, a_BlockX, a_BlockZ)
 	return (
@@ -291,7 +322,6 @@ end
 
 --- Returns true if the specified player can interact with the specified block
 -- This takes into account the areas owned by the player
--- TODO: Allow permission-based overrides, global for all galleries and per-gallery
 function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	-- If the player has the admin permission, allow them:
 	if (a_Player:HasPermission("gallery.admin.buildanywhere")) then
@@ -313,8 +343,16 @@ function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	-- Inside a gallery, retrieve the areas:
 	local Area = FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ);
 	if (Area == nil) then
-		-- Not this player's area, disable interaction
-		return false, "This area is owned by someone else.";
+		-- Not this player's area, check allowances:
+		local Allowance = FindPlayerAllowanceByCoords(a_Player, a_BlockX, a_BlockZ)
+		if (Allowance == nil) then
+			return false, "This area is owned by someone else.";
+		end
+		-- Allowed via an allowance, is it within the allowed buildable space? (exclude the sidewalks):
+		if not(IsInArea(Allowance, a_BlockX, a_BlockZ)) then
+			return false, "This is the public sidewalk.";
+		end
+		return true;
 	end
 	
 	-- This player's area, is it within the allowed buildable space? (exclude the sidewalks):

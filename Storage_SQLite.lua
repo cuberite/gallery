@@ -178,6 +178,47 @@ end
 
 
 
+--- Loads all player allowances in the specified world
+function SQLite:LoadPlayerAllowancesInWorld(a_WorldName, a_PlayerName)
+	local res = {};
+	self:DBExec(
+		[[
+			SELECT Areas.MinX AS MinX, Areas.MinZ AS MinZ, Areas.MaxX AS MaxX, Areas.MaxZ as MaxZ,
+				Areas.StartX AS StartX, Areas.StartZ AS StartZ, Areas.EndX AS EndX, Areas.EndZ AS EndZ,
+				Areas.PlayerName AS PlayerName, Areas.Name AS Name, Areas.ID AS ID,
+				Areas.GalleryIndex AS GalleryIndex, Areas.GalleryName AS GalleryName
+			FROM Areas INNER JOIN Allowances ON Areas.ID = Allowances.AreaID
+			WHERE Areas.WorldName = ? AND Allowances.FriendName = ?
+		]],
+		{
+			a_WorldName,
+			a_PlayerName,
+		},
+		function (a_Values)
+			local Gallery = FindGalleryByName(a_WorldName, a_Values.GalleryName)
+			if (Gallery == nil) then
+				return;
+			end
+			table.insert(res,
+				{
+					ID = a_Values.ID,
+					MinX = a_Values.MinX, MaxX = a_Values.MaxX, MinZ = a_Values.MinZ, MaxZ = a_Values.MaxZ,
+					StartX = a_Values.StartX, EndX = a_Values.EndX, StartZ = a_Values.StartZ, EndZ = a_Values.EndZ,
+					Gallery = Gallery,
+					GalleryIndex = a_Values.GalleryIndex,
+					PlayerName = a_Values.PlayerName,
+					Name = a_AreaName,
+				}
+			);
+		end
+	);
+	return res;
+end
+
+
+
+
+
 --- Loads the areas for a single player in the specified gallery
 function SQLite:LoadPlayerAreasInGallery(a_GalleryName, a_PlayerName)
 	assert(a_GalleryName ~= nil);
@@ -463,6 +504,41 @@ end
 
 
 
+--- Adds the playername to the list of allowed players in the specified gallery
+function SQLite:AllowPlayerInArea(a_Area, a_PlayerName)
+	assert(a_Area ~= nil);
+	assert(type(a_PlayerName) == "string");
+	
+	-- First try if the pairing is already there:
+	local IsThere = false;
+	self:ExecuteStatement(
+		"SELECT FROM Allowances WHERE AreaID = ? AND FriendName = ?",
+		{
+			a_Area.ID,
+			a_PlayerName
+		},
+		function (a_Values)
+			IsThere = true
+		end
+	);
+	if (IsThere) then
+		return;
+	end
+	
+	-- Insert the new pairing
+	self:ExecuteStatement(
+		"INSERT INTO Allowances (AreaID, FriendName) VALUES (?, ?)",
+		{
+			a_Area.ID,
+			a_PlayerName
+		}
+	);
+end
+
+
+
+
+
 function SQLite_CreateStorage(a_Params)
 	DB = SQLite;
 	local DBFile = a_Params.File or "Galleries.sqlite";
@@ -492,9 +568,15 @@ function SQLite_CreateStorage(a_Params)
 		"GalleryName",
 		"NextAreaIdx",
 	};
+	local AllowancesColumns =
+	{
+		"AreaID",
+		"FriendName"
+	};
 	if (
-		not(DB:CreateDBTable("Areas", AreasColumns)) or
-		not(DB:CreateDBTable("GalleryEnd", GalleryEndColumns))
+		not(DB:CreateDBTable("Areas",      AreasColumns)) or
+		not(DB:CreateDBTable("GalleryEnd", GalleryEndColumns)) or
+		not(DB:CreateDBTable("Allowances", AllowancesColumns))
 	) then
 		LOGWARNING(PLUGIN_PREFIX .. "Cannot create DB tables!");
 		error("Cannot create DB tables!");

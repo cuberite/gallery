@@ -189,14 +189,22 @@ function HandleCmdAllow(a_Split, a_Player)
 	end
 	
 	-- Allow the player:
-	g_DB:AllowPlayerInArea(Area, FriendName);
+	local res, msg = g_DB:AllowPlayerInArea(Area, FriendName);
+	if not(res) then
+		a_Player:SendMessage(msg or "Unknown failure");
+		return true;
+	end
 	
 	-- Reload the allowed player's allowances:
 	local WorldName = a_Player:GetWorld():GetName();
 	local Allowances = GetPlayerAllowances(WorldName, FriendName);
 	if (Allowances ~= nil) then
-		ReloadPlayerAllowances(WorldName, FriendName);
+		-- Hack: we're using the actual area as the Allowance. They have compatible structure, after all
+		table.insert(Allowances, Area);
 	end
+	
+	a_Player:SendMessage("You have allowed " .. FriendName .. " to build in your area " .. DescribeArea(Area));
+	return true;
 end
 
 

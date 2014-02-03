@@ -371,7 +371,28 @@ end
 --- Returns the player-owned area for the specified coords, or nil if no such area
 function FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ)
 	for idx, area in ipairs(GetPlayerAreas(a_Player)) do
-		if ((a_BlockX >= area.MinX) and (a_BlockX < area.MaxX) and (a_BlockZ >= area.MinZ) and (a_BlockZ < area.MaxZ)) then
+		if (
+			(a_BlockX >= area.MinX) and (a_BlockX < area.MaxX) and
+			(a_BlockZ >= area.MinZ) and (a_BlockZ < area.MaxZ)
+		) then
+			return area;
+		end
+	end
+	return nil;
+end
+
+
+
+
+
+--- Returns the player-allowed area for the specified coords, or nil if no such area
+function FindPlayerAllowanceByCoords(a_Player, a_BlockX, a_BlockZ)
+	local Allowances = GetPlayerAllowances(a_Player:GetWorld():GetName(), a_Player:GetName());
+	for idx, area in ipairs(Allowances) do
+		if (
+			(a_BlockX >= area.MinX) and (a_BlockX < area.MaxX) and
+			(a_BlockZ >= area.MinZ) and (a_BlockZ < area.MaxZ)
+		) then
 			return area;
 		end
 	end

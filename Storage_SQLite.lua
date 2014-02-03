@@ -41,8 +41,9 @@ function SQLite:ExecuteStatement(a_SQL, a_Params, a_Callback)
 	
 	local Stmt, ErrCode, ErrMsg = self.DB:prepare(a_SQL);
 	if (Stmt == nil) then
-		LOGWARNING("Cannot execute SQL \"" .. a_SQL .. "\": " .. ErrCode .. " (" .. ErrMsg .. ")");
-		return nil, ErrMsg;
+		LOGWARNING("Cannot prepare SQL \"" .. a_SQL .. "\": " .. (ErrCode or "<unknown>") .. " (" .. (ErrMsg or "<no message>") .. ")");
+		LOGWARNING("  Params = {" .. table.concat(a_Params, ", ") .. "}");
+		return nil, (ErrMsg or "<no message");
 	end
 	Stmt:bind_values(unpack(a_Params));
 	if (a_Callback == nil) then
@@ -181,7 +182,7 @@ end
 --- Loads all player allowances in the specified world
 function SQLite:LoadPlayerAllowancesInWorld(a_WorldName, a_PlayerName)
 	local res = {};
-	self:DBExec(
+	self:ExecuteStatement(
 		[[
 			SELECT Areas.MinX AS MinX, Areas.MinZ AS MinZ, Areas.MaxX AS MaxX, Areas.MaxZ as MaxZ,
 				Areas.StartX AS StartX, Areas.StartZ AS StartZ, Areas.EndX AS EndX, Areas.EndZ AS EndZ,
@@ -195,7 +196,7 @@ function SQLite:LoadPlayerAllowancesInWorld(a_WorldName, a_PlayerName)
 			a_PlayerName,
 		},
 		function (a_Values)
-			local Gallery = FindGalleryByName(a_WorldName, a_Values.GalleryName)
+			local Gallery = FindGalleryByName(a_Values.GalleryName)
 			if (Gallery == nil) then
 				return;
 			end
@@ -505,24 +506,29 @@ end
 
 
 --- Adds the playername to the list of allowed players in the specified gallery
+-- Returns success state and an error message in case of failure
 function SQLite:AllowPlayerInArea(a_Area, a_PlayerName)
 	assert(a_Area ~= nil);
+	assert(a_Area.ID ~= nil);
 	assert(type(a_PlayerName) == "string");
 	
 	-- First try if the pairing is already there:
 	local IsThere = false;
-	self:ExecuteStatement(
-		"SELECT FROM Allowances WHERE AreaID = ? AND FriendName = ?",
+	local IsSuccess, Msg = self:ExecuteStatement(
+		"SELECT * FROM Allowances WHERE AreaID = ? AND FriendName = ?",
 		{
 			a_Area.ID,
 			a_PlayerName
 		},
 		function (a_Values)
-			IsThere = true
+			IsThere = true;
 		end
 	);
+	if not(IsSuccess) then
+		return false, msg;
+	end
 	if (IsThere) then
-		return;
+		return false, a_PlayerName .. " is already allowed";
 	end
 	
 	-- Insert the new pairing
@@ -533,6 +539,8 @@ function SQLite:AllowPlayerInArea(a_Area, a_PlayerName)
 			a_PlayerName
 		}
 	);
+	
+	return true;
 end
 
 

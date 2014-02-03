@@ -58,7 +58,7 @@ function OnPlayerRightClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockFace,
 	end
 	
 	local BlockX, BlockY, BlockZ = AddFaceDirection(a_BlockX, a_BlockY, a_BlockZ, a_BlockFace);
-	local CanInteract, Reason = CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ);
+	local CanInteract, Reason = CanPlayerInteractWithBlock(a_Player, BlockX, BlockY, BlockZ);
 	if (CanInteract) then
 		return false;
 	end

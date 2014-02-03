@@ -33,16 +33,19 @@ end
 
 
 
---- Executes the SQL statement, substituting "?" in the SQL with the specified params; calls a_Callback for each row
+--- Executes the SQL statement, substituting "?" in the SQL with the specified params
+-- Calls a_Callback for each row
 -- The callback receives a dictionary table containing the row values (stmt:nrows())
+-- Returns false and error message on failure, or true on success
 function SQLite:ExecuteStatement(a_SQL, a_Params, a_Callback)
 	assert(a_SQL ~= nil);
 	assert(a_Params ~= nil);
 	
 	local Stmt, ErrCode, ErrMsg = self.DB:prepare(a_SQL);
 	if (Stmt == nil) then
-		LOGWARNING("Cannot execute SQL \"" .. a_SQL .. "\": " .. ErrCode .. " (" .. ErrMsg .. ")");
-		return nil, ErrMsg;
+		LOGWARNING("Cannot prepare SQL \"" .. a_SQL .. "\": " .. (ErrCode or "<unknown>") .. " (" .. (ErrMsg or "<no message>") .. ")");
+		LOGWARNING("  Params = {" .. table.concat(a_Params, ", ") .. "}");
+		return nil, (ErrMsg or "<no message");
 	end
 	Stmt:bind_values(unpack(a_Params));
 	if (a_Callback == nil) then
@@ -171,6 +174,47 @@ function SQLite:LoadPlayerAreasInWorld(a_WorldName, a_PlayerName)
 		stmt:finalize();
 	end
 	
+	return res;
+end
+
+
+
+
+
+--- Loads all player allowances in the specified world
+function SQLite:LoadPlayerAllowancesInWorld(a_WorldName, a_PlayerName)
+	local res = {};
+	self:ExecuteStatement(
+		[[
+			SELECT Areas.MinX AS MinX, Areas.MinZ AS MinZ, Areas.MaxX AS MaxX, Areas.MaxZ as MaxZ,
+				Areas.StartX AS StartX, Areas.StartZ AS StartZ, Areas.EndX AS EndX, Areas.EndZ AS EndZ,
+				Areas.PlayerName AS PlayerName, Areas.Name AS Name, Areas.ID AS ID,
+				Areas.GalleryIndex AS GalleryIndex, Areas.GalleryName AS GalleryName
+			FROM Areas INNER JOIN Allowances ON Areas.ID = Allowances.AreaID
+			WHERE Areas.WorldName = ? AND Allowances.FriendName = ?
+		]],
+		{
+			a_WorldName,
+			a_PlayerName,
+		},
+		function (a_Values)
+			local Gallery = FindGalleryByName(a_Values.GalleryName)
+			if (Gallery == nil) then
+				return;
+			end
+			table.insert(res,
+				{
+					ID = a_Values.ID,
+					MinX = a_Values.MinX, MaxX = a_Values.MaxX, MinZ = a_Values.MinZ, MaxZ = a_Values.MaxZ,
+					StartX = a_Values.StartX, EndX = a_Values.EndX, StartZ = a_Values.StartZ, EndZ = a_Values.EndZ,
+					Gallery = Gallery,
+					GalleryIndex = a_Values.GalleryIndex,
+					PlayerName = a_Values.PlayerName,
+					Name = a_AreaName,
+				}
+			);
+		end
+	);
 	return res;
 end
 
@@ -463,6 +507,86 @@ end
 
 
 
+--- Adds the playername to the list of allowed players in the specified area
+-- Returns success state and an error message in case of failure
+function SQLite:AllowPlayerInArea(a_Area, a_PlayerName)
+	assert(a_Area ~= nil);
+	assert(a_Area.ID ~= nil);
+	assert(type(a_PlayerName) == "string");
+	
+	-- First try if the pairing is already there:
+	local IsThere = false;
+	local IsSuccess, Msg = self:ExecuteStatement(
+		"SELECT * FROM Allowances WHERE AreaID = ? AND FriendName = ?",
+		{
+			a_Area.ID,
+			a_PlayerName
+		},
+		function (a_Values)
+			IsThere = true;
+		end
+	);
+	if not(IsSuccess) then
+		return false, msg;
+	end
+	if (IsThere) then
+		return false, a_PlayerName .. " is already allowed";
+	end
+	
+	-- Insert the new pairing
+	return self:ExecuteStatement(
+		"INSERT INTO Allowances (AreaID, FriendName) VALUES (?, ?)",
+		{
+			a_Area.ID,
+			a_PlayerName
+		}
+	);
+end
+
+
+
+
+
+--- Removes the playername from the list of allowed players in the specified area
+-- Returns success state and an error message in case of failure
+function SQLite:DenyPlayerInArea(a_Area, a_PlayerName)
+	assert(a_Area ~= nil);
+	assert(a_Area.ID ~= nil);
+	assert(type(a_PlayerName) == "string");
+	
+	-- First try whether the pairing is already there:
+	local IsThere = false;
+	local IsSuccess, Msg = self:ExecuteStatement(
+		"SELECT * FROM Allowances WHERE AreaID = ? AND FriendName = ?",
+		{
+			a_Area.ID,
+			a_PlayerName
+		},
+		function (a_Values)
+			IsThere = true;
+		end
+	);
+	if not(IsSuccess) then
+		return false, msg;
+	end
+	if not(IsThere) then
+		return false, a_PlayerName .. " has not been allowed";
+	end
+	
+	-- Insert the new pairing
+	return self:ExecuteStatement(
+		"DELETE FROM Allowances WHERE AreaID = ? AND FriendName = ?",
+		{
+			a_Area.ID,
+			a_PlayerName
+		}
+	);
+end
+
+
+
+
+
 function SQLite_CreateStorage(a_Params)
 	DB = SQLite;
 	local DBFile = a_Params.File or "Galleries.sqlite";
@@ -492,9 +616,15 @@ function SQLite_CreateStorage(a_Params)
 		"GalleryName",
 		"NextAreaIdx",
 	};
+	local AllowancesColumns =
+	{
+		"AreaID",
+		"FriendName"
+	};
 	if (
-		not(DB:CreateDBTable("Areas", AreasColumns)) or
-		not(DB:CreateDBTable("GalleryEnd", GalleryEndColumns))
+		not(DB:CreateDBTable("Areas",      AreasColumns)) or
+		not(DB:CreateDBTable("GalleryEnd", GalleryEndColumns)) or
+		not(DB:CreateDBTable("Allowances", AllowancesColumns))
 	) then
 		LOGWARNING(PLUGIN_PREFIX .. "Cannot create DB tables!");
 		error("Cannot create DB tables!");

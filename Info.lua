@@ -113,6 +113,20 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 			Handler = nil,
 			Subcommands =
 			{
+				allow =
+				{
+					HelpString = "allows a friend to build at your area",
+					Permission = "gallery.allow",
+					Handler = HandleCmdAllow,
+					ParameterCombinations =
+					{
+						{
+							Params = "FriendName",
+							Help = "allows the specified friend to build at your area where you're standing now",
+						},
+					},
+				},
+				
 				claim =
 				{
 					HelpString = "claims a new area",
@@ -126,6 +140,20 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						},
 					},
 				},  -- claim
+				
+				deny =
+				{
+					HelpString = "denies a friend the build permissions for your area",
+					Permission = "gallery.deny",
+					Handler = HandleCmdDeny,
+					ParameterCombinations =
+					{
+						{
+							Params = "FormerFriendName",
+							Help = "denies the specified friend the build permission to your area where you're standing now",
+						},
+					},
+				},
 				
 				goto =
 				{

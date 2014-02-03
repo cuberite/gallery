@@ -73,7 +73,10 @@ end
 
 function OnPlayerSpawned(a_Player)
 	-- Read this player's areas for this world:
-	SetPlayerAreas(a_Player, g_DB:LoadPlayerAreasInWorld(a_Player:GetWorld():GetName(), a_Player:GetName()));
+	local WorldName = a_Player:GetWorld():GetName();
+	local PlayerName = a_Player:GetName();
+	SetPlayerAreas(a_Player, g_DB:LoadPlayerAreasInWorld(WorldName, PlayerName));
+	SetPlayerAllowances(WorldName, PlayerName, g_DB:LoadPlayerAllowancesInWorld(WorldName, PlayerName));
 	return false;
 end
 

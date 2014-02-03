@@ -334,9 +334,19 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 			Description = "Create a .schematic file out of an in-game cuboid.",
 			RecommendedGroups = "admins",
 		},
+		["gallery.allow"] =
+		{
+			Description = "Allow another player to build in your area.",
+			RecommendedGroups = "normal users",
+		},
 		["gallery.claim"] =
 		{
 			Description = "Claim an area in any gallery.",
+			RecommendedGroups = "normal users",
+		},
+		["gallery.deny"] =
+		{
+			Description = "Deny another player to build in your area.",
 			RecommendedGroups = "normal users",
 		},
 		["gallery.goto"] =

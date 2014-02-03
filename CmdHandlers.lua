@@ -211,6 +211,52 @@ end
 
 
 
+function HandleCmdDeny(a_Split, a_Player)
+	-- Check the params:
+	if (#a_Split < 3) then
+		a_Player:SendMessage("You need to specify the player whom to allow here.");
+		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " deny <FormerFriendName>");
+		return true;
+	end
+	local FormerFriendName = a_Split[3];
+	
+	-- Get the area to be allowed:
+	local BlockX = math.floor(a_Player:GetPosX());
+	local BlockZ = math.floor(a_Player:GetPosZ());
+	local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
+	if (Area == nil) then
+		a_Player:SendMessage("You do not own this area");
+		return true;
+	end
+	
+	-- Deny the player:
+	local res, msg = g_DB:DenyPlayerInArea(Area, FormerFriendName);
+	if not(res) then
+		a_Player:SendMessage(msg or "Unknown failure");
+		return true;
+	end
+	
+	-- Reload the allowed player's allowances:
+	local WorldName = a_Player:GetWorld():GetName();
+	local Allowances = GetPlayerAllowances(WorldName, FormerFriendName);
+	if (Allowances ~= nil) then
+		local NewAllowances = {};
+		for idx, allow in ipairs(Allowances) do
+			if (allow ~= Area) then
+				table.insert(NewAllowances, allow);
+			end
+		end
+		SetPlayerAllowances(WorldName, FormerFriendName, NewAllowances);
+	end
+	
+	a_Player:SendMessage("You have denied " .. FormerFriendName .. " to build in your area " .. DescribeArea(Area));
+	return true;
+end
+
+
+
+
+
 function HandleCmdList(a_Split, a_Player)
 	local WorldName = a_Player:GetWorld():GetName();
 

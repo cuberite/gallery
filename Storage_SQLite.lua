@@ -33,8 +33,10 @@ end
 
 
 
---- Executes the SQL statement, substituting "?" in the SQL with the specified params; calls a_Callback for each row
+--- Executes the SQL statement, substituting "?" in the SQL with the specified params
+-- Calls a_Callback for each row
 -- The callback receives a dictionary table containing the row values (stmt:nrows())
+-- Returns false and error message on failure, or true on success
 function SQLite:ExecuteStatement(a_SQL, a_Params, a_Callback)
 	assert(a_SQL ~= nil);
 	assert(a_Params ~= nil);
@@ -505,7 +507,7 @@ end
 
 
 
---- Adds the playername to the list of allowed players in the specified gallery
+--- Adds the playername to the list of allowed players in the specified area
 -- Returns success state and an error message in case of failure
 function SQLite:AllowPlayerInArea(a_Area, a_PlayerName)
 	assert(a_Area ~= nil);
@@ -532,15 +534,53 @@ function SQLite:AllowPlayerInArea(a_Area, a_PlayerName)
 	end
 	
 	-- Insert the new pairing
-	self:ExecuteStatement(
+	return self:ExecuteStatement(
 		"INSERT INTO Allowances (AreaID, FriendName) VALUES (?, ?)",
 		{
 			a_Area.ID,
 			a_PlayerName
 		}
 	);
+end
+
+
+
+
+
+--- Removes the playername from the list of allowed players in the specified area
+-- Returns success state and an error message in case of failure
+function SQLite:DenyPlayerInArea(a_Area, a_PlayerName)
+	assert(a_Area ~= nil);
+	assert(a_Area.ID ~= nil);
+	assert(type(a_PlayerName) == "string");
 	
-	return true;
+	-- First try whether the pairing is already there:
+	local IsThere = false;
+	local IsSuccess, Msg = self:ExecuteStatement(
+		"SELECT * FROM Allowances WHERE AreaID = ? AND FriendName = ?",
+		{
+			a_Area.ID,
+			a_PlayerName
+		},
+		function (a_Values)
+			IsThere = true;
+		end
+	);
+	if not(IsSuccess) then
+		return false, msg;
+	end
+	if not(IsThere) then
+		return false, a_PlayerName .. " has not been allowed";
+	end
+	
+	-- Insert the new pairing
+	return self:ExecuteStatement(
+		"DELETE FROM Allowances WHERE AreaID = ? AND FriendName = ?",
+		{
+			a_Area.ID,
+			a_PlayerName
+		}
+	);
 end
 
 

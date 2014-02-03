@@ -76,7 +76,7 @@ function OnPlayerSpawned(a_Player)
 	local WorldName = a_Player:GetWorld():GetName();
 	local PlayerName = a_Player:GetName();
 	SetPlayerAreas(a_Player, g_DB:LoadPlayerAreasInWorld(WorldName, PlayerName));
-	SetPlayerAllowances(a_Player, g_DB:LoadPlayerAllowancesInWorld(WorldName, PlayerName));
+	SetPlayerAllowances(WorldName, PlayerName, g_DB:LoadPlayerAllowancesInWorld(WorldName, PlayerName));
 	return false;
 end
 

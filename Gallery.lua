@@ -196,7 +196,7 @@ function LoadAllPlayersAreas()
 				function (a_Player)
 					local PlayerName = a_Player:GetName();
 					SetPlayerAreas(a_Player, g_DB:LoadPlayerAreasInWorld(WorldName, PlayerName));
-					SetPlayerAllowances(a_Player, g_DB:LoadPlayerAllowancesInWorld(WorldName, PlayerName));
+					SetPlayerAllowances(WorldName, PlayerName, g_DB:LoadPlayerAllowancesInWorld(WorldName, PlayerName));
 				end
 			);
 		end
@@ -281,6 +281,9 @@ end
 
 
 function GetPlayerAllowances(a_WorldName, a_PlayerName)
+	assert(a_WorldName ~= nil);
+	assert(a_PlayerName ~= nil);
+	
 	local res = g_PlayerAllowances[a_WorldName][a_PlayerName];
 	if (res == nil) then
 		res = {};
@@ -293,13 +296,16 @@ end
 
 
 
-function SetPlayerAllowances(a_Player, a_Allowances)
-	local WorldAllowances = g_PlayerAllowances[a_Player:GetWorld():GetName()];
+function SetPlayerAllowances(a_WorldName, a_PlayerName, a_Allowances)
+	assert(a_WorldName ~= nil);
+	assert(a_PlayerName ~= nil);
+	
+	local WorldAllowances = g_PlayerAllowances[a_WorldName];
 	if (WorldAllowances == nil) then
 		WorldAllowances = {};
-		g_PlayerAllowances[a_Player:GetWorld():GetName()] = WorldAllowances;
+		g_PlayerAllowances[a_WorldName] = WorldAllowances;
 	end
-	WorldAllowances[a_Player:GetName()] = a_Allowances;
+	WorldAllowances[a_PlayerName] = a_Allowances;
 end
 
 

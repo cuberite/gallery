@@ -141,7 +141,6 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					},
 				},  -- claim
 				
-				--[[
 				deny =
 				{
 					HelpString = "denies a friend the build permissions for your area",
@@ -150,12 +149,11 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					ParameterCombinations =
 					{
 						{
-							Params = "FriendName",
+							Params = "FormerFriendName",
 							Help = "denies the specified friend the build permission to your area where you're standing now",
 						},
 					},
 				},
-				--]]
 				
 				goto =
 				{

@@ -218,11 +218,22 @@ end
 
 
 function OnExploding(a_World, a_ExplosionSize, a_CanCauseFire, a_BlockX, a_BlockY, a_BlockZ, a_Source, a_Data)
-	local Gallery = FindGalleryByCoords(a_World, a_BlockX, a_BlockZ);
-	if (Gallery ~= nil) then
-		-- Abort the explosion
-		LOG("Aborted explosion at {" .. a_BlockX .. ", " .. a_BlockY .. ", " .. a_BlockZ .. "} due to gallery " .. Gallery.Name);
-		return true;
+	-- Find any gallery close enough to the explosion:
+	local MinX = a_BlockX - a_ExplosionSize - 1;
+	local MaxX = a_BlockX + a_ExplosionSize + 1;
+	local MinZ = a_BlockZ - a_ExplosionSize - 1;
+	local MaxZ = a_BlockZ + a_ExplosionSize + 1;
+	for idx, gal in ipairs(g_Galleries) do
+		if (
+			(gal.World == a_World) and
+			(MaxX >= gal.MinX) and
+			(MinX <= gal.MaxX) and
+			(MaxZ >= gal.MinZ) and
+			(MinZ <= gal.MaxZ)
+		) then
+			-- Gallery found, abort the explosion:
+			return true;
+		end
 	end
 	
 	-- Let it explode

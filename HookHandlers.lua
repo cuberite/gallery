@@ -252,6 +252,7 @@ function WorldEditCallback(a_MinX, a_MaxX, a_MinY, a_MaxY, a_MinZ, a_MaxZ, a_Pla
 	local GalMin = FindGalleryByCoords(a_World, a_MinX, a_MinZ);
 	local GalMax = FindGalleryByCoords(a_World, a_MaxX, a_MaxZ);
 	if (GalMin ~= GalMax) then
+		a_Player:SendMessage(cChatColor.LightPurple .. "WorldEdit actions across galleries are not allowed");
 		return true;
 	end
 	if (GalMin == nil) then
@@ -267,10 +268,18 @@ function WorldEditCallback(a_MinX, a_MaxX, a_MinY, a_MaxY, a_MinZ, a_MaxZ, a_Pla
 		(a_MaxX >= Area.EndZ)   or (a_MaxZ >= Area.EndZ)       -- Max not in area / on sidewalk
 	) then
 		-- The player doesn't own this area, allow WE only with an admin permission
-		return not(a_Player:HasPermission("gallery.admin.worldedit"));
+		if (a_Player:HasPermission("gallery.admin.worldedit")) then
+			return false;
+		end
+		a_Player:SendMessage(cChatColor.LightPurple .. "Cannot allow WorldEdit action, you don't own the area");
+		return true;
 	end
 	
-	return not(a_Player:HasPermission("gallery.worldedit"));
+	if (a_Player:HasPermission("gallery.worldedit")) then
+		return false;
+	end
+	a_Player:SendMessage(cChatColor.LightPurple .. "Cannot allow WorldEdit action, you don't own the area");
+	return true;
 end
 
 

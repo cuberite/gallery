@@ -260,17 +260,17 @@ function WorldEditCallback(a_MinX, a_MaxX, a_MinY, a_MaxY, a_MinZ, a_MaxZ, a_Pla
 	end
 	
 	-- If the minima and maxima aren't in the same area, disallow unless admin override permission
-	local Area = function FindPlayerAreaByCoords(a_Player, a_MinX, a_MinZ)
+	local Area = FindPlayerAreaByCoords(a_Player, a_MinX, a_MinZ);
 	if (
 		(Area == nil) or
 		(a_MinX <  Area.StartZ) or (a_MinZ <  Area.StartZ) or  -- Min is on sidewalk
 		(a_MaxX >= Area.EndZ)   or (a_MaxZ >= Area.EndZ)       -- Max not in area / on sidewalk
 	) then
 		-- The player doesn't own this area, allow WE only with an admin permission
-		return not(a_Player:HasPermission("gallery.admin.worldedit");
+		return not(a_Player:HasPermission("gallery.admin.worldedit"));
 	end
 	
-	return not(a_Player:HasPermission("gallery.worldedit");
+	return not(a_Player:HasPermission("gallery.worldedit"));
 end
 
 
@@ -283,7 +283,7 @@ function OnPluginsLoaded()
 		function (a_World)
 			local res = cPluginManager:CallPlugin("WorldEdit", "RegisterCallback", "Gallery", "WorldEditCallback", a_World:GetName());
 		end
-	end
+	);
 end
 
 

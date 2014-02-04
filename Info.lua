@@ -334,6 +334,11 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 			Description = "Create a .schematic file out of an in-game cuboid.",
 			RecommendedGroups = "admins",
 		},
+		["gallery.admin.worldedit"] =
+		{
+			Description = "Allows the use of worldedit anywhere in the gallery.",
+			RecommendedGroups = "admins",
+		},
 		["gallery.allow"] =
 		{
 			Description = "Allow another player to build in your area.",
@@ -377,6 +382,11 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 		["gallery.name"] =
 		{
 			Description = "Rename an area owned by self.",
+			RecommendedGroups = "normal users",
+		},
+		["gallery.worldedit"] =
+		{
+			Description = "Allows the use of WorldEdit within each individual area",
 			RecommendedGroups = "normal users",
 		},
 	},

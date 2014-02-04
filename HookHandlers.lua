@@ -16,6 +16,7 @@ function InitHookHandlers()
 	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_LEFT_CLICK,  OnPlayerLeftClick);
 	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_RIGHT_CLICK, OnPlayerRightClick);
 	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_SPAWNED,     OnPlayerSpawned);
+	cPluginManager:AddHook(cPluginManager.HOOK_PLUGINS_LOADED,     OnPluginsLoaded);
 end
 
 
@@ -238,6 +239,51 @@ function OnExploding(a_World, a_ExplosionSize, a_CanCauseFire, a_BlockX, a_Block
 	
 	-- Let it explode
 	return false;
+end
+
+
+
+
+
+--- This function gets called by WorldEdit each time a player performs a WE operation
+-- Return true to abort the operation, false to continue
+function WorldEditCallback(a_MinX, a_MaxX, a_MinY, a_MaxY, a_MinZ, a_MaxZ, a_Player, a_World, a_Operation)
+	-- If the minima and maxima aren't in the same gallery, disallow (yes, even admins canNOT use those)
+	local GalMin = FindGalleryByCoords(a_World, a_MinX, a_MinZ);
+	local GalMax = FindGalleryByCoords(a_World, a_MaxX, a_MaxZ);
+	if (GalMin ~= GalMax) then
+		return true;
+	end
+	if (GalMin == nil) then
+		-- Allow WE outside the galleries
+		return false;
+	end
+	
+	-- If the minima and maxima aren't in the same area, disallow unless admin override permission
+	local Area = function FindPlayerAreaByCoords(a_Player, a_MinX, a_MinZ)
+	if (
+		(Area == nil) or
+		(a_MinX <  Area.StartZ) or (a_MinZ <  Area.StartZ) or  -- Min is on sidewalk
+		(a_MaxX >= Area.EndZ)   or (a_MaxZ >= Area.EndZ)       -- Max not in area / on sidewalk
+	) then
+		-- The player doesn't own this area, allow WE only with an admin permission
+		return not(a_Player:HasPermission("gallery.admin.worldedit");
+	end
+	
+	return not(a_Player:HasPermission("gallery.worldedit");
+end
+
+
+
+
+
+function OnPluginsLoaded()
+	-- Add a WE hook to each world
+	cRoot:Get():ForEachWorld(
+		function (a_World)
+			local res = cPluginManager:CallPlugin("WorldEdit", "RegisterCallback", "Gallery", "WorldEditCallback", a_World:GetName());
+		end
+	end
 end
 
 

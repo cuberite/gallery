@@ -111,7 +111,7 @@ function RegisterPluginInfoCommands()
 						info.Alias = {info.Alias};
 					end
 					for idx, alias in ipairs(info.Alias) do
-						cPluginManager.BindCommand(a_Prefix .. alias, info.Permission or "", info.Handler, HelpString);
+						cPluginManager.BindCommand(a_Prefix .. alias, info.Permission or "", Handler, HelpString);
 					end
 				end
 			end

@@ -264,8 +264,8 @@ function WorldEditCallback(a_MinX, a_MaxX, a_MinY, a_MaxY, a_MinZ, a_MaxZ, a_Pla
 	local Area = FindPlayerAreaByCoords(a_Player, a_MinX, a_MinZ);
 	if (
 		(Area == nil) or
-		(a_MinX <  Area.StartZ) or (a_MinZ <  Area.StartZ) or  -- Min is on sidewalk
-		(a_MaxX >= Area.EndZ)   or (a_MaxZ >= Area.EndZ)       -- Max not in area / on sidewalk
+		(a_MinX <  Area.StartX) or (a_MinZ <  Area.StartZ) or  -- Min is on sidewalk
+		(a_MaxX >= Area.EndX)   or (a_MaxZ >= Area.EndZ)       -- Max not in area / on sidewalk
 	) then
 		-- The player doesn't own this area, allow WE only with an admin permission
 		if (a_Player:HasPermission("gallery.admin.worldedit")) then

@@ -293,6 +293,20 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						},
 					},
 				},  -- template
+				
+				visit =
+				{
+					HelpString = "teleports you to the specified gallery",
+					Permission = "gallery.visit",
+					Handler = HandleCmdVisit,
+					ParameterCombinations =
+					{
+						{
+							Params = "GalleryName",
+							Help = "Teleports you to the specified gallery",
+						},
+					},
+				},  -- visit
 			},  -- Subcommands
 		},  -- ["/gallery"]
 	},  -- Commands
@@ -384,9 +398,14 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 			Description = "Rename an area owned by self.",
 			RecommendedGroups = "normal users",
 		},
+		["gallery.visit"] =
+		{
+			Description = "Teleport to any gallery.",
+			RecommendedGroups = "normal users",
+		},
 		["gallery.worldedit"] =
 		{
-			Description = "Allows the use of WorldEdit within each individual area",
+			Description = "Allows the use of WorldEdit within each individual area.",
 			RecommendedGroups = "normal users",
 		},
 	},

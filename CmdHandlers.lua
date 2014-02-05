@@ -714,6 +714,30 @@ end
 
 
 
+function HandleCmdVisit(a_Split, a_Player)
+	if (#a_Split ~= 3) then
+		a_Player:SendMessage("This command requires one parameter:");
+		a_Player:SendMessage(cChatColor.Green .. g_Config.CommandPrefix .. " visit " .. cChatColor.Blue .. "<GalleryName>");
+		return true;
+	end
+	local GalleryName = a_Split[3];
+	local Gallery = FindGalleryByName(GalleryName);
+	if (Gallery == nil) then
+		a_Player:SendMessage("There is no gallery named \"" .. GalleryName .. "\" in this world.");
+		return true;
+	end
+	local BlockX, BlockZ = AreaCoordsToBlockCoords(Gallery, AreaIndexToCoords(0, Gallery));
+	assert(BlockX ~= nil);
+	assert(BlockZ ~= nil);
+	a_Player:TeleportToCoords(BlockX + 0.5, Gallery.TeleportCoordY + 0.001, BlockZ + 0.5);
+	a_Player:SendMessage("Welcome to " .. GalleryName .. ".");
+	return true;
+end
+
+
+
+
+
 function SendUsage(a_Player, a_Message)
 	if (a_Message ~= nil) then
 		a_Player:SendMessage(a_Message);

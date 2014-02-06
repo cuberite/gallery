@@ -14,6 +14,17 @@ local SQLite = {};
 
 
 
+--- Formats the datetime (as returned by os.time() ) into textual representation used in the DB
+function FormatDateTime(a_DateTime)
+	assert(type(a_DateTime) == "number");
+	
+	return os.date("%Y-%m-%dT%H:%M:%S", a_DateTime);
+end
+
+
+
+
+
 --- Executes an SQL query on the SQLite DB
 function SQLite:DBExec(a_SQL, a_Callback, a_CallbackParam)
 	assert(a_SQL ~= nil);
@@ -418,7 +429,7 @@ function SQLite:AddArea(a_Area)
 	assert(a_Area ~= nil);
 	
 	self:ExecuteStatement(
-		"INSERT INTO Areas (MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, PlayerName, Name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO Areas (MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, PlayerName, Name, DateClaimed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		{
 			a_Area.MinX, a_Area.MaxX, a_Area.MinZ, a_Area.MaxZ,
 			a_Area.StartX, a_Area.EndX, a_Area.StartZ, a_Area.EndZ,
@@ -426,6 +437,7 @@ function SQLite:AddArea(a_Area)
 			a_Area.Gallery.WorldName,
 			a_Area.PlayerName,
 			a_Area.Name,
+			FormatDateTime(os.time())
 		}
 	);
 	a_Area.ID = self.DB:last_insert_rowid();
@@ -609,7 +621,8 @@ function SQLite_CreateStorage(a_Params)
 		"WorldName",                         -- Name of the world where the area belongs
 		"PlayerName",                        -- Name of the owner
 		"GalleryName",                       -- Name of the gallery from which the area has been claimed
-		"GalleryIndex"                       -- Index of the area in the gallery from which this area has been claimed
+		"GalleryIndex",                      -- Index of the area in the gallery from which this area has been claimed
+		"DateClaimed",                       -- ISO 8601 DateTime of the claiming
 	};
 	local GalleryEndColumns =
 	{

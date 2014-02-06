@@ -158,6 +158,32 @@ function ImprintChunkWithGallery(a_MinX, a_MinZ, a_MaxX, a_MaxZ, a_ChunkDesc, a_
 			end
 		end
 	end
+
+	-- Imprint the biome into the portion of the chunk covered by the gallery
+	local Biome = a_Gallery.Biome;
+	if (Biome ~= nil) then
+		local BlockX = a_ChunkDesc:GetChunkX() * 16;
+		local BlockZ = a_ChunkDesc:GetChunkZ() * 16;
+		local MinX = 0;
+		if (a_Gallery.AreaMinX > BlockX) then
+			MinX = a_Gallery.AreaMinX - BlockX;
+		end
+		local MaxX = 15;
+		if (a_Gallery.AreaMaxX < BlockX + 15) then
+			MaxX = a_Gallery.AreaMaxX - BlockX;
+		end
+		local MinZ = 0;
+		if (a_Gallery.AreaMinZ > BlockZ) then
+			MinZ = a_Gallery.AreaMinZ - BlockZ;
+		end
+		local MaxZ = 15;
+		if (a_Gallery.AreaMaxZ < BlockZ + 15) then
+			MaxZ = a_Gallery.AreaMaxZ - BlockZ;
+		end
+		for z = MinZ, MaxZ do for x = MinX, MaxX do
+			a_ChunkDesc:SetBiome(x, z, Biome);
+		end end
+	end
 	
 	-- Fix the heightmap after all those changes:
 	a_ChunkDesc:UpdateHeightmap();
@@ -210,6 +236,10 @@ function OnChunkGenerating(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
 	a_ChunkDesc:SetUseDefaultHeight(false);
 	a_ChunkDesc:SetUseDefaultStructures(false);
 	a_ChunkDesc:SetUseDefaultFinish(false);
+	if (Gallery.Biome ~= nil) then
+		a_ChunkDesc:SetUseDefaultBiomes(false);
+		-- The biome will be set in ImprintChunk()
+	end
 	ImprintChunk(a_ChunkX, a_ChunkZ, a_ChunkDesc, false);
 	return true;
 end

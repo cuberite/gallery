@@ -41,6 +41,7 @@ checked for validity and preprocessed to contain the following members:
 	AreaTemplateSchematic -- The loaded schematic used for new areas
 	AreaTemplateSchematicTop -- An empty schematic that fills the space from the AreaTemplateSchematic to the top of the world
 	AreaTop -- The Y size of the AreaTemplateSchematic
+	Biome -- The biome to set in the gallery. String in the config file, biome type in the in-memory structure.
 }
 --]]
 

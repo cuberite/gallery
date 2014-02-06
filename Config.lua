@@ -30,7 +30,8 @@ local g_GalleryRequiredParams =
 local g_GalleryOptionalParams =
 {
 	{ Name = "AreaTemplate", Type = "string" },
-	{ Name = "AreaEdge", Type = "number" },
+	{ Name = "AreaEdge",     Type = "number" },
+	{ Name = "Biome",        Type = "string" },
 } ;
 
 
@@ -181,6 +182,17 @@ function CheckGallery(a_Gallery, a_Index)
 		-- "z-" direction, the areas are calculated from the MaxZ side of the gallery
 		a_Gallery.AreaMinZ = a_Gallery.MaxZ - a_Gallery.AreaSizeZ * a_Gallery.NumAreasPerZ;
 		a_Gallery.AreaMaxZ = a_Gallery.MaxZ;
+	end
+	
+	-- Look up biome, if set, and convert to EMCSBiome enum:
+	if (a_Gallery.Biome ~= nil) then
+		local BiomeType = StringToBiome(a_Gallery.Biome);
+		if (BiomeType == biInvalidBiome) then
+			LOGWARNING("Gallery " .. a_Gallery.Name .. " has invalid Biome \"" .. a_Gallery.Biome .. "\"; biome support turned off.");
+			a_Gallery.Biome = nil;
+		else
+			a_Gallery.Biome = BiomeType;
+		end
 	end
 
 	-- All okay

@@ -320,7 +320,7 @@ function OnPluginsLoaded()
 	-- Add a WE hook to each world
 	cRoot:Get():ForEachWorld(
 		function (a_World)
-			local res = cPluginManager:CallPlugin("WorldEdit", "RegisterCallback", "Gallery", "WorldEditCallback", a_World:GetName());
+			local res = cPluginManager:CallPlugin("WorldEdit", "RegisterAreaCallback", "Gallery", "WorldEditCallback", a_World:GetName());
 		end
 	);
 end

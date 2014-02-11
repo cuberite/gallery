@@ -286,8 +286,15 @@ function WorldEditCallback(a_MinX, a_MaxX, a_MinY, a_MaxY, a_MinZ, a_MaxZ, a_Pla
 		return true;
 	end
 	if (GalMin == nil) then
-		-- Allow WE outside the galleries
-		return false;
+		-- Outside the galleries, check the config and permissions:
+		if (g_Config.AllowWEOutsideGalleries) then
+			return false;
+		end
+		if (a_Player:HasPermission("gallery.admin.worldeditoutside")) then
+			return false;
+		end
+		a_Player:SendMessage(cChatColor.LightPurple .. "Cannot allow WorldEdit action, outside the galleries");
+		return true;
 	end
 	
 	-- If the minima and maxima aren't in the same area, disallow unless admin override permission

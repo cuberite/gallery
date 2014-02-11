@@ -125,7 +125,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 							Help = "allows the specified friend to build at your area where you're standing now",
 						},
 					},
-				},
+				},  -- allow
 				
 				claim =
 				{
@@ -153,7 +153,21 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 							Help = "denies the specified friend the build permission to your area where you're standing now",
 						},
 					},
-				},
+				},  -- deny
+				
+				fork =
+				{
+					HelpString = "copy-and-claims an area",
+					Permission = "gallery.fork",
+					Handler = HandleCmdFork,
+					ParameterCombinations =
+					{
+						{
+							Params = "",
+							Help = "claims a new area and fills it with a copy of the area you're now standing in",
+						},
+					},
+				},  -- fork
 				
 				goto =
 				{

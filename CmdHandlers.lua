@@ -299,6 +299,51 @@ end
 
 
 
+function HandleCmdFork(a_Split, a_Player)
+	-- Check params - we expect none:
+	if (#a_Split ~= 2) then
+		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " fork");
+		return true;
+	end
+	
+	-- Find the area where the player is:
+	local World = a_Player:GetWorld();
+	local BlockX = math.floor(a_Player:GetPosX());
+	local BlockZ = math.floor(a_Player:GetPosZ());
+	local PlayerID = a_Player:GetUniqueID();
+	local Area = g_DB:LoadAreaByPos(World:GetName(), BlockX, BlockZ);
+	if (Area == nil) then
+		a_Player:SendMessage("There is no area claimed here, nothing to fork.");
+		return true;
+	end
+	
+	a_Player:SendMessage("Preparing the forked area, please stand by...");
+	
+	-- Claim a new area:
+	local NewArea, ErrMsg = ClaimArea(a_Player, Area.Gallery, Area);
+	if (NewArea == nil) then
+		a_Player:SendMessage(ErrMsg);
+		return true;
+	end
+	
+	-- Copy the area contents and teleport the player, once copied:
+	CopyAreaContents(Area, NewArea,
+		function ()
+			World:DoWithEntityByID(PlayerID,
+				function (a_Entity)
+					a_Entity:TeleportToCoords(NewArea.MinX + 0.5, NewArea.Gallery.TeleportCoordY + 0.001, NewArea.MinZ + 0.5);
+				end
+			);
+		end
+	);
+	
+	return true;
+end
+
+
+
+
+
 --- Handles the admin version of the goto command
 local function HandleCmdGotoAdmin(a_Split, a_Player)
 	-- "/gal goto @playername <areaname>"

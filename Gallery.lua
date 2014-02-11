@@ -121,7 +121,8 @@ end
 
 --- Claims an area in a gallery for the specified player. Returns a table describing the area
 -- If there's no space left in the gallery, returns nil and error message
-function ClaimArea(a_Player, a_Gallery)
+-- a_ForkFromArea is an optional param, specifying the area from which the new area is forking; used to write statistics into DB
+function ClaimArea(a_Player, a_Gallery, a_ForkFromArea)
 	local NextAreaIdx = a_Gallery.NextAreaIdx;
 	if (NextAreaIdx >= a_Gallery.MaxAreaIdx) then
 		return nil, "The gallery is full";
@@ -147,6 +148,7 @@ function ClaimArea(a_Player, a_Gallery)
 		GalleryIndex = a_Gallery.NextAreaIdx;
 		PlayerName = a_Player:GetName();
 		Name = a_Gallery.Name .. " " .. tostring(a_Gallery.NextAreaIdx);
+		ForkedFrom = a_ForkFromArea;
 	};
 	g_DB:AddArea(Area);
 	
@@ -159,6 +161,65 @@ function ClaimArea(a_Player, a_Gallery)
 	PlayerAreas[Area.Name] = Area;
 	
 	return Area;
+end
+
+
+
+
+
+--- Returns the chunk coords of chunks that intersect the given area
+-- The returned value has the form of { {Chunk1x, Chunk1z}, {Chunk2x, Chunk2z}, ...}
+function GetAreaChunkCoords(a_Area)
+	assert(type(a_Area) == "table");
+	local MinChunkX = math.floor(a_Area.MinX / 16);
+	local MinChunkZ = math.floor(a_Area.MinZ / 16);
+	local MaxChunkX = math.floor((a_Area.MaxX + 15) / 16);
+	local MaxChunkZ = math.floor((a_Area.MaxZ + 15) / 16);
+	local res = {};
+	for z = MinChunkZ, MaxChunkZ do
+		for x = MinChunkX, MaxChunkX do
+			table.insert(res, {x, z});
+		end
+	end
+	assert(#res > 0);
+	return res;
+end
+
+
+
+
+
+--- Copies the contents of src area into dst area, then calls the callback
+function CopyAreaContents(a_SrcArea, a_DstArea, a_DoneCallback)
+	assert(type(a_SrcArea) == "table");
+	assert(type(a_DstArea) == "table");
+	assert(a_SrcArea.Gallery == a_DstArea.Gallery);  -- Only supports copying in the same gallery
+	assert(a_SrcArea.Gallery.World ~= nil);
+	assert((a_DoneCallback == nil) or (type(a_DoneCallback) == "function"));
+	
+	local Clipboard = cBlockArea();
+	local World = a_SrcArea.Gallery.World;
+	
+	-- Callback that is scheduled once the src is copied into Clipboard
+	local function WriteDst()
+		World:ChunkStay(GetAreaChunkCoords(a_DstArea), nil,
+			function()
+				Clipboard:Write(World, a_DstArea.MinX, 0, a_DstArea.MinZ);
+				if (a_DoneCallback ~= nil) then
+					LOGINFO("Calling DoneCallback...");
+					a_DoneCallback();
+				end
+			end
+		)
+	end
+	
+	-- Copy the source area into a clipboard:
+	World:ChunkStay(GetAreaChunkCoords(a_SrcArea), nil,
+		function()
+			Clipboard:Read(World, a_SrcArea.MinX, a_SrcArea.MaxX - 1, 0, 255, a_SrcArea.MinZ, a_SrcArea.MaxZ - 1);
+			World:QueueTask(WriteDst);
+		end
+	);
 end
 
 

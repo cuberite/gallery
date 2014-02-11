@@ -726,7 +726,7 @@ function HandleCmdVisit(a_Split, a_Player)
 		a_Player:SendMessage("There is no gallery named \"" .. GalleryName .. "\" in this world.");
 		return true;
 	end
-	local BlockX, BlockZ = AreaCoordsToBlockCoords(Gallery, AreaIndexToCoords(0, Gallery));
+	local BlockX, MaxX, BlockZ = AreaCoordsToBlockCoords(Gallery, AreaIndexToCoords(0, Gallery));
 	assert(BlockX ~= nil);
 	assert(BlockZ ~= nil);
 	a_Player:TeleportToCoords(BlockX + 0.5, Gallery.TeleportCoordY + 0.001, BlockZ + 0.5);

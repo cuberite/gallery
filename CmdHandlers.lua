@@ -211,83 +211,6 @@ end
 
 
 
-function HandleCmdDeny(a_Split, a_Player)
-	-- Check the params:
-	if (#a_Split < 3) then
-		a_Player:SendMessage("You need to specify the player whom to allow here.");
-		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " deny <FormerFriendName>");
-		return true;
-	end
-	local FormerFriendName = a_Split[3];
-	
-	-- Get the area to be allowed:
-	local BlockX = math.floor(a_Player:GetPosX());
-	local BlockZ = math.floor(a_Player:GetPosZ());
-	local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
-	if (Area == nil) then
-		a_Player:SendMessage("You do not own this area");
-		return true;
-	end
-	
-	-- Deny the player:
-	local res, msg = g_DB:DenyPlayerInArea(Area, FormerFriendName);
-	if not(res) then
-		a_Player:SendMessage(msg or "Unknown failure");
-		return true;
-	end
-	
-	-- Reload the allowed player's allowances:
-	local WorldName = a_Player:GetWorld():GetName();
-	local Allowances = GetPlayerAllowances(WorldName, FormerFriendName);
-	if (Allowances ~= nil) then
-		local NewAllowances = {};
-		for idx, allow in ipairs(Allowances) do
-			if (allow ~= Area) then
-				table.insert(NewAllowances, allow);
-			end
-		end
-		SetPlayerAllowances(WorldName, FormerFriendName, NewAllowances);
-	end
-	
-	a_Player:SendMessage("You have denied " .. FormerFriendName .. " to build in your area " .. DescribeArea(Area));
-	return true;
-end
-
-
-
-
-
-function HandleCmdList(a_Split, a_Player)
-	local WorldName = a_Player:GetWorld():GetName();
-
-	-- First count the galleries in this world:
-	local NumGalleries = 0;
-	for idx, gal in ipairs(g_Galleries) do
-		if (gal.WorldName == WorldName) then
-			NumGalleries = NumGalleries + 1;
-		end
-	end
-	
-	if (NumGalleries == 0) then
-		a_Player:SendMessage("There are no galleries defined for this world.");
-		return true;
-	end
-	
-	-- List all the galleries in this world:
-	a_Player:SendMessage("Number of galleries in this world: " .. NumGalleries);
-	for idx, gal in ipairs(g_Galleries) do
-		if (gal.WorldName == WorldName) then
-			a_Player:SendMessage("  " .. gal.Name);
-		end
-	end
-	
-	return true;
-end
-
-
-
-
-
 function HandleCmdClaim(a_Split, a_Player)
 	if (#a_Split < 3) then
 		a_Player:SendMessage("You need to specify the gallery where to claim.");
@@ -330,26 +253,45 @@ end
 
 
 
-function HandleCmdMy(a_Split, a_Player)
-	if (#a_Split == 2) then
-		-- "/gal my" command, list all areas in this world
-		ListPlayerAreasInWorld(a_Player);
+function HandleCmdDeny(a_Split, a_Player)
+	-- Check the params:
+	if (#a_Split < 3) then
+		a_Player:SendMessage("You need to specify the player whom to allow here.");
+		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " deny <FormerFriendName>");
+		return true;
+	end
+	local FormerFriendName = a_Split[3];
+	
+	-- Get the area to be allowed:
+	local BlockX = math.floor(a_Player:GetPosX());
+	local BlockZ = math.floor(a_Player:GetPosZ());
+	local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
+	if (Area == nil) then
+		a_Player:SendMessage("You do not own this area");
 		return true;
 	end
 	
-	if (a_Split[3]:sub(1, 1) == '@') then
-		-- "/gal my @playername [<gallery>]" command, available only to admins
-		if not(a_Player:HasPermission("gallery.admin.my")) then
-			a_Player:SendMessage("You do not have the required permission to use this command");
-			return true;
+	-- Deny the player:
+	local res, msg = g_DB:DenyPlayerInArea(Area, FormerFriendName);
+	if not(res) then
+		a_Player:SendMessage(msg or "Unknown failure");
+		return true;
+	end
+	
+	-- Reload the allowed player's allowances:
+	local WorldName = a_Player:GetWorld():GetName();
+	local Allowances = GetPlayerAllowances(WorldName, FormerFriendName);
+	if (Allowances ~= nil) then
+		local NewAllowances = {};
+		for idx, allow in ipairs(Allowances) do
+			if (allow ~= Area) then
+				table.insert(NewAllowances, allow);
+			end
 		end
-		ListOtherPlayerAreas(a_Player, a_Split[3]:sub(2), a_Split[4]);
-		return true;
+		SetPlayerAllowances(WorldName, FormerFriendName, NewAllowances);
 	end
 	
-	-- "/gal my <gallery>" command, list all areas in the specified gallery
-	-- Note that the gallery may be in a different world, need to list using DB Storage
-	ListPlayerAreasInGallery(a_Player, a_Split[3]);
+	a_Player:SendMessage("You have denied " .. FormerFriendName .. " to build in your area " .. DescribeArea(Area));
 	return true;
 end
 
@@ -408,6 +350,146 @@ function HandleCmdGoto(a_Split, a_Player)
 	end
 	
 	a_Player:TeleportToCoords(Area.MinX + 0.5, Area.Gallery.TeleportCoordY + 0.001, Area.MinZ + 0.5);
+	return true;
+end
+
+
+
+
+
+function HandleCmdHelp(a_Split, a_Player)
+	local ColCmd    = cChatColor.Green;
+	local ColParams = cChatColor.Blue;
+	local ColText   = cChatColor.White;
+	
+	-- For the parameter-less invocation, list all the subcommands:
+	if (#a_Split == 2) then
+		SendUsage(a_Player, "Listing all subcommands, use " .. ColCmd .. g_Config.CommandPrefix .. " help " .. ColParams .. "<subcommand>" .. ColText .. " for more info on a specific subcommand");
+		return true;
+	end
+	
+	-- Find the requested subcommand:
+	local Subcommands = g_PluginInfo.Commands[a_Split[1]].Subcommands;
+	assert(Subcommands ~= nil);
+	local Subcommand = Subcommands[a_Split[3]];
+	if ((Subcommand == nil) or not(a_Player:HasPermission(Subcommand.Permission))) then
+		-- Not found or no permission to use that subcommand
+		a_Player:SendMessage("Subcommand " .. a_Split[3] .. " not found.");
+		SendUsage(a_Player);
+		return
+	end;
+	
+	-- Print detailed help on the subcommand:
+	local CommonPrefix = ColCmd .. g_Config.CommandPrefix .. " " .. a_Split[3];
+	a_Player:SendMessage(CommonPrefix .. ColText .. " - " .. Subcommand.HelpString);
+	local Variants = {};
+	for idx, variant in ipairs(Subcommand.ParameterCombinations or {}) do
+		if ((variant.Permission == nil) or a_Player:HasPermission(variant.Permission)) then
+			table.insert(Variants, "  " .. CommonPrefix .. " " .. ColParams .. (variant.Params or "") .. ColText .. " - " .. variant.Help);
+		end
+	end
+	if (#Variants == 0) then
+		a_Player:SendMessage("There is no specific parameter combination");
+	else
+		a_Player:SendMessage("The following parameter combinations are recognized:");
+		for idx, txt in ipairs(Variants) do
+			a_Player:SendMessage(txt);
+		end
+	end
+	
+	return true;
+end
+
+
+
+
+
+
+function HandleCmdInfo(a_Split, a_Player)
+	local BlockX = math.floor(a_Player:GetPosX());
+	local BlockZ = math.floor(a_Player:GetPosZ());
+
+	local Area = nil;
+	local LeadingLine = nil;
+	if (a_Player:HasPermission("gallery.admin.info")) then
+		-- Admin-level info tool, if the player has the necessary permissions, print info about anyone's area:
+		Area = g_DB:LoadAreaByPos(a_Player:GetWorld():GetName(), BlockX, BlockZ);
+		if (Area == nil) then
+			a_Player:SendMessage("There is no claimed area here.");
+			return true;
+		end;
+		LeadingLine = "This is " .. Area.PlayerName .. "'s area ";
+	else
+		-- Default infotool - print only info on own areas:
+		Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
+		if (Area == nil) then
+			a_Player:SendMessage("This isn't your area.");
+			return true;
+		end
+		LeadingLine = "This is your area ";
+	end
+
+	assert(Area ~= nil);
+	assert(LeadingLine ~= nil);
+	SendAreaDetails(a_Player, Area, LeadingLine);
+	return true;
+end
+
+
+
+
+
+function HandleCmdList(a_Split, a_Player)
+	local WorldName = a_Player:GetWorld():GetName();
+
+	-- First count the galleries in this world:
+	local NumGalleries = 0;
+	for idx, gal in ipairs(g_Galleries) do
+		if (gal.WorldName == WorldName) then
+			NumGalleries = NumGalleries + 1;
+		end
+	end
+	
+	if (NumGalleries == 0) then
+		a_Player:SendMessage("There are no galleries defined for this world.");
+		return true;
+	end
+	
+	-- List all the galleries in this world:
+	a_Player:SendMessage("Number of galleries in this world: " .. NumGalleries);
+	for idx, gal in ipairs(g_Galleries) do
+		if (gal.WorldName == WorldName) then
+			a_Player:SendMessage("  " .. gal.Name);
+		end
+	end
+	
+	return true;
+end
+
+
+
+
+
+function HandleCmdMy(a_Split, a_Player)
+	if (#a_Split == 2) then
+		-- "/gal my" command, list all areas in this world
+		ListPlayerAreasInWorld(a_Player);
+		return true;
+	end
+	
+	if (a_Split[3]:sub(1, 1) == '@') then
+		-- "/gal my @playername [<gallery>]" command, available only to admins
+		if not(a_Player:HasPermission("gallery.admin.my")) then
+			a_Player:SendMessage("You do not have the required permission to use this command");
+			return true;
+		end
+		ListOtherPlayerAreas(a_Player, a_Split[3]:sub(2), a_Split[4]);
+		return true;
+	end
+	
+	-- "/gal my <gallery>" command, list all areas in the specified gallery
+	-- Note that the gallery may be in a different world, need to list using DB Storage
+	ListPlayerAreasInGallery(a_Player, a_Split[3]);
 	return true;
 end
 
@@ -524,83 +606,57 @@ end
 
 
 
-function HandleCmdInfo(a_Split, a_Player)
+function HandleCmdReset(a_Split, a_Player)
+	-- Find the appropriate Area:
 	local BlockX = math.floor(a_Player:GetPosX());
 	local BlockZ = math.floor(a_Player:GetPosZ());
-
-	local Area = nil;
-	local LeadingLine = nil;
-	if (a_Player:HasPermission("gallery.admin.info")) then
-		-- Admin-level info tool, if the player has the necessary permissions, print info about anyone's area:
-		Area = g_DB:LoadAreaByPos(a_Player:GetWorld():GetName(), BlockX, BlockZ);
-		if (Area == nil) then
-			a_Player:SendMessage("There is no claimed area here.");
+	local Template = nil;
+	local TemplateTop = nil;
+	local AreaTop = nil;
+	local MinX, MinZ;
+	if (a_Player:HasPermission("gallery.admin.reset")) then
+		-- Admin-level reset tool, if the player has the necessary permissions, reset anyone's area:
+		local Gallery = FindGalleryByCoords(a_Player:GetWorld(), BlockX, BlockZ);
+		if (Gallery == nil) then
+			a_Player:SendMessage("There is no gallery here");
 			return true;
-		end;
-		LeadingLine = "This is " .. Area.PlayerName .. "'s area ";
+		end
+		MinX, MinZ = GetAreaCoordsFromBlockCoords(Gallery, BlockX, BlockZ);
+		Template = Gallery.AreaTemplateSchematic;
+		TemplateTop = Gallery.AreaTemplateSchematicTop;
+		AreaTop = Gallery.AreaTop;
 	else
-		-- Default infotool - print only info on own areas:
-		Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
+		-- Default reset tool - reset only own areas:
+		local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
 		if (Area == nil) then
 			a_Player:SendMessage("This isn't your area.");
 			return true;
 		end
-		LeadingLine = "This is your area ";
+		MinX = Area.MinX;
+		MinZ = Area.MinZ;
+		Template = Area.Gallery.AreaTemplateSchematic;
+		TemplateTop = Area.Gallery.AreaTemplateSchematicTop;
+		AreaTop = Area.Gallery.AreaTop;
 	end
 
-	assert(Area ~= nil);
-	assert(LeadingLine ~= nil);
-	SendAreaDetails(a_Player, Area, LeadingLine);
-	return true;
-end
-
-
-
-
-
-function HandleCmdHelp(a_Split, a_Player)
-	local ColCmd    = cChatColor.Green;
-	local ColParams = cChatColor.Blue;
-	local ColText   = cChatColor.White;
+	assert(MinX ~= nil);
+	assert(MinZ ~= nil);
+	assert(AreaTop ~= nil);
 	
-	-- For the parameter-less invocation, list all the subcommands:
-	if (#a_Split == 2) then
-		SendUsage(a_Player, "Listing all subcommands, use " .. ColCmd .. g_Config.CommandPrefix .. " help " .. ColParams .. "<subcommand>" .. ColText .. " for more info on a specific subcommand");
+	-- Check if there is a valid schematic in the gallery:
+	if (Template == nil) then
+		a_Player:SendMessage("Cannot reset this area, the gallery doesn't use schematic templates");
 		return true;
 	end
 	
-	-- Find the requested subcommand:
-	local Subcommands = g_PluginInfo.Commands[a_Split[1]].Subcommands;
-	assert(Subcommands ~= nil);
-	local Subcommand = Subcommands[a_Split[3]];
-	if ((Subcommand == nil) or not(a_Player:HasPermission(Subcommand.Permission))) then
-		-- Not found or no permission to use that subcommand
-		a_Player:SendMessage("Subcommand " .. a_Split[3] .. " not found.");
-		SendUsage(a_Player);
-		return
-	end;
+	assert(TemplateTop ~= nil);
 	
-	-- Print detailed help on the subcommand:
-	local CommonPrefix = ColCmd .. g_Config.CommandPrefix .. " " .. a_Split[3];
-	a_Player:SendMessage(CommonPrefix .. ColText .. " - " .. Subcommand.HelpString);
-	local Variants = {};
-	for idx, variant in ipairs(Subcommand.ParameterCombinations or {}) do
-		if ((variant.Permission == nil) or a_Player:HasPermission(variant.Permission)) then
-			table.insert(Variants, "  " .. CommonPrefix .. " " .. ColParams .. (variant.Params or "") .. ColText .. " - " .. variant.Help);
-		end
-	end
-	if (#Variants == 0) then
-		a_Player:SendMessage("There is no specific parameter combination");
-	else
-		a_Player:SendMessage("The following parameter combinations are recognized:");
-		for idx, txt in ipairs(Variants) do
-			a_Player:SendMessage(txt);
-		end
-	end
-	
+	-- Reset the area:
+	Template:Write(a_Player:GetWorld(), MinX, 0, MinZ);
+	TemplateTop:Write(a_Player:GetWorld(), MinX, AreaTop, MinZ);
+	a_Player:SendMessage("Area has been reset");
 	return true;
 end
-
 
 
 
@@ -651,62 +707,6 @@ function HandleCmdTemplate(a_Split, a_Player)
 		BeginTemplating(a_Player, Third .. ".schematic");
 		a_Player:SendMessage("You have switched to templating mode. " .. Usage);
 	end
-	return true;
-end
-
-
-
-
-
-function HandleCmdReset(a_Split, a_Player)
-	-- Find the appropriate Area:
-	local BlockX = math.floor(a_Player:GetPosX());
-	local BlockZ = math.floor(a_Player:GetPosZ());
-	local Template = nil;
-	local TemplateTop = nil;
-	local AreaTop = nil;
-	local MinX, MinZ;
-	if (a_Player:HasPermission("gallery.admin.reset")) then
-		-- Admin-level reset tool, if the player has the necessary permissions, reset anyone's area:
-		local Gallery = FindGalleryByCoords(a_Player:GetWorld(), BlockX, BlockZ);
-		if (Gallery == nil) then
-			a_Player:SendMessage("There is no gallery here");
-			return true;
-		end
-		MinX, MinZ = GetAreaCoordsFromBlockCoords(Gallery, BlockX, BlockZ);
-		Template = Gallery.AreaTemplateSchematic;
-		TemplateTop = Gallery.AreaTemplateSchematicTop;
-		AreaTop = Gallery.AreaTop;
-	else
-		-- Default reset tool - reset only own areas:
-		local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
-		if (Area == nil) then
-			a_Player:SendMessage("This isn't your area.");
-			return true;
-		end
-		MinX = Area.MinX;
-		MinZ = Area.MinZ;
-		Template = Area.Gallery.AreaTemplateSchematic;
-		TemplateTop = Area.Gallery.AreaTemplateSchematicTop;
-		AreaTop = Area.Gallery.AreaTop;
-	end
-
-	assert(MinX ~= nil);
-	assert(MinZ ~= nil);
-	assert(AreaTop ~= nil);
-	
-	-- Check if there is a valid schematic in the gallery:
-	if (Template == nil) then
-		a_Player:SendMessage("Cannot reset this area, the gallery doesn't use schematic templates");
-		return true;
-	end
-	
-	assert(TemplateTop ~= nil);
-	
-	-- Reset the area:
-	Template:Write(a_Player:GetWorld(), MinX, 0, MinZ);
-	TemplateTop:Write(a_Player:GetWorld(), MinX, AreaTop, MinZ);
-	a_Player:SendMessage("Area has been reset");
 	return true;
 end
 

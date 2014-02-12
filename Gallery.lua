@@ -206,7 +206,6 @@ function CopyAreaContents(a_SrcArea, a_DstArea, a_DoneCallback)
 			function()
 				Clipboard:Write(World, a_DstArea.MinX, 0, a_DstArea.MinZ);
 				if (a_DoneCallback ~= nil) then
-					LOGINFO("Calling DoneCallback...");
 					a_DoneCallback();
 				end
 			end

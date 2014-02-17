@@ -8,8 +8,9 @@
 
 
 function Initialize(a_Plugin)
-	a_Plugin:SetVersion(1);
-
+	-- Load the InfoReg library file for registering the Info.lua command table:
+	dofile(cPluginManager:GetPluginsPath() .. "/InfoReg.lua");
+	
 	-- Load the config
 	LoadConfig();
 

@@ -398,8 +398,16 @@ function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	-- If the player is outside all galleries, bail out:
 	local Gallery = FindGalleryByCoords(a_Player:GetWorld(), a_BlockX, a_BlockZ);
 	if (Gallery == nil) then
-		-- Allowed to do anything outside the galleries
-		return true;
+		-- Check the config whether building outside galleries is allowed:
+		if (g_Config.AllowBuildOutsideGalleries) then
+			-- Config says allow anyone:
+			return true;
+		end
+		if (a_Player:HasPermission("gallery.admin.buildoutside")) then
+			-- Player has the permission:
+			return true;
+		end
+		return false, "Building outside galleries is forbidden. Use the " .. g_Config.CommandPrefix .. " command to interact with the galleries.";
 	end
 	
 	-- If the player has the admin permission for this gallery, allow them:

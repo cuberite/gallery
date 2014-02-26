@@ -31,6 +31,7 @@ checked for validity and preprocessed to contain the following members:
 	MaxAreaIdx -- The maximum index of a valid area in this gallery
 	MinX, MinZ, MaxX, MaxZ -- Dimensions of the gallery, in block coords
 	Name -- Name of the gallery, as used in the commands
+	NextAreaIdx -- index of the next-to-be-claimed area
 	NumAreasPerX, NumAreasPerZ -- Number of areas in the X and Z directions
 	TeleportCoordY  -- Y coord where the player is teleported upon claiming.
 	World -- The cWorld where the gallery is placed

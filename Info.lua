@@ -317,7 +317,11 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					{
 						{
 							Params = "GalleryName",
-							Help = "Teleports you to the specified gallery",
+							Help = "Teleports you to the latest area of the specified gallery",
+						},
+						{
+							Params = "GalleryName AreaIndex",
+							Help = "Teleports you to the specified area of the specified gallery",
 						},
 					},
 				},  -- visit

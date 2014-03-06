@@ -294,6 +294,13 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					},
 				},  -- reset
 				
+				stats =
+				{
+					HelpString = "Shows statistics about the galleries on this server",
+					Permission = "gallery.stats",
+					Handler = HandleCmdStats,
+				},  -- stats
+				
 				template =
 				{
 					HelpString = "creates new .schematic template based on your selection",

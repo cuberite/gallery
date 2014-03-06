@@ -707,6 +707,40 @@ end
 
 
 
+function HandleCmdStats(a_Split, a_Player)
+	local Limit = 5
+	local PlayerName = a_Player:GetName()
+	local PlayerAreaCounts = g_DB:GetPlayerAreaCounts(Limit, PlayerName)
+	if (PlayerAreaCounts and (#PlayerAreaCounts > 0)) then
+		local Top = #PlayerAreaCounts
+		if (Top > Limit) then
+			Top = Limit
+		end
+		a_Player:SendMessage("Top " .. Top .. " gallerists:")
+		local Width = math.floor(math.log10(PlayerAreaCounts[1].NumAreas + 0.5));
+		for idx, stat in ipairs(PlayerAreaCounts) do
+			local Style = ""
+			if (stat.PlayerName == PlayerName) then
+				Style = "@2"
+			end
+			local Prefix = "  -: "
+			if (idx <= Limit) then
+				Prefix = "  " .. idx .. ": "
+			end
+			local Padding = string.rep("0", Width - math.floor(math.log10(stat.NumAreas + 0.5)))
+			local Msg = cCompositeChat()
+				:AddTextPart(Prefix .. Padding .. (stat.NumAreas) .. " areas    ", Style)
+				:AddSuggestCommandPart(stat.PlayerName, "/gal my @" .. stat.PlayerName, Style)
+			a_Player:SendMessage(Msg)
+		end
+	end
+	return true
+end
+
+
+
+
+
 function HandleCmdTemplate(a_Split, a_Player)
 	local Third = a_Split[3];
 	local Usage =

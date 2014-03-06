@@ -140,6 +140,61 @@ end
 
 
 
+--- Returns a table of top area counts per player, up to a_Limit rows (sorted by count desc)
+--[[
+If a_PlayerName is given, that player is added to the table as well (if not already there)
+The table returned has the format:
+{
+	{NumAreas = Count1, PlayerName = "PlayerName1"},
+	{NumAreas = Count2, PlayerName = "PlayerName2"},
+	...
+}
+--]]
+
+function SQLite:GetPlayerAreaCounts(a_Limit, a_PlayerName)
+	a_Limit = tonumber(a_Limit) or 5
+	
+	-- Add the top N players:
+	local res = {}
+	self:ExecuteStatement(
+		"SELECT COUNT(*) AS NumAreas, PlayerName FROM Areas GROUP BY PlayerName ORDER BY NumAreas DESC LIMIT ?", -- .. a_Limit,
+		{ a_Limit },
+		function (a_Values)
+			local PlayerName = a_Values["PlayerName"]
+			if (a_Values["NumAreas"] and PlayerName) then
+				table.insert(res, {NumAreas = a_Values["NumAreas"], PlayerName = PlayerName})
+				if (PlayerName == a_PlayerName) then
+					a_PlayerName = nil  -- Do not add the specified player, they're already present
+				end
+			end
+		end
+	)
+	
+	-- Add a_Player, if not already added:
+	if (a_PlayerName) then
+		local HasFound = false
+		self:ExecuteStatement(
+			"SELECT COUNT(*) AS NumAreas FROM Areas WHERE PlayerName = ?",
+			{ a_PlayerName },
+			function (a_Values)
+				if (a_Values["NumAreas"] and a_Values["PlayerName"]) then
+					table.insert(res, {NumAreas = a_Values["NumAreas"], PlayerName = a_PlayerName})
+					HasFound = true
+				end
+			end
+		)
+		if not(HasFound) then
+			table.insert(res, {NumAreas = 0, PlayerName = a_PlayerName})
+		end
+	end
+	
+	return res
+end
+
+
+
+
+
 --- Loads the areas for a single player in the specified world
 -- Also deletes areas with invalid gallery from the DB (TODO: move this to a separate function?)
 function SQLite:LoadPlayerAreasInWorld(a_WorldName, a_PlayerName)

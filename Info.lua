@@ -294,9 +294,16 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					},
 				},  -- reset
 				
+				select =
+				{
+					HelpString = "selects the entire area you're standing in.",
+					Permission = "gallery.select",
+					Handler = HandleCmdSelect,
+				},  -- select
+				
 				stats =
 				{
-					HelpString = "Shows statistics about the galleries on this server",
+					HelpString = "shows statistics about the galleries on this server",
 					Permission = "gallery.stats",
 					Handler = HandleCmdStats,
 				},  -- stats

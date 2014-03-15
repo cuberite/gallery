@@ -707,32 +707,74 @@ end
 
 
 
+function HandleCmdSelect(a_Split, a_Player)
+	-- Get the Gallery:
+	local World = a_Player:GetWorld()
+	local BlockX = math.floor(a_Player:GetPosX())
+	local BlockZ = math.floor(a_Player:GetPosZ())
+	local Gallery = FindGalleryByCoords(World, BlockX, BlockZ)
+	if not(Gallery) then
+		a_Player:SendMessage(cCompositeChat():SetMessageType(mtFailure):AddTextPart("Cannot select, there is no gallery here."))
+		return true
+	end
+	
+	-- Get the area buildable coords:
+	local StartX, StartZ, EndX, EndZ = GetAreaBuildableCoordsFromBlockCoords(Gallery, BlockX, BlockZ)
+	if not(StartX) then
+		a_Player:SendMessage(cCompositeChat():SetMessageType(mtFailure):AddTextPart("Cannot select, there is no gallery area here."))
+		return true
+	end
+	
+	-- Select the area in WorldEdit:
+	local Cuboid = cCuboid(StartX, 0, StartZ, EndX, 255, EndZ)
+	local IsSuccess = cPluginManager:CallPlugin("WorldEdit", "SetPlayerCuboidSelection", a_Player, Cuboid)
+	if (IsSuccess == nil) then
+		a_Player:SendMessage(cCompositeChat():SetMessageType(mtFailure):AddTextPart("Cannot select, WorldEdit is not installed."))
+		return true
+	elseif (IsSuccess == false) then
+		a_Player:SendMessage(cCompositeChat():SetMessageType(mtFailure):AddTextPart("Cannot select, WorldEdit reported an error."))
+		return true
+	end
+	
+	-- Report success:
+	a_Player:SendMessage(cCompositeChat():SetMessageType(mtInformation):AddTextPart("Selected the entire area."))
+	return true
+end
+
+
+
+
+
 function HandleCmdStats(a_Split, a_Player)
+	-- Retrieve the stats from the DB:
 	local Limit = 5
 	local PlayerName = a_Player:GetName()
 	local PlayerAreaCounts = g_DB:GetPlayerAreaCounts(Limit, PlayerName)
-	if (PlayerAreaCounts and (#PlayerAreaCounts > 0)) then
-		local Top = #PlayerAreaCounts
-		if (Top > Limit) then
-			Top = Limit
+	if (not(PlayerAreaCounts) or (#PlayerAreaCounts == 0)) then
+		return true
+	end
+	
+	-- List the top gallerists:
+	local Top = #PlayerAreaCounts
+	if (Top > Limit) then
+		Top = Limit
+	end
+	a_Player:SendMessage("Top " .. Top .. " gallerists:")
+	local Width = math.floor(math.log10(PlayerAreaCounts[1].NumAreas + 0.5));
+	for idx, stat in ipairs(PlayerAreaCounts) do
+		local Style = ""
+		if (stat.PlayerName == PlayerName) then
+			Style = "@2"
 		end
-		a_Player:SendMessage("Top " .. Top .. " gallerists:")
-		local Width = math.floor(math.log10(PlayerAreaCounts[1].NumAreas + 0.5));
-		for idx, stat in ipairs(PlayerAreaCounts) do
-			local Style = ""
-			if (stat.PlayerName == PlayerName) then
-				Style = "@2"
-			end
-			local Prefix = "  -: "
-			if (idx <= Limit) then
-				Prefix = "  " .. idx .. ": "
-			end
-			local Padding = string.rep("0", Width - math.floor(math.log10(stat.NumAreas + 0.5)))
-			local Msg = cCompositeChat()
-				:AddTextPart(Prefix .. Padding .. (stat.NumAreas) .. " areas    ", Style)
-				:AddSuggestCommandPart(stat.PlayerName, "/gal my @" .. stat.PlayerName, Style)
-			a_Player:SendMessage(Msg)
+		local Prefix = "  -: "
+		if (idx <= Limit) then
+			Prefix = "  " .. idx .. ": "
 		end
+		local Padding = string.rep("0", Width - math.floor(math.log10(stat.NumAreas + 0.5)))
+		local Msg = cCompositeChat()
+			:AddTextPart(Prefix .. Padding .. (stat.NumAreas) .. " areas    ", Style)
+			:AddSuggestCommandPart(stat.PlayerName, "/gal my @" .. stat.PlayerName, Style)
+		a_Player:SendMessage(Msg)
 	end
 	return true
 end

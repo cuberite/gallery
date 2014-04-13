@@ -182,38 +182,41 @@ end
 function HandleCmdAllow(a_Split, a_Player)
 	-- Check the params:
 	if (#a_Split < 3) then
-		a_Player:SendMessage("You need to specify the player whom to allow here.");
-		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " allow <FriendName>");
+		a_Player:SendMessage(cCompositeChat("You need to specify the player whom to allow here.", mtFailure))
+		a_Player:SendMessage(cCompositeChat("Usage: ", mtInfo)
+			:AddSuggestCommandPart(g_Config.CommandPrefix .. " allow ", g_Config.CommandPrefix .. " allow ")
+			:AddTextPart("<FriendName>", @2)
+		)
 		return true;
 	end
-	local FriendName = a_Split[3];
+	local FriendName = a_Split[3]
 	
 	-- Get the area to be allowed:
-	local BlockX = math.floor(a_Player:GetPosX());
-	local BlockZ = math.floor(a_Player:GetPosZ());
-	local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
+	local BlockX = math.floor(a_Player:GetPosX())
+	local BlockZ = math.floor(a_Player:GetPosZ())
+	local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ)
 	if (Area == nil) then
-		a_Player:SendMessage("You do not own this area");
-		return true;
+		a_Player:SendMessage(cCompositeChat("You do not own this area", mtFailure))
+		return true
 	end
 	
 	-- Allow the player:
-	local res, msg = g_DB:AllowPlayerInArea(Area, FriendName);
+	local res, msg = g_DB:AllowPlayerInArea(Area, FriendName)
 	if not(res) then
-		a_Player:SendMessage(msg or "Unknown failure");
-		return true;
+		a_Player:SendMessage(cCompositeChat("Cannot store allowed friend to DB: " .. (msg or "<no details>"), mtFailure))
+		return true
 	end
 	
 	-- Reload the allowed player's allowances:
-	local WorldName = a_Player:GetWorld():GetName();
-	local Allowances = GetPlayerAllowances(WorldName, FriendName);
+	local WorldName = a_Player:GetWorld():GetName()
+	local Allowances = GetPlayerAllowances(WorldName, FriendName)
 	if (Allowances ~= nil) then
 		-- Hack: we're using the actual area as the Allowance. They have compatible structure, after all
-		table.insert(Allowances, Area);
+		table.insert(Allowances, Area)
 	end
 	
-	a_Player:SendMessage("You have allowed " .. FriendName .. " to build in your area " .. DescribeArea(Area));
-	return true;
+	a_Player:SendMessage(cCompositeChat("You have allowed " .. FriendName .. " to build in your area " .. DescribeArea(Area), mtInfo))
+	return true
 end
 
 
@@ -222,40 +225,43 @@ end
 
 function HandleCmdClaim(a_Split, a_Player)
 	if (#a_Split < 3) then
-		a_Player:SendMessage("You need to specify the gallery where to claim.");
-		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " claim <Gallery>");
-		return true;
+		a_Player:SendMessage(cCompositeChat("You need to specify the gallery where to claim.", mtFailure))
+		a_Player:SendMessage(cCompositeChat("Usage: ", mtInfo)
+			:AddSuggestCommandPart(g_Config.CommandPrefix .. " claim ", g_Config.CommandPrefix .. " claim ")
+			:AddTextPart("<Gallery>")
+		)
+		return true
 	end
 	
 	-- Find the gallery specified:
-	local Gallery = FindGalleryByName(a_Split[3]);
+	local Gallery = FindGalleryByName(a_Split[3])
 	if (Gallery == nil) then
-		a_Player:SendMessage("There's no gallery " .. a_Split[3]);
+		a_Player:SendMessage(cCompositeChat("There's no gallery " .. a_Split[3], mtFailure))
 		-- Be nice, send the list of galleries to the player:
-		HandleCmdList({"/gal", "list"}, a_Player);
-		return true;
+		HandleCmdList({"/gal", "list"}, a_Player)
+		return true
 	end
 	if (Gallery.WorldName ~= a_Player:GetWorld():GetName()) then
-		a_Player:SendMessage("That gallery is in world " .. Gallery.WorldName .. ", you need to go to that world before claiming.");
-		return true;
+		a_Player:SendMessage(cCompositeChat("That gallery is in world " .. Gallery.WorldName .. ", you need to go to that world before claiming.", mtFailure))
+		return true
 	end
 	
 	-- Claim an area:
-	local Area, ErrMsg = ClaimArea(a_Player, Gallery);
+	local Area, ErrMsg = ClaimArea(a_Player, Gallery)
 	if (Area == nil) then
-		a_Player:SendMessage("Cannot claim area in gallery " .. Gallery.Name .. ": " .. ErrMsg);
-		return true;
+		a_Player:SendMessage(cCompositeChat("Cannot claim area in gallery " .. Gallery.Name .. ": " .. ErrMsg, mtFailure))
+		return true
 	end
 	
 	-- Fill the area with the schematic, if available:
 	if (Gallery.AreaTemplateSchematic ~= nil) then
-		Gallery.AreaTemplateSchematic:Write   (a_Player:GetWorld(), Area.MinX, 0,               Area.MinZ);
-		Gallery.AreaTemplateSchematicTop:Write(a_Player:GetWorld(), Area.MinX, Gallery.AreaTop, Area.MinZ);
+		Gallery.AreaTemplateSchematic:Write   (a_Player:GetWorld(), Area.MinX, 0,               Area.MinZ)
+		Gallery.AreaTemplateSchematicTop:Write(a_Player:GetWorld(), Area.MinX, Gallery.AreaTop, Area.MinZ)
 	end
 	
 	-- Teleport to the area:
-	a_Player:TeleportToCoords(Area.MinX + 0.5, Area.Gallery.TeleportCoordY + 0.001, Area.MinZ + 0.5);
-	return true;
+	a_Player:TeleportToCoords(Area.MinX + 0.5, Area.Gallery.TeleportCoordY + 0.001, Area.MinZ + 0.5)
+	return true
 end
 
 

@@ -322,7 +322,7 @@ function HandleCmdFork(a_Split, a_Player)
 	-- Check params - we expect none:
 	if (a_Split[3] ~= nil) then
 		a_Player:SendMessage(cCompositeChat("Too many parameters", mtFailure))
-		a_Player:SendMessage("Usage: ", mtInfo)
+		a_Player:SendMessage(cCompositeChat("Usage: ", mtInfo)
 			:AddSuggestCommandPart(g_Config.CommandPrefix .. " fork", g_Config.CommandPrefix .. " fork")
 		)
 		return true
@@ -335,8 +335,8 @@ function HandleCmdFork(a_Split, a_Player)
 	local PlayerID = a_Player:GetUniqueID()
 	local Area = g_DB:LoadAreaByPos(World:GetName(), BlockX, BlockZ)
 	if (Area == nil) then
-		a_Player:SendMessage(cCompositeChat("There is no area claimed here, nothing to fork.", mtFailure)
-		return true;
+		a_Player:SendMessage(cCompositeChat("There is no area claimed here, nothing to fork.", mtFailure))
+		return true
 	end
 	
 	a_Player:SendMessage(cCompositeChat("Preparing the forked area, please stand by...", mtInfo))

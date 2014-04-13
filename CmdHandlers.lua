@@ -46,7 +46,10 @@ function ListPlayerAreasInWorld(a_Player)
 	
 	-- Send list:
 	for idx, area in ipairs(Areas) do
-		a_Player:SendMessage("  " .. DescribeArea(area));
+		a_Player:SendMessage(cCompositeChat("  " .. DescribeArea(area) .. " (", mtInfo)
+			:AddRunCommandPart("goto", "/gal goto " .. area.Name, "@bu")
+			:AddTextPart(")")
+		)
 	end
 end
 
@@ -77,7 +80,10 @@ function ListPlayerAreasInGallery(a_Player, a_GalleryName)
 
 	-- Send list:
 	for idx, area in ipairs(Areas) do
-		a_Player:SendMessage("  " .. DescribeArea(area));
+		a_Player:SendMessage(cCompositeChat("  " .. DescribeArea(area) .. " (", mtInfo)
+			:AddRunCommandPart("goto", "/gal goto " .. area.Name, "@bu")
+			:AddTextPart(")")
+		)
 	end
 end
 
@@ -118,7 +124,10 @@ local function ListOtherPlayerAreas(a_Player, a_OwnerName, a_GalleryName)
 
 	-- Send list:
 	for idx, area in ipairs(Areas) do
-		a_Player:SendMessage("  " .. DescribeArea(area));
+		a_Player:SendMessage(cCompositeChat("  " .. DescribeArea(area) .. " (", mtInfo)
+			:AddRunCommandPart("goto", "/gal goto @" .. a_OwnerName .. " " .. area.Name, "@bu")
+			:AddTextPart(")")
+		)
 	end
 end
 

@@ -185,7 +185,7 @@ function HandleCmdAllow(a_Split, a_Player)
 		a_Player:SendMessage(cCompositeChat("You need to specify the player whom to allow here.", mtFailure))
 		a_Player:SendMessage(cCompositeChat("Usage: ", mtInfo)
 			:AddSuggestCommandPart(g_Config.CommandPrefix .. " allow ", g_Config.CommandPrefix .. " allow ")
-			:AddTextPart("<FriendName>", @2)
+			:AddTextPart("<FriendName>", "@2")
 		)
 		return true;
 	end
@@ -259,8 +259,9 @@ function HandleCmdClaim(a_Split, a_Player)
 		Gallery.AreaTemplateSchematicTop:Write(a_Player:GetWorld(), Area.MinX, Gallery.AreaTop, Area.MinZ)
 	end
 	
-	-- Teleport to the area:
+	-- Teleport to the area and set orientation to look at the area:
 	a_Player:TeleportToCoords(Area.MinX + 0.5, Area.Gallery.TeleportCoordY + 0.001, Area.MinZ + 0.5)
+	a_Player:SendRotation(-45, 0)
 	return true
 end
 

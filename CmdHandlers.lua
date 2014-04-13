@@ -723,14 +723,14 @@ function HandleCmdSelect(a_Split, a_Player)
 	local BlockZ = math.floor(a_Player:GetPosZ())
 	local Gallery = FindGalleryByCoords(World, BlockX, BlockZ)
 	if not(Gallery) then
-		a_Player:SendMessage(cCompositeChat():SetMessageType(mtFailure):AddTextPart("Cannot select, there is no gallery here."))
+		a_Player:SendMessage(cCompositeChat("Cannot select, there is no gallery here.", mtFailure))
 		return true
 	end
 	
 	-- Get the area buildable coords:
 	local StartX, StartZ, EndX, EndZ = GetAreaBuildableCoordsFromBlockCoords(Gallery, BlockX, BlockZ)
 	if not(StartX) then
-		a_Player:SendMessage(cCompositeChat():SetMessageType(mtFailure):AddTextPart("Cannot select, there is no gallery area here."))
+		a_Player:SendMessage(cCompositeChat("Cannot select, there is no gallery area here.", mtFailure))
 		return true
 	end
 	
@@ -738,15 +738,15 @@ function HandleCmdSelect(a_Split, a_Player)
 	local Cuboid = cCuboid(StartX, 0, StartZ, EndX, 255, EndZ)
 	local IsSuccess = cPluginManager:CallPlugin("WorldEdit", "SetPlayerCuboidSelection", a_Player, Cuboid)
 	if (IsSuccess == nil) then
-		a_Player:SendMessage(cCompositeChat():SetMessageType(mtFailure):AddTextPart("Cannot select, WorldEdit is not installed."))
+		a_Player:SendMessage(cCompositeChat("Cannot select, WorldEdit is not installed.", mtFailure))
 		return true
 	elseif (IsSuccess == false) then
-		a_Player:SendMessage(cCompositeChat():SetMessageType(mtFailure):AddTextPart("Cannot select, WorldEdit reported an error."))
+		a_Player:SendMessage(cCompositeChat("Cannot select, WorldEdit reported an error.", mtFailure))
 		return true
 	end
 	
 	-- Report success:
-	a_Player:SendMessage(cCompositeChat():SetMessageType(mtInformation):AddTextPart("Selected the entire area."))
+	a_Player:SendMessage(cCompositeChat("Selected the entire area.", mtInfo))
 	return true
 end
 

@@ -185,7 +185,7 @@ function HandleCmdAllow(a_Split, a_Player)
 		a_Player:SendMessage(cCompositeChat("You need to specify the player whom to allow here.", mtFailure))
 		a_Player:SendMessage(cCompositeChat("Usage: ", mtInfo)
 			:AddSuggestCommandPart(g_Config.CommandPrefix .. " allow ", g_Config.CommandPrefix .. " allow ")
-			:AddTextPart("<FriendName>", "@2")
+			:AddTextPart("FriendName", "@2")
 		)
 		return true;
 	end
@@ -228,7 +228,7 @@ function HandleCmdClaim(a_Split, a_Player)
 		a_Player:SendMessage(cCompositeChat("You need to specify the gallery where to claim.", mtFailure))
 		a_Player:SendMessage(cCompositeChat("Usage: ", mtInfo)
 			:AddSuggestCommandPart(g_Config.CommandPrefix .. " claim ", g_Config.CommandPrefix .. " claim ")
-			:AddTextPart("<Gallery>")
+			:AddTextPart("Gallery", "@2")
 		)
 		return true
 	end
@@ -272,42 +272,45 @@ end
 function HandleCmdDeny(a_Split, a_Player)
 	-- Check the params:
 	if (#a_Split < 3) then
-		a_Player:SendMessage("You need to specify the player whom to allow here.");
-		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " deny <FormerFriendName>");
-		return true;
+		a_Player:SendMessage(cCompositeChat("You need to specify the player whom to deny here.", mtFailure))
+		a_Player:SendMessage(cCompositeChat("Usage: ", mtInfo)
+			:AddSuggestCommandPart(g_Config.CommandPrefix .. " deny ", g_Config.CommandPrefix .. " deny ")
+			:AddTextPart("FormerFriendName", "@2")
+		)
+		return true
 	end
-	local FormerFriendName = a_Split[3];
+	local FormerFriendName = a_Split[3]
 	
 	-- Get the area to be allowed:
-	local BlockX = math.floor(a_Player:GetPosX());
-	local BlockZ = math.floor(a_Player:GetPosZ());
-	local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
+	local BlockX = math.floor(a_Player:GetPosX())
+	local BlockZ = math.floor(a_Player:GetPosZ())
+	local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ)
 	if (Area == nil) then
-		a_Player:SendMessage("You do not own this area");
-		return true;
+		a_Player:SendMessage(cCompositeChat("You do not own this area", mtFailure))
+		return true
 	end
 	
 	-- Deny the player:
-	local res, msg = g_DB:DenyPlayerInArea(Area, FormerFriendName);
+	local res, msg = g_DB:DenyPlayerInArea(Area, FormerFriendName)
 	if not(res) then
-		a_Player:SendMessage(msg or "Unknown failure");
-		return true;
+		a_Player:SendMessage(cCompositeChat("Denying failed in the DB: " .. (msg or "<no details>"), mtFailure))
+		return true
 	end
 	
 	-- Reload the allowed player's allowances:
-	local WorldName = a_Player:GetWorld():GetName();
-	local Allowances = GetPlayerAllowances(WorldName, FormerFriendName);
+	local WorldName = a_Player:GetWorld():GetName()
+	local Allowances = GetPlayerAllowances(WorldName, FormerFriendName)
 	if (Allowances ~= nil) then
-		local NewAllowances = {};
+		local NewAllowances = {}
 		for idx, allow in ipairs(Allowances) do
 			if (allow ~= Area) then
-				table.insert(NewAllowances, allow);
+				table.insert(NewAllowances, allow)
 			end
 		end
-		SetPlayerAllowances(WorldName, FormerFriendName, NewAllowances);
+		SetPlayerAllowances(WorldName, FormerFriendName, NewAllowances)
 	end
 	
-	a_Player:SendMessage("You have denied " .. FormerFriendName .. " to build in your area " .. DescribeArea(Area));
+	a_Player:SendMessage("You have denied " .. FormerFriendName .. " to build in your area " .. DescribeArea(Area))
 	return true;
 end
 
@@ -317,29 +320,32 @@ end
 
 function HandleCmdFork(a_Split, a_Player)
 	-- Check params - we expect none:
-	if (#a_Split ~= 2) then
-		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " fork");
-		return true;
+	if (a_Split[3] ~= nil) then
+		a_Player:SendMessage(cCompositeChat("Too many parameters", mtFailure))
+		a_Player:SendMessage("Usage: ", mtInfo)
+			:AddSuggestCommandPart(g_Config.CommandPrefix .. " fork", g_Config.CommandPrefix .. " fork")
+		)
+		return true
 	end
 	
 	-- Find the area where the player is:
-	local World = a_Player:GetWorld();
-	local BlockX = math.floor(a_Player:GetPosX());
-	local BlockZ = math.floor(a_Player:GetPosZ());
-	local PlayerID = a_Player:GetUniqueID();
-	local Area = g_DB:LoadAreaByPos(World:GetName(), BlockX, BlockZ);
+	local World = a_Player:GetWorld()
+	local BlockX = math.floor(a_Player:GetPosX())
+	local BlockZ = math.floor(a_Player:GetPosZ())
+	local PlayerID = a_Player:GetUniqueID()
+	local Area = g_DB:LoadAreaByPos(World:GetName(), BlockX, BlockZ)
 	if (Area == nil) then
-		a_Player:SendMessage("There is no area claimed here, nothing to fork.");
+		a_Player:SendMessage(cCompositeChat("There is no area claimed here, nothing to fork.", mtFailure)
 		return true;
 	end
 	
-	a_Player:SendMessage("Preparing the forked area, please stand by...");
+	a_Player:SendMessage(cCompositeChat("Preparing the forked area, please stand by...", mtInfo))
 	
 	-- Claim a new area:
-	local NewArea, ErrMsg = ClaimArea(a_Player, Area.Gallery, Area);
+	local NewArea, ErrMsg = ClaimArea(a_Player, Area.Gallery, Area)
 	if (NewArea == nil) then
-		a_Player:SendMessage(ErrMsg);
-		return true;
+		a_Player:SendMessage(ErrMsg)
+		return true
 	end
 	
 	-- Copy the area contents and teleport the player, once copied:
@@ -347,13 +353,18 @@ function HandleCmdFork(a_Split, a_Player)
 		function ()
 			World:DoWithEntityByID(PlayerID,
 				function (a_Entity)
-					a_Entity:TeleportToCoords(NewArea.MinX + 0.5, NewArea.Gallery.TeleportCoordY + 0.001, NewArea.MinZ + 0.5);
+					if (a_Entity:GetEntityType() ~= etPlayer) then
+						return
+					end
+					-- a_Entity is a cPlayer, we can use cPlayer methods to teleport them and send them new rotation:
+					a_Entity:TeleportToCoords(NewArea.MinX + 0.5, NewArea.Gallery.TeleportCoordY + 0.001, NewArea.MinZ + 0.5)
+					a_Entity:SendRotation(-45, 0)
 				end
-			);
+			)
 		end
-	);
+	)
 	
-	return true;
+	return true
 end
 
 

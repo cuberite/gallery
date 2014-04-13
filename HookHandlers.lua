@@ -234,7 +234,6 @@ function OnChunkGenerating(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
 	-- The entire chunk is in a single gallery. Imprint the gallery schematic:
 	a_ChunkDesc:SetUseDefaultComposition(false);
 	a_ChunkDesc:SetUseDefaultHeight(false);
-	a_ChunkDesc:SetUseDefaultStructures(false);
 	a_ChunkDesc:SetUseDefaultFinish(false);
 	if (Gallery.Biome ~= nil) then
 		a_ChunkDesc:SetUseDefaultBiomes(false);

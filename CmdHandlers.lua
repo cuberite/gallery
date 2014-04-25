@@ -353,12 +353,14 @@ function HandleCmdFork(a_Split, a_Player)
 		function ()
 			World:DoWithEntityByID(PlayerID,
 				function (a_Entity)
-					if (a_Entity:GetEntityType() ~= etPlayer) then
+					if (a_Entity:GetEntityType() ~= cEntity.etPlayer) then
+						LOGWARNING("Not a cPlayer anymore? Type = " .. a_Entity:GetEntityType())
 						return
 					end
 					-- a_Entity is a cPlayer, we can use cPlayer methods to teleport them and send them new rotation:
 					a_Entity:TeleportToCoords(NewArea.MinX + 0.5, NewArea.Gallery.TeleportCoordY + 0.001, NewArea.MinZ + 0.5)
 					a_Entity:SendRotation(-45, 0)
+					a_Entity:SendMessage(cCompositeChat("Here's your new forked area", mtInfo))
 				end
 			)
 		end

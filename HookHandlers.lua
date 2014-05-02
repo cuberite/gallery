@@ -11,7 +11,7 @@
 function InitHookHandlers()
 	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATED,    OnChunkGenerated);
 	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATING,   OnChunkGenerating);
-	cPluginManager:AddHook(cPluginManager.HOOK_DISCONNECT,         OnDisconnect);
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_DESTROYED,   OnPlayerDestroyed);
 	cPluginManager:AddHook(cPluginManager.HOOK_EXPLODING,          OnExploding);
 	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_LEFT_CLICK,  OnPlayerLeftClick);
 	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_RIGHT_CLICK, OnPlayerRightClick);
@@ -23,8 +23,17 @@ end
 
 
 
-function OnDisconnect(a_Player, a_Reason)
+function OnPlayerDestroyed(a_Player)
 	-- TODO: Remove the player's areas from the global list
+	--[[
+	NOTE: We can't do it by simply removing the areas, we support multiple logins of the same player, so we
+	need to take care of one of the multiple logins disconnecting, but the rest staying - can't just erase the
+	areas.
+	So for now we "leak" the areas, it shouldn't be too much anyway - a few kilobytes at most per each unique
+	playername.
+	--]]
+	-- RemovePlayerAreas(a_Player)
+	-- RemovePlayerAllowances(a_Player)
 end
 
 

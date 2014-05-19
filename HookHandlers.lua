@@ -73,6 +73,10 @@ function OnPlayerRightClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockFace,
 		return false;
 	end
 	
+	if (a_Player:GetEquippedItem().m_ItemType == E_BLOCK_AIR) then
+		return false
+	end
+	
 	a_Player:SendMessage("You are not allowed to build here. " .. Reason);
 	return true;
 end

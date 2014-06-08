@@ -123,7 +123,11 @@ function CheckGallery(a_Gallery, a_Index)
 		a_Gallery.AreaSizeZ = Schematic:GetSizeZ();
 		a_Gallery.AreaTop   = Schematic:GetSizeY();
 		a_Gallery.AreaTemplateSchematicTop = cBlockArea();
-		a_Gallery.AreaTemplateSchematicTop:Create(a_Gallery.AreaSizeX, 255 - a_Gallery.AreaTop, a_Gallery.AreaSizeZ);
+		if (a_Gallery.AreaTop < 255) then
+			a_Gallery.AreaTemplateSchematicTop:Create(a_Gallery.AreaSizeX, 255 - a_Gallery.AreaTop, a_Gallery.AreaSizeZ);
+		else
+			a_Gallery.AreaTemplateSchematicTop:Create(a_Gallery.AreaSizeX, 0, a_Gallery.AreaSizeZ);
+		end
 		a_Gallery.TeleportCoordY = GetSchematicHighestNonAirBlock(Schematic) + 1;
 	else
 		-- If no schematic is given, the area sizes must be specified:

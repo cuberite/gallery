@@ -680,6 +680,27 @@ end
 
 
 
+function HandleCmdRemove(a_Split, a_Player)
+	-- Find the appropriate area:
+	local Area = g_DB:LoadAreaByPos(a_Player:GetWorld():GetName(), a_Player:GetPosX(), a_Player:GetPosZ())
+	if (Area == nil) then
+		a_Player:SendMessage("There is no gallery area here")
+		return true
+	end
+	
+	-- Remove the area:
+	g_DB:RemoveArea(Area, a_Player:GetName())
+	RemovePlayerArea(a_Player, Area)
+	
+	-- Notify the player:
+	a_Player:SendMessage("The area has been unclaimed.")
+	return true
+end
+
+
+
+
+
 function HandleCmdReset(a_Split, a_Player)
 	-- Find the appropriate Area:
 	local BlockX = math.floor(a_Player:GetPosX());
@@ -858,6 +879,27 @@ function HandleCmdTemplate(a_Split, a_Player)
 		a_Player:SendMessage("You have switched to templating mode. " .. Usage);
 	end
 	return true;
+end
+
+
+
+
+
+function HandleCmdUnclaim(a_Split, a_Player)
+	-- Get the gallery in which the player is standing:
+	local Area = FindPlayerAreaByCoords(a_Player, a_Player:GetPosX(), a_Player:GetPosZ())
+	if (Area == nil) then
+		a_Player:SendMessage("This isn't your area.")
+		return true
+	end
+	
+	-- Remove the area:
+	g_DB:RemoveArea(Area, a_Player:GetName())
+	RemovePlayerArea(a_Player, Area)
+	
+	-- Notify the player:
+	a_Player:SendMessage("The area has been unclaimed.")
+	return true
 end
 
 

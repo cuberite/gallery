@@ -503,6 +503,94 @@ end
 
 
 
+--- Claims an area either from the list of removed areas, or a fresh new one
+-- Returns the Area table, or nil and string description of the error
+function SQLite:ClaimArea(a_Gallery, a_PlayerName, a_ForkedFromArea)
+	-- Check params:
+	assert(type(a_Gallery) == "table")
+	assert(type(a_PlayerName) == "string")
+	assert((a_ForkedFromArea == nil) or (type(a_ForkedFromArea) == "table"))
+	
+	-- Get the index for the new area:
+	local NextAreaIdx = self:PopRemovedArea(a_Gallery)
+	if (NextAreaIdx == -1) then
+		NextAreaIdx = a_Gallery.NextAreaIdx
+	end
+	if (NextAreaIdx >= a_Gallery.MaxAreaIdx) then
+		return nil, "The gallery is full";
+	end
+	local AreaX, AreaZ = AreaIndexToCoords(NextAreaIdx, a_Gallery)
+
+	local MinX, MaxX, MinZ, MaxZ = AreaCoordsToBlockCoords(a_Gallery, AreaX, AreaZ);
+	
+	local Area = {
+		MinX = MinX,
+		MaxX = MaxX,
+		MinZ = MinZ,
+		MaxZ = MaxZ,
+		StartX = MinX + a_Gallery.AreaEdge,
+		EndX   = MaxX - a_Gallery.AreaEdge,
+		StartZ = MinZ + a_Gallery.AreaEdge,
+		EndZ   = MaxZ - a_Gallery.AreaEdge,
+		Gallery = a_Gallery;
+		GalleryIndex = NextAreaIdx;
+		PlayerName = a_PlayerName;
+		Name = a_Gallery.Name .. " " .. tostring(NextAreaIdx);
+		ForkedFrom = a_ForkedFromArea;
+	};
+	self:AddArea(Area);
+
+	-- Update the next area idx in the gallery object:
+	if (a_Gallery.NextAreaIdx == NextAreaIdx) then
+		a_Gallery.NextAreaIdx = NextAreaIdx + 1;
+		self:UpdateGallery(a_Gallery);
+	end
+	
+	return Area
+end
+
+
+
+
+
+--- Removes an area from the RemovedAreas table in the specified gallery, and returns its GalleryIndex
+-- Returns -1 if there's no suitable area in the RemovedAreas table
+function SQLite:PopRemovedArea(a_Gallery)
+	-- Check params:
+	assert(type(a_Gallery) == "table")
+	
+	-- Get the lowest index stored in the DB:
+	local AreaIndex = -1
+	local AreaID = -1
+	self:ExecuteStatement(
+		"SELECT ID, GalleryIndex FROM RemovedAreas WHERE GalleryName = ? LIMIT 1",
+		{
+			a_Gallery.Name
+		},
+		function (a_Values)
+			AreaIndex = a_Values["GalleryIndex"]
+			AreaID = a_Values["ID"]
+		end
+	)
+	
+	-- If the area is valid, remove it from the table:
+	if (AreaID < 0) then
+		return -1
+	end
+	self:ExecuteStatement(
+		"DELETE FROM RemovedAreas WHERE ID = ?",
+		{
+			AreaID
+		}
+	)
+	
+	return AreaIndex
+end
+
+
+
+
+
 function SQLite:IsAreaNameUsed(a_PlayerName, a_WorldName, a_AreaName)
 	assert(a_PlayerName ~= nil);
 	assert(a_WorldName ~= nil);
@@ -521,6 +609,48 @@ function SQLite:IsAreaNameUsed(a_PlayerName, a_WorldName, a_AreaName)
 		end
 	);
 	return IsNameUsed;
+end
+
+
+
+
+
+--- Removes the claim on the specified area
+-- The area is recycled into the RemovedAreas table which then serves as source of new areas for claiming
+-- a_RemovedBy is the name of the player removing the area
+function SQLite:RemoveArea(a_Area, a_RemovedBy)
+	-- Check params:
+	assert(type(a_Area) == "table")
+	assert(type(a_RemovedBy) == "string")
+	
+	-- TODO: Check that the area really exists
+	
+	-- Add the area to the RemovedAreas table:
+	self:ExecuteStatement(
+		"INSERT INTO RemovedAreas (GalleryIndex, GalleryName, DateRemoved, RemovedBy) VALUES (?, ?, ?, ?)",
+		{
+			a_Area.GalleryIndex,
+			a_Area.Gallery.Name,
+			FormatDateTime(os.time()),
+			a_RemovedBy
+		}
+	)
+	
+	-- Remove the area from the Areas table:
+	self:ExecuteStatement(
+		"DELETE FROM Areas WHERE ID = ?",
+		{
+			a_Area.ID
+		}
+	)
+	
+	-- Remove any allowances on the area:
+	self:ExecuteStatement(
+		"DELETE FROM Allowances WHERE AreaID = ?",
+		{
+			a_Area.ID
+		}
+	)
 end
 
 
@@ -691,10 +821,19 @@ function SQLite_CreateStorage(a_Params)
 		"AreaID",
 		"FriendName"
 	};
+	local RemovedAreasColumns =
+	{
+		"ID INTEGER PRIMARY KEY AUTOINCREMENT",
+		"GalleryName",
+		"GalleryIndex",
+		"RemovedBy",
+		"DateRemoved",
+	}
 	if (
-		not(DB:CreateDBTable("Areas",      AreasColumns)) or
-		not(DB:CreateDBTable("GalleryEnd", GalleryEndColumns)) or
-		not(DB:CreateDBTable("Allowances", AllowancesColumns))
+		not(DB:CreateDBTable("Areas",        AreasColumns)) or
+		not(DB:CreateDBTable("GalleryEnd",   GalleryEndColumns)) or
+		not(DB:CreateDBTable("Allowances",   AllowancesColumns)) or
+		not(DB:CreateDBTable("RemovedAreas", RemovedAreasColumns))
 	) then
 		LOGWARNING(PLUGIN_PREFIX .. "Cannot create DB tables!");
 		error("Cannot create DB tables!");

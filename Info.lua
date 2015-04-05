@@ -276,6 +276,13 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					},
 				},  -- name
 				
+				remove =
+				{
+					HelpString = "removes the area you're standing on from its owner",
+					Permission = "gallery.admin.remove",
+					Handler = HandleCmdRemove,
+				},  -- remove
+				
 				reset =
 				{
 					HelpString = "resets the area you're standing on to its original state",
@@ -321,6 +328,13 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						},
 					},
 				},  -- template
+				
+				unclaim =
+				{
+					HelpString = "removes your claim on the area you're standing in",
+					Permission = "gallery.unclaim",
+					Handler = HandleCmdUnclaim,
+				},  -- unclaim
 				
 				visit =
 				{

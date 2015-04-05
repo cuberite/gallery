@@ -122,40 +122,17 @@ end
 
 --- Claims an area in a gallery for the specified player. Returns a table describing the area
 -- If there's no space left in the gallery, returns nil and error message
--- a_ForkFromArea is an optional param, specifying the area from which the new area is forking; used to write statistics into DB
-function ClaimArea(a_Player, a_Gallery, a_ForkFromArea)
-	local NextAreaIdx = a_Gallery.NextAreaIdx;
-	if (NextAreaIdx >= a_Gallery.MaxAreaIdx) then
-		return nil, "The gallery is full";
-	end
-	local AreaX, AreaZ = AreaIndexToCoords(NextAreaIdx, a_Gallery)
-
-	local MinX, MaxX, MinZ, MaxZ = AreaCoordsToBlockCoords(a_Gallery, AreaX, AreaZ);
+-- a_ForkedFromArea is an optional param, specifying the area from which the new area is forking; used to write statistics into DB
+function ClaimArea(a_Player, a_Gallery, a_ForkedFromArea)
+	-- Check params:
+	assert(type(a_Player) == "userdata")
+	assert(tolua.type(a_Player) == "cPlayer")
+	assert(type(a_Gallery) == "table")
+	assert((a_ForkedFromArea == nil) or (type(a_ForkedFromArea) == "table"))
 	
-	-- DEBUG:
-	a_Player:SendMessage("Claiming area #" .. NextAreaIdx .. " at area-coords [" .. AreaX .. ", " .. AreaZ .. "]");
-	a_Player:SendMessage("  block-coords: {" .. MinX .. ", " .. MinZ .. "} - {" .. MaxX .. ", " .. MaxZ .. "}");
-
-	local Area = {
-		MinX = MinX,
-		MaxX = MaxX,
-		MinZ = MinZ,
-		MaxZ = MaxZ,
-		StartX = MinX + a_Gallery.AreaEdge,
-		EndX   = MaxX - a_Gallery.AreaEdge,
-		StartZ = MinZ + a_Gallery.AreaEdge,
-		EndZ   = MaxZ - a_Gallery.AreaEdge,
-		Gallery = a_Gallery;
-		GalleryIndex = a_Gallery.NextAreaIdx;
-		PlayerName = a_Player:GetName();
-		Name = a_Gallery.Name .. " " .. tostring(a_Gallery.NextAreaIdx);
-		ForkedFrom = a_ForkFromArea;
-	};
-	g_DB:AddArea(Area);
+	-- Claim in the DB:
+	local Area = g_DB:ClaimArea(a_Gallery, a_Player:GetName(), a_ForkedFromArea)
 	
-	a_Gallery.NextAreaIdx = NextAreaIdx + 1;
-	g_DB:UpdateGallery(a_Gallery);
-
 	-- Add this area to Player's areas:
 	local PlayerAreas = GetPlayerAreas(a_Player);
 	table.insert(PlayerAreas, Area);
@@ -381,6 +358,28 @@ end
 
 
 
+--- Removes the specified area from the internal cache of player's areas
+function RemovePlayerArea(a_Player, a_Area)
+	-- Check params:
+	assert(tolua.type(a_Player) == "cPlayer")
+	assert(type(a_Area) == "table")
+	assert(a_Area.ID ~= nil)
+
+	-- Remove the area from the cache:
+	local PlayerAreas = GetPlayerAreas(a_Player);
+	for idx, area in ipairs(PlayerAreas) do
+		if (area.ID == a_Area.ID) then
+			table.remove(PlayerAreas, idx)
+			break
+		end
+	end
+	PlayerAreas[a_Area.Name] = nil
+end
+
+
+
+
+
 function SetPlayerAllowances(a_WorldName, a_PlayerName, a_Allowances)
 	assert(a_WorldName ~= nil);
 	assert(a_PlayerName ~= nil);
@@ -469,6 +468,14 @@ end
 
 --- Returns the player-owned area for the specified coords, or nil if no such area
 function FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ)
+	-- Check params:
+	assert(tolua.type(a_Player) == "cPlayer", "a_Player is not a cPlayer instance")
+	a_BlockX = tonumber(a_BlockX)
+	a_BlockZ = tonumber(a_BlockZ)
+	assert(a_BlockX ~= nil, "a_BlockX is not a number")
+	assert(a_BlockZ ~= nil, "a_BlockZ is not a number")
+	
+	-- Search for the area:
 	for idx, area in ipairs(GetPlayerAreas(a_Player)) do
 		if (
 			(a_BlockX >= area.MinX) and (a_BlockX < area.MaxX) and
@@ -477,6 +484,8 @@ function FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ)
 			return area;
 		end
 	end
+	
+	-- No area found:
 	return nil;
 end
 

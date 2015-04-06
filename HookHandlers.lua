@@ -7,23 +7,22 @@
 
 
 
---- Registers all hook handlers
-function InitHookHandlers()
-	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATED,    OnChunkGenerated);
-	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATING,   OnChunkGenerating);
-	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_DESTROYED,   OnPlayerDestroyed);
-	cPluginManager:AddHook(cPluginManager.HOOK_EXPLODING,          OnExploding);
-	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_LEFT_CLICK,  OnPlayerLeftClick);
-	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_RIGHT_CLICK, OnPlayerRightClick);
-	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_SPAWNED,     OnPlayerSpawned);
-	cPluginManager:AddHook(cPluginManager.HOOK_PLUGINS_LOADED,     OnPluginsLoaded);
+local function OnPlayerBrokenBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
+	-- Update the area's DateLastChanged:
+	local Area = FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ)
+	if (Area ~= nil) then
+		g_DB:UpdateAreaDateLastChanged(Area)
+	end
+	
+	-- Allow other plugins to execute:
+	return false
 end
 
 
 
 
 
-function OnPlayerDestroyed(a_Player)
+local function OnPlayerDestroyed(a_Player)
 	-- TODO: Remove the player's areas from the global list
 	--[[
 	NOTE: We can't do it by simply removing the areas, we support multiple logins of the same player, so we
@@ -40,8 +39,7 @@ end
 
 
 
-
-function OnPlayerLeftClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockFace, a_Status)
+local function OnPlayerLeftClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockFace, a_Status)
 	if ((a_BlockFace >= 0) and (HandleTemplatingLeftClick(a_Player, a_BlockX, a_BlockZ))) then
 		return true;
 	end
@@ -58,7 +56,22 @@ end
 
 
 
-function OnPlayerRightClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockFace, a_CursorX, a_CursorY, a_CursorZ, a_Status)
+local function OnPlayerPlacedBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
+	-- Update the area's DateLastChanged:
+	local Area = FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ)
+	if (Area ~= nil) then
+		g_DB:UpdateAreaDateLastChanged(Area)
+	end
+	
+	-- Allow other plugins to execute:
+	return false
+end
+
+
+
+
+
+local function OnPlayerRightClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockFace, a_CursorX, a_CursorY, a_CursorZ, a_Status)
 	if (a_BlockFace < 0) then
 		-- This really means "use item" and no valid coords are given
 		return false;
@@ -86,7 +99,7 @@ end
 
 
 
-function OnPlayerSpawned(a_Player)
+local function OnPlayerSpawned(a_Player)
 	-- Read this player's areas for this world:
 	local WorldName = a_Player:GetWorld():GetName();
 	local PlayerName = a_Player:GetName();
@@ -101,7 +114,7 @@ end
 
 --- Returns the gallery that covers the entire chunk's area
 -- Returns nil if no such gallery
-function GetGalleryForEntireChunk(a_ChunkX, a_ChunkZ)
+local function GetGalleryForEntireChunk(a_ChunkX, a_ChunkZ)
 	local MinX = a_ChunkX * 16;
 	local MinZ = a_ChunkZ * 16;
 	local MaxX = MinX + 16;
@@ -123,7 +136,7 @@ end
 
 --- Imprints the specified chunk with the specified gallery's template, where (if) they intersect
 -- If a_ClearAbove is true, the AreaTemplateSchematicTop is applied, too
-function ImprintChunkWithGallery(a_MinX, a_MinZ, a_MaxX, a_MaxZ, a_ChunkDesc, a_Gallery, a_ClearAbove)
+local function ImprintChunkWithGallery(a_MinX, a_MinZ, a_MaxX, a_MaxZ, a_ChunkDesc, a_Gallery, a_ClearAbove)
 	if (a_Gallery.AreaTemplateSchematic == nil) then
 		-- This gallery doesn't have a template
 		return;
@@ -209,7 +222,7 @@ end
 
 --- Imprints the specified chunk with all the intersecting galleries' templates
 -- if a_ClearAbove is true, the AreaTemplateSchematicTop is applied, too
-function ImprintChunk(a_ChunkX, a_ChunkZ, a_ChunkDesc, a_ClearAbove)
+local function ImprintChunk(a_ChunkX, a_ChunkZ, a_ChunkDesc, a_ClearAbove)
 	local MinX = a_ChunkX * 16;
 	local MinZ = a_ChunkZ * 16;
 	local MaxX = MinX + 16;
@@ -223,7 +236,7 @@ end
 
 
 
-function OnChunkGenerated(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
+local function OnChunkGenerated(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
 	local Gallery = GetGalleryForEntireChunk(a_ChunkX, a_ChunkZ);
 	if ((Gallery ~= nil) and (Gallery.AreaTemplateSchematic ~= nil)) then
 		-- The chunk has already been generated in OnChunkGenerating(), skip it
@@ -238,7 +251,7 @@ end
 
 
 
-function OnChunkGenerating(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
+local function OnChunkGenerating(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
 	local Gallery = GetGalleryForEntireChunk(a_ChunkX, a_ChunkZ);
 	if ((Gallery == nil) or (Gallery.AreaTemplateSchematic == nil)) then
 		-- The chunks is not covered by one gallery, or the gallery doesn't use a schematic
@@ -261,7 +274,7 @@ end
 
 
 
-function OnExploding(a_World, a_ExplosionSize, a_CanCauseFire, a_BlockX, a_BlockY, a_BlockZ, a_Source, a_Data)
+local function OnExploding(a_World, a_ExplosionSize, a_CanCauseFire, a_BlockX, a_BlockY, a_BlockZ, a_Source, a_Data)
 	-- Find any gallery close enough to the explosion:
 	local MinX = a_BlockX - a_ExplosionSize - 1;
 	local MaxX = a_BlockX + a_ExplosionSize + 1;
@@ -336,13 +349,31 @@ end
 
 
 
-function OnPluginsLoaded()
+local function OnPluginsLoaded()
 	-- Add a WE hook to each world
 	cRoot:Get():ForEachWorld(
 		function (a_World)
 			local res = cPluginManager:CallPlugin("WorldEdit", "RegisterAreaCallback", "Gallery", "WorldEditCallback", a_World:GetName());
 		end
 	);
+end
+
+
+
+
+
+--- Registers all hook handlers
+function InitHookHandlers()
+	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATED,     OnChunkGenerated)
+	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATING,    OnChunkGenerating)
+	cPluginManager:AddHook(cPluginManager.HOOK_EXPLODING,           OnExploding)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_BROKEN_BLOCK, OnPlayerBrokenBlock)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_DESTROYED,    OnPlayerDestroyed)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_LEFT_CLICK,   OnPlayerLeftClick)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_PLACED_BLOCK, OnPlayerPlacedBlock)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_RIGHT_CLICK,  OnPlayerRightClick)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_SPAWNED,      OnPlayerSpawned)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLUGINS_LOADED,      OnPluginsLoaded)
 end
 
 

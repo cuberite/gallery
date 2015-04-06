@@ -49,24 +49,28 @@ end
 -- The callback receives a dictionary table containing the row values (stmt:nrows())
 -- Returns false and error message on failure, or true on success
 function SQLite:ExecuteStatement(a_SQL, a_Params, a_Callback)
-	assert(a_SQL ~= nil);
-	assert(a_Params ~= nil);
+	-- Check params:
+	assert(type(a_SQL) == "string")
+	assert((a_Params == nil) or (type(a_Params) == "table"))
+	assert((a_Callback == nil) or (type(a_Callback) == "function"))
 	
-	local Stmt, ErrCode, ErrMsg = self.DB:prepare(a_SQL);
+	local Stmt, ErrCode, ErrMsg = self.DB:prepare(a_SQL)
 	if (Stmt == nil) then
-		LOGWARNING("Cannot prepare SQL \"" .. a_SQL .. "\": " .. (ErrCode or "<unknown>") .. " (" .. (ErrMsg or "<no message>") .. ")");
-		LOGWARNING("  Params = {" .. table.concat(a_Params, ", ") .. "}");
-		return nil, (ErrMsg or "<no message");
+		LOGWARNING("Cannot prepare SQL \"" .. a_SQL .. "\": " .. (ErrCode or "<unknown>") .. " (" .. (ErrMsg or "<no message>") .. ")")
+		LOGWARNING("  Params = {" .. table.concat(a_Params, ", ") .. "}")
+		return nil, (ErrMsg or "<no message")
 	end
-	Stmt:bind_values(unpack(a_Params));
+	if (a_Params ~= nil) then
+		Stmt:bind_values(unpack(a_Params))
+	end
 	if (a_Callback == nil) then
-		Stmt:step();
+		Stmt:step()
 	else
 		for v in Stmt:nrows() do
-			a_Callback(v);
+			a_Callback(v)
 		end
 	end
-	Stmt:finalize();
+	Stmt:finalize()
 	return true;
 end
 
@@ -486,12 +490,15 @@ end
 
 --- Stores a new area into the DB
 function SQLite:AddArea(a_Area)
-	assert(a_Area ~= nil);
-	
+	-- Check params:
+	assert(type(a_Area) == "table");
+
+	-- Add in the DB:
+	local DateTimeNow = FormatDateTime(os.time())
 	self:ExecuteStatement(
 		"INSERT INTO Areas \
-			(MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, PlayerName, Name, DateClaimed, ForkedFromID, IsLocked) \
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			(MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, PlayerName, Name, DateClaimed, ForkedFromID, IsLocked, DateLastChanged) \
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		{
 			a_Area.MinX, a_Area.MaxX, a_Area.MinZ, a_Area.MaxZ,
 			a_Area.StartX, a_Area.EndX, a_Area.StartZ, a_Area.EndZ,
@@ -499,9 +506,10 @@ function SQLite:AddArea(a_Area)
 			a_Area.Gallery.WorldName,
 			a_Area.PlayerName,
 			a_Area.Name,
-			FormatDateTime(os.time()),
+			DateTimeNow,
 			(a_Area.ForkedFrom or {}).ID or -1,
 			a_Area.IsLocked or 0,
+			DateTimeNow,
 		}
 	);
 	a_Area.ID = self.DB:last_insert_rowid();
@@ -757,6 +765,26 @@ end
 
 
 
+--- Updates the DateLastChanged value in the DB for the specified area
+function SQLite:UpdateAreaDateLastChanged(a_Area)
+	-- Check params:
+	assert(type(a_Area) == "table")
+	assert(a_Area.ID ~= nil)
+	
+	-- Update the DB:
+	self:ExecuteStatement(
+		"UPDATE Areas SET DateLastChanged = ? WHERE ID = ?",
+		{
+			FormatDateTime(os.time()),
+			a_Area.ID
+		}
+	)
+end
+
+
+
+
+
 function SQLite:UpdateGallery(a_Gallery)
 	self:ExecuteStatement(
 		"UPDATE GalleryEnd SET NextAreaIdx = ? WHERE GalleryName = ?",
@@ -879,6 +907,7 @@ function SQLite_CreateStorage(a_Params)
 		"IsLocked",                          -- If nonzero, the area is locked and cannot be edited unless the player has the "gallery.admin.overridelocked" permission
 		"LockedBy",                          -- Name of the player who last locked / unlocked the area
 		"DateLocked",                        -- ISO 8601 DateTime when the area was last locked / unlocked
+		"DateLastChanged",                   -- ISO 8601 DateTime when the area was last changed
 	};
 	local GalleryEndColumns =
 	{
@@ -907,6 +936,12 @@ function SQLite_CreateStorage(a_Params)
 		LOGWARNING(PLUGIN_PREFIX .. "Cannot create DB tables!");
 		error("Cannot create DB tables!");
 	end
+	
+	-- Areas that have no DateClaimed assigned get a dummy value:
+	DB:ExecuteStatement("UPDATE Areas SET DateClaimed='1999-01-01T00:00:00' WHERE DateClaimed IS NULL")
+	
+	-- Set each area with an unassigned DateLastChanged to its claiming date, so that the value is always present:
+	DB:ExecuteStatement("UPDATE Areas SET DateLastChanged = DateClaimed WHERE DateLastChanged IS NULL")
 	
 	-- Returns the initialized database access object
 	return DB;

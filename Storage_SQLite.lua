@@ -765,17 +765,19 @@ end
 
 
 
---- Updates the DateLastChanged value in the DB for the specified area
-function SQLite:UpdateAreaDateLastChanged(a_Area)
+--- Updates the DateLastChanged, NumPlacedBlocks and NumBrokenBlocks values in the DB for the specified area
+function SQLite:UpdateAreaStats(a_Area)
 	-- Check params:
 	assert(type(a_Area) == "table")
 	assert(a_Area.ID ~= nil)
 	
 	-- Update the DB:
 	self:ExecuteStatement(
-		"UPDATE Areas SET DateLastChanged = ? WHERE ID = ?",
+		"UPDATE Areas SET DateLastChanged = ?, NumPlacedBlocks = ?, NumBrokenBlocks = ? WHERE ID = ?",
 		{
 			FormatDateTime(os.time()),
+			a_Area.NumPlacedBlocks,
+			a_Area.NumBrokenBlocks,
 			a_Area.ID
 		}
 	)
@@ -903,11 +905,13 @@ function SQLite_CreateStorage(a_Params)
 		"GalleryName",                       -- Name of the gallery from which the area has been claimed
 		"GalleryIndex",                      -- Index of the area in the gallery from which this area has been claimed
 		"DateClaimed",                       -- ISO 8601 DateTime of the claiming
-		"ForkedFromID",                      -- The ID of the area from which this one has been forked
+		"ForkedFromID INTEGER",              -- The ID of the area from which this one has been forked
 		"IsLocked",                          -- If nonzero, the area is locked and cannot be edited unless the player has the "gallery.admin.overridelocked" permission
 		"LockedBy",                          -- Name of the player who last locked / unlocked the area
 		"DateLocked",                        -- ISO 8601 DateTime when the area was last locked / unlocked
 		"DateLastChanged",                   -- ISO 8601 DateTime when the area was last changed
+		"NumPlacedBlocks INTEGER",           -- Total number of blocks that the players have placed in the area
+		"NumBrokenBlocks INTEGER",           -- Total number of blocks that the players have broken in the area
 	};
 	local GalleryEndColumns =
 	{
@@ -942,6 +946,10 @@ function SQLite_CreateStorage(a_Params)
 	
 	-- Set each area with an unassigned DateLastChanged to its claiming date, so that the value is always present:
 	DB:ExecuteStatement("UPDATE Areas SET DateLastChanged = DateClaimed WHERE DateLastChanged IS NULL")
+	
+	-- Set initial statistics values for areas that pre-date statistics collection:
+	DB:ExecuteStatement("UPDATE Areas SET NumPlacedBlocks = 0 WHERE NumPlacedBlocks IS NULL")
+	DB:ExecuteStatement("UPDATE Areas SET NumBrokenBlocks = 0 WHERE NumBrokenBlocks IS NULL")
 	
 	-- Returns the initialized database access object
 	return DB;

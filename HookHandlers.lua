@@ -11,7 +11,8 @@ local function OnPlayerBrokenBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	-- Update the area's DateLastChanged:
 	local Area = FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ)
 	if (Area ~= nil) then
-		g_DB:UpdateAreaDateLastChanged(Area)
+		Area.NumBrokenBlocks = Area.NumBrokenBlocks + 1
+		g_DB:UpdateAreaStats(Area)
 	end
 	
 	-- Allow other plugins to execute:
@@ -60,7 +61,8 @@ local function OnPlayerPlacedBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	-- Update the area's DateLastChanged:
 	local Area = FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ)
 	if (Area ~= nil) then
-		g_DB:UpdateAreaDateLastChanged(Area)
+		Area.NumPlacedBlocks = Area.NumPlacedBlocks + 1
+		g_DB:UpdateAreaStats(Area)
 	end
 	
 	-- Allow other plugins to execute:

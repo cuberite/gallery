@@ -15,10 +15,10 @@ function LockAreaByCoords(a_WorldName, a_BlockX, a_BlockZ, a_LockedByName)
 	a_BlockX = tonumber(a_BlockX)
 	a_BlockZ = tonumber(a_BlockZ)
 	if (
-		not(type(a_WorldName) == "string") or
-		not(type(a_BlockX) == "number") or
-		not(type(a_BlockZ) == "number") or
-		not(type(a_LockedByName) == "string")
+		(type(a_WorldName) ~= "string") or
+		(type(a_BlockX) ~= "number") or
+		(type(a_BlockZ) ~= "number") or
+		(type(a_LockedByName) ~= "string")
 	) then
 		return false, "ParamError", "Invalid parameters. Expected string, number, number and string."
 	end
@@ -52,8 +52,8 @@ function LockAreaByID(a_AreaID, a_LockedByName)
 	-- Check params:
 	a_AreaID = tonumber(a_AreaID)
 	if (
-		not(type(a_AreaID) == "number") or
-		not(type(a_LockedByName) == "string")
+		(type(a_AreaID) ~= "number") or
+		(type(a_LockedByName) ~= "string")
 	) then
 		return false, "ParamError", "Invalid parameters. Expected number and string."
 	end
@@ -88,10 +88,10 @@ function UnlockAreaByCoords(a_WorldName, a_BlockX, a_BlockZ, a_UnlockedByName)
 	a_BlockX = tonumber(a_BlockX)
 	a_BlockZ = tonumber(a_BlockZ)
 	if (
-		not(type(a_WorldName) == "string") or
-		not(type(a_BlockX) == "number") or
-		not(type(a_BlockZ) == "number") or
-		not(type(a_UnlockedByName) == "string")
+		(type(a_WorldName) ~= "string") or
+		(type(a_BlockX) ~= "number") or
+		(type(a_BlockZ) ~= "number") or
+		(type(a_LockedByName) ~= "string")
 	) then
 		return false, "ParamError", "Invalid parameters. Expected string, number, number and string."
 	end
@@ -125,8 +125,8 @@ function UnlockAreaByID(a_AreaID, a_UnlockedByName)
 	-- Check params:
 	a_AreaID = tonumber(a_AreaID)
 	if (
-		not(type(a_AreaID) == "number") or
-		not(type(a_UnlockedByName) == "string")
+		(type(a_AreaID) ~= "number") or
+		(type(a_UnlockedByName) ~= "string")
 	) then
 		return false, "ParamError", "Invalid parameters. Expected number and string."
 	end

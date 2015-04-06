@@ -17,14 +17,17 @@ end
 
 
 local function SendAreaDetails(a_Player, a_Area, a_LeadingText)
-	assert(a_Player ~= nil);
-	assert(a_Area ~= nil);
-	assert(a_LeadingText ~= nil);
+	assert(tolua.type(a_Player) == "cPlayer")
+	assert(type(a_Area) == "table")
+	assert(type(a_LeadingText) == "string")
 	
-	a_Player:SendMessage(a_LeadingText .. DescribeArea(a_Area) .. ":");
-	a_Player:SendMessage("  Boundaries: {" .. a_Area.MinX .. ", " .. a_Area.MinZ .. "} - {" .. tostring(a_Area.MaxX - 1) .. ", " .. tostring(a_Area.MaxZ - 1) .. "}");
-	a_Player:SendMessage("  Buildable region: {" .. a_Area.StartX .. ", " .. a_Area.StartZ .. "} - {" .. tostring(a_Area.EndX - 1) .. ", " .. tostring(a_Area.EndZ - 1) .. "}");
-	a_Player:SendMessage("  Unbuildable edge: " .. tostring(a_Area.StartX - a_Area.MinX) .. " blocks");
+	a_Player:SendMessage(a_LeadingText .. DescribeArea(a_Area) .. ":")
+	a_Player:SendMessage("  Boundaries: {" .. a_Area.MinX .. ", " .. a_Area.MinZ .. "} - {" .. tostring(a_Area.MaxX - 1) .. ", " .. tostring(a_Area.MaxZ - 1) .. "}")
+	a_Player:SendMessage("  Buildable region: {" .. a_Area.StartX .. ", " .. a_Area.StartZ .. "} - {" .. tostring(a_Area.EndX - 1) .. ", " .. tostring(a_Area.EndZ - 1) .. "}")
+	a_Player:SendMessage("  Unbuildable edge: " .. tostring(a_Area.StartX - a_Area.MinX) .. " blocks")
+	if (a_Area.IsLocked) then
+		a_Player:SendMessage("  The area is LOCKED.")
+	end
 end
 
 
@@ -544,6 +547,23 @@ end
 
 
 
+function HandleCmdLockArea(a_Split, a_Player)
+	-- Lock the area:
+	local IsSuccess, ErrCode, Msg = LockAreaByCoords(a_Player:GetWorld():GetName(), a_Player:GetPosX(), a_Player:GetPosZ(), a_Player:GetName())
+	if not(IsSuccess) then
+		a_Player:SendMessage(Msg or ("<Unknown error while locking area (" .. (ErrCode or "<UnknownCode>") .. ">"))
+		return true
+	end
+	
+	-- Notify the player:
+	a_Player:SendMessage("The area has been locked.")
+	return true
+end
+
+
+
+
+
 function HandleCmdMy(a_Split, a_Player)
 	if (#a_Split == 2) then
 		-- "/gal my" command, list all areas in this world
@@ -899,6 +919,23 @@ function HandleCmdUnclaim(a_Split, a_Player)
 	
 	-- Notify the player:
 	a_Player:SendMessage("The area has been unclaimed.")
+	return true
+end
+
+
+
+
+
+function HandleCmdUnlockArea(a_Split, a_Player)
+	-- Lock the area:
+	local IsSuccess, ErrCode, Msg = UnlockAreaByCoords(a_Player:GetWorld():GetName(), a_Player:GetPosX(), a_Player:GetPosZ(), a_Player:GetName())
+	if not(IsSuccess) then
+		a_Player:SendMessage(Msg or ("<Unknown error while unlocking area (" .. (ErrCode or "<UnknownCode>") .. ">"))
+		return true
+	end
+	
+	-- Notify the player:
+	a_Player:SendMessage("The area has been unlocked.")
 	return true
 end
 

@@ -140,6 +140,38 @@ end
 
 
 
+--- Fixes the area table after loading
+-- Assigns the proper Gallery object to the area
+-- Synthesizes area name if not present
+-- Returns the input table on success, nil on failure
+function SQLite:FixupAreaAfterLoad(a_Area)
+	-- Check params:
+	assert(type(a_Area) == "table")
+	assert(a_Area.GalleryName ~= nil)
+	
+	-- Assign the proper Gallery object to the area:
+	if (a_Area.Gallery == nil) then
+		a_Area.Gallery = FindGalleryByName(a_Area.GalleryName);
+		if (a_Area.Gallery == nil) then
+			return;
+		end
+	end
+	
+	-- Fix area name, if not present:
+	if ((a_Area.Name == nil) or (a_Area.Name == "")) then
+		a_Area.Name = a_Area.GalleryName .. " " .. tostring(a_Area.GalleryIndex)
+	end
+	
+	-- Convert IsLocked from "number or bool" to "bool":
+	a_Area.IsLocked = (a_Area.IsLocked ~= 0) and (a_Area.IsLocked ~= false)
+	
+	return a_Area
+end
+
+
+
+
+
 --- Returns a table of top area counts per player, up to a_Limit rows (sorted by count desc)
 --[[
 If a_PlayerName is given, that player is added to the table as well (if not already there)
@@ -196,6 +228,7 @@ end
 
 
 --- Loads the areas for a single player in the specified world
+-- Returns a table that has both an array of the area objects, as well as a map AreaName -> area object
 -- Also deletes areas with invalid gallery from the DB (TODO: move this to a separate function?)
 function SQLite:LoadPlayerAreasInWorld(a_WorldName, a_PlayerName)
 	assert(a_WorldName ~= nil);
@@ -203,35 +236,26 @@ function SQLite:LoadPlayerAreasInWorld(a_WorldName, a_PlayerName)
 	
 	local res = {};
 	local ToDelete = {};  -- List of IDs to delete because of missing Gallery
-	local stmt = self.DB:prepare("SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, Name FROM Areas WHERE PlayerName = ? AND WorldName = ?");
-	stmt:bind_values(a_PlayerName, a_WorldName);
-	for v in stmt:rows() do
-		local Gallery = FindGalleryByName(v[10]);
-		if (Gallery == nil) then
-			table.insert(ToDelete, v[1]);
-		else
-			local Name = v[12];
-			if ((Name == nil) or (Name == "")) then
-				Name = Gallery.Name .. " " .. tostring(v[11]);
+	self:ExecuteStatement(
+		"SELECT * FROM Areas WHERE PlayerName = ? AND WorldName = ?",
+		{
+			a_PlayerName,
+			a_WorldName,
+		},
+		function (a_Values)
+			local area = self:FixupAreaAfterLoad(a_Values)
+			if (area == nil) then
+				-- The area is invalid (bad gallery etc), schedule it for removing:
+				table.insert(ToDelete, a_Values.ID);
+			else
+				table.insert(res, area);
+				res[area.Name] = area;
 			end
-			local area =
-			{
-				ID = v[1],
-				MinX = v[2], MaxX = v[3], MinZ = v[4], MaxZ = v[5],
-				StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
-				Gallery = Gallery,
-				GalleryIndex = v[11],
-				Name = Name,
-				PlayerName = a_PlayerName,
-			};
-			table.insert(res, area);
-			res[area.Name] = area;
 		end
-	end
-	stmt:finalize();
+	)
 	
 	-- Remove areas that reference non-existent galleries:
-	if (#ToDelete > 0) then
+	if (ToDelete[1] ~= nil) then
 		local stmt = self.DB:prepare("DELETE FROM Areas WHERE ID = ?");
 		for idx, id in ipairs(ToDelete) do
 			stmt:bind_values(id);
@@ -248,6 +272,7 @@ end
 
 
 --- Loads all player allowances in the specified world
+-- Returns a table that has both an array of the area objects, as well as a map AreaName -> area object
 function SQLite:LoadPlayerAllowancesInWorld(a_WorldName, a_PlayerName)
 	local res = {};
 	self:ExecuteStatement(
@@ -255,7 +280,8 @@ function SQLite:LoadPlayerAllowancesInWorld(a_WorldName, a_PlayerName)
 			SELECT Areas.MinX AS MinX, Areas.MinZ AS MinZ, Areas.MaxX AS MaxX, Areas.MaxZ as MaxZ,
 				Areas.StartX AS StartX, Areas.StartZ AS StartZ, Areas.EndX AS EndX, Areas.EndZ AS EndZ,
 				Areas.PlayerName AS PlayerName, Areas.Name AS Name, Areas.ID AS ID,
-				Areas.GalleryIndex AS GalleryIndex, Areas.GalleryName AS GalleryName
+				Areas.GalleryIndex AS GalleryIndex, Areas.GalleryName AS GalleryName,
+				Areas.IsLocked AS IsLocked, Areas.LockedBy AS LockedBy, Areas.DateLocked as DateLocked
 			FROM Areas INNER JOIN Allowances ON Areas.ID = Allowances.AreaID
 			WHERE Areas.WorldName = ? AND Allowances.FriendName = ?
 		]],
@@ -264,21 +290,12 @@ function SQLite:LoadPlayerAllowancesInWorld(a_WorldName, a_PlayerName)
 			a_PlayerName,
 		},
 		function (a_Values)
-			local Gallery = FindGalleryByName(a_Values.GalleryName)
-			if (Gallery == nil) then
+			local area = self:FixupAreaAfterLoad(a_Values)
+			if (area == nil) then
 				return;
 			end
-			table.insert(res,
-				{
-					ID = a_Values.ID,
-					MinX = a_Values.MinX, MaxX = a_Values.MaxX, MinZ = a_Values.MinZ, MaxZ = a_Values.MaxZ,
-					StartX = a_Values.StartX, EndX = a_Values.EndX, StartZ = a_Values.StartZ, EndZ = a_Values.EndZ,
-					Gallery = Gallery,
-					GalleryIndex = a_Values.GalleryIndex,
-					PlayerName = a_Values.PlayerName,
-					Name = a_AreaName,
-				}
-			);
+			table.insert(res, area)
+			res[area.Name] = area
 		end
 	);
 	return res;
@@ -289,6 +306,7 @@ end
 
 
 --- Loads the areas for a single player in the specified gallery
+-- Returns a table that has both an array of the area objects, as well as a map AreaName -> area object
 function SQLite:LoadPlayerAreasInGallery(a_GalleryName, a_PlayerName)
 	assert(a_GalleryName ~= nil);
 	assert(a_PlayerName ~= nil);
@@ -300,27 +318,22 @@ function SQLite:LoadPlayerAreasInGallery(a_GalleryName, a_PlayerName)
 	end
 	
 	local res = {};
-	local stmt = self.DB:prepare("SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryIndex, Name FROM Areas WHERE PlayerName = ? AND GalleryName = ?");
-	stmt:bind_values(a_PlayerName, a_GalleryName);
-	for v in stmt:rows() do
-		local Name = v[11];
-		if ((Name == nil) or (Name == "")) then
-			Name = a_GalleryName .. " " .. tostring(v[10]);
-		end
-		local area =
+	self.ExecuteStatement(
+		"SELECT * FROM Areas WHERE PlayerName = ? AND GalleryName = ?",
 		{
-			ID = v[1],
-			MinX = v[2], MaxX = v[3], MinZ = v[4], MaxZ = v[5],
-			StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
-			Gallery = Gallery,
-			GalleryIndex = v[10],
-			PlayerName = a_PlayerName,
-			Name = Name,
-		};
-		table.insert(res, area);
-		res[area.Name] = area;
-	end
-	stmt:finalize();
+			a_PlayerName,
+			a_GalleryName,
+		},
+		function (a_Values)
+			-- Assign the proper gallery object to the area:
+			local area = self:FixupAreaAfterLoad(a_Values)
+			if (area == nil) then
+				return;
+			end
+			table.insert(res, area);
+			res[area.Name] = area;
+		end
+	)
 	
 	return res;
 end
@@ -330,34 +343,26 @@ end
 
 
 --- Loads all the areas for a single player
+-- Returns a table that has both an array of the area objects, as well as a map AreaName -> area object
 function SQLite:LoadAllPlayerAreas(a_PlayerName)
 	assert(a_PlayerName ~= nil);
 	
 	local res = {};
-	local stmt = self.DB:prepare("SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, Name FROM Areas WHERE PlayerName = ?");
-	stmt:bind_values(a_PlayerName);
-	for v in stmt:rows() do
-		local Gallery = FindGalleryByName(v[10]);
-		if (Gallery ~= nil) then
-			local Name = v[12];
-			if ((Name == nil) or (Name == "")) then
-				Name = v[10] .. " " .. tostring(v[11]);
+	self:ExecuteStatement(
+		"SELECT * FROM Areas WHERE PlayerName = ?",
+		{
+			a_PlayerName
+		},
+		function (a_Values)
+			-- Assign the proper gallery:
+			local area = self:FixupAreaAfterLoad(a_Values)
+			if (area == nil) then
+				return
 			end
-			local area =
-			{
-				ID = v[1],
-				MinX = v[2], MaxX = v[3], MinZ = v[4], MaxZ = v[5],
-				StartX = v[6], EndX = v[7], StartZ = v[8], EndZ = v[9],
-				Gallery = Gallery,
-				GalleryIndex = v[11],
-				PlayerName = a_PlayerName,
-				Name = Name,
-			};
-			table.insert(res, area);
-			res[area.Name] = area;
+			table.insert(res, area)
+			res[area.Name] = area
 		end
-	end
-	stmt:finalize();
+	)
 	
 	return res;
 end
@@ -374,23 +379,11 @@ function SQLite:LoadPlayerAreaByName(a_PlayerName, a_AreaName)
 	
 	local res = nil;
 	self:ExecuteStatement(
-		"SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex FROM Areas WHERE PlayerName = ? AND Name = ?",
+		"SELECT * FROM Areas WHERE PlayerName = ? AND Name = ?",
 		{a_PlayerName, a_AreaName},
 		function (a_Values)
-			local Gallery = FindGalleryByName(a_Values.GalleryName);
-			if (Gallery == nil) then
-				return;
-			end
-			res =
-			{
-				ID = a_Values.ID,
-				MinX = a_Values.MinX, MaxX = a_Values.MaxX, MinZ = a_Values.MinZ, MaxZ = a_Values.MaxZ,
-				StartX = a_Values.StartX, EndX = a_Values.EndX, StartZ = a_Values.StartZ, EndZ = a_Values.EndZ,
-				Gallery = Gallery,
-				GalleryIndex = a_Values.GalleryIndex,
-				PlayerName = a_PlayerName,
-				Name = a_AreaName,
-			};
+			-- Assign the proper gallery:
+			res = self:FixupAreaAfterLoad(a_Values)
 		end
 	);
 	
@@ -413,23 +406,10 @@ function SQLite:LoadAreaByPos(a_WorldName, a_BlockX, a_BlockZ)
 	
 	local res = nil;
 	self:ExecuteStatement(
-		"SELECT ID, MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, PlayerName, Name FROM Areas WHERE WorldName = ? AND MinX <= ? AND MaxX > ? AND MinZ <= ? AND MaxZ > ?",
+		"SELECT * FROM Areas WHERE WorldName = ? AND MinX <= ? AND MaxX > ? AND MinZ <= ? AND MaxZ > ?",
 		{a_WorldName, a_BlockX, a_BlockX, a_BlockZ, a_BlockZ},
 		function (a_Values)
-			local Gallery = FindGalleryByName(a_Values.GalleryName);
-			if (Gallery == nil) then
-				return;
-			end
-			res =
-			{
-				ID = a_Values.ID,
-				MinX = a_Values.MinX, MaxX = a_Values.MaxX, MinZ = a_Values.MinZ, MaxZ = a_Values.MaxZ,
-				StartX = a_Values.StartX, EndX = a_Values.EndX, StartZ = a_Values.StartZ, EndZ = a_Values.EndZ,
-				Gallery = Gallery,
-				GalleryIndex = a_Values.GalleryIndex,
-				PlayerName = a_Values.PlayerName,
-				Name = a_Values.Name,
-			};
+			res = self:FixupAreaAfterLoad(a_Values)
 		end
 	);
 	
@@ -484,7 +464,9 @@ function SQLite:AddArea(a_Area)
 	assert(a_Area ~= nil);
 	
 	self:ExecuteStatement(
-		"INSERT INTO Areas (MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, PlayerName, Name, DateClaimed, ForkedFromID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO Areas \
+			(MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, PlayerName, Name, DateClaimed, ForkedFromID, IsLocked) \
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		{
 			a_Area.MinX, a_Area.MaxX, a_Area.MinZ, a_Area.MaxZ,
 			a_Area.StartX, a_Area.EndX, a_Area.StartZ, a_Area.EndZ,
@@ -493,7 +475,8 @@ function SQLite:AddArea(a_Area)
 			a_Area.PlayerName,
 			a_Area.Name,
 			FormatDateTime(os.time()),
-			(a_Area.ForkedFrom or {}).ID or -1
+			(a_Area.ForkedFrom or {}).ID or -1,
+			a_Area.IsLocked or 0,
 		}
 	);
 	a_Area.ID = self.DB:last_insert_rowid();
@@ -547,6 +530,35 @@ function SQLite:ClaimArea(a_Gallery, a_PlayerName, a_ForkedFromArea)
 	end
 	
 	return Area
+end
+
+
+
+
+
+--- Marks the specified area as locked in the DB
+-- a_LockedByName is the name of the player locking the area
+function SQLite:LockArea(a_Area, a_LockedByName)
+	-- Check params:
+	assert(type(a_Area) == "table")
+	assert(a_Area.ID ~= nil)
+	assert(type(a_LockedByName) == "string")
+	
+	-- Set the area's properties:
+	a_Area.IsLocked = true
+	a_Area.LockedBy = a_LockedByName
+	a_Area.DateLocked = FormatDateTime(os.time())
+
+	-- Update the DB:
+	self:ExecuteStatement(
+		"UPDATE Areas SET IsLocked = ?, LockedBy = ?, DateLocked = ? WHERE ID = ?",
+		{
+			1,
+			a_LockedByName,
+			a_Area.DateLocked,
+			a_Area.ID
+		}
+	)
 end
 
 
@@ -691,6 +703,35 @@ end
 
 
 
+--- Marks the specified area as unlocked in the DB
+-- a_UnlockedByName is the name of the player unlocking the area
+function SQLite:UnlockArea(a_Area, a_UnlockedByName)
+	-- Check params:
+	assert(type(a_Area) == "table")
+	assert(a_Area.ID ~= nil)
+	assert(type(a_UnlockedByName) == "string")
+	
+	-- Set the area's properties:
+	a_Area.IsLocked = false
+	a_Area.LockedBy = a_UnlockedByName
+	a_Area.DateLocked = FormatDateTime(os.time())
+
+	-- Update the DB:
+	self:ExecuteStatement(
+		"UPDATE Areas SET IsLocked = ?, LockedBy = ?, DateLocked = ? WHERE ID = ?",
+		{
+			0,
+			a_UnlockedByName,
+			a_Area.DateLocked,
+			a_Area.ID
+		}
+	)
+end
+
+
+
+
+
 function SQLite:UpdateGallery(a_Gallery)
 	self:ExecuteStatement(
 		"UPDATE GalleryEnd SET NextAreaIdx = ? WHERE GalleryName = ?",
@@ -810,6 +851,9 @@ function SQLite_CreateStorage(a_Params)
 		"GalleryIndex",                      -- Index of the area in the gallery from which this area has been claimed
 		"DateClaimed",                       -- ISO 8601 DateTime of the claiming
 		"ForkedFromID",                      -- The ID of the area from which this one has been forked
+		"IsLocked",                          -- If nonzero, the area is locked and cannot be edited unless the player has the "gallery.admin.overridelocked" permission
+		"LockedBy",                          -- Name of the player who last locked / unlocked the area
+		"DateLocked",                        -- ISO 8601 DateTime when the area was last locked / unlocked
 	};
 	local GalleryEndColumns =
 	{

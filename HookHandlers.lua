@@ -57,6 +57,7 @@ end
 
 
 
+
 function OnPlayerRightClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockFace, a_CursorX, a_CursorY, a_CursorZ, a_Status)
 	if (a_BlockFace < 0) then
 		-- This really means "use item" and no valid coords are given

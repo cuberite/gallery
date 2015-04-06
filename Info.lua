@@ -169,7 +169,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					},
 				},  -- fork
 				
-				goto =
+				["goto"] =
 				{
 					HelpString = "teleports you to specified gallery area",
 					Permission = "gallery.goto",
@@ -219,6 +219,13 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					Permission = "gallery.list",
 					Handler = HandleCmdList,
 				},  -- list
+				
+				lockarea =
+				{
+					HelpString = "locks an area so that even the owner can't build there",
+					Permission = "gallery.admin.lockarea",
+					Handler = HandleCmdLockArea,
+				},  -- lockarea
 				
 				my =
 				{
@@ -336,6 +343,13 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					Handler = HandleCmdUnclaim,
 				},  -- unclaim
 				
+				unlockarea =
+				{
+					HelpString = "unlocks a previously locked area",
+					Permission = "gallery.admin.unlockarea",
+					Handler = HandleCmdUnlockArea,
+				},  -- unlockarea
+				
 				visit =
 				{
 					HelpString = "teleports you to the specified gallery",
@@ -380,6 +394,11 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 			RecommendedGroups = "VIPs",
 			CommandsAffected = { "/gallery info", },
 		},
+		["gallery.admin.lockarea"] =
+		{
+			Description = "Lock an area so that not even the owner can build in there.",
+			RecommendedGroups = "admins",
+		},
 		["gallery.admin.my"] =
 		{
 			Description = "View list of areas for other players, using the \"/gallery my @playername [<galleryname>]\" form.",
@@ -389,9 +408,19 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 			Description = "Rename any area for any player.",
 			RecommendedGroups = "admins, mods",
 		},
+		["gallery.admin.overridelocked"] =
+		{
+			Description = "Allows a player to build in areas that have been locked. The player still needs to have access to the area - either ownership or by allowance.",
+			RecommendedGroups = "admins",
+		},
 		["gallery.admin.template"] =
 		{
 			Description = "Create a .schematic file out of an in-game cuboid.",
+			RecommendedGroups = "admins",
+		},
+		["gallery.admin.unlockarea"] =
+		{
+			Description = "Unlock a previously locked area. See also \"gallery.admin.lock.\"",
 			RecommendedGroups = "admins",
 		},
 		["gallery.admin.worldedit"] =

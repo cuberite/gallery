@@ -11,9 +11,11 @@
 g_Galleries = {};
 
 --- The per-world per-player list of owned areas. Access as "g_Areas[WorldName][PlayerName]"
+-- Each such item is both an array of area objects and a map of area name -> area object
 g_PlayerAreas = {};
 
---- The per-world per-player list of allowances. Access as "g_PlayerAllowances[WorldName][PlayerName]"
+--- The per-world per-player array of allowances. Access as "g_PlayerAllowances[WorldName][PlayerName]"
+-- Each such item is both an array of area objects and a map of area name -> area object
 g_PlayerAllowances = {};
 
 
@@ -358,6 +360,38 @@ end
 
 
 
+--- Replaces the area for each player that is using it, either as owned or allowance
+function ReplaceAreaForAllPlayers(a_Area)
+	-- Check params:
+	assert(type(a_Area) == "table")
+	assert(a_Area.ID ~= nil)
+	assert(a_Area.Gallery ~= nil)
+	
+	-- Replace in Ownership:
+	for _, areas in pairs(g_PlayerAreas[a_Area.Gallery.WorldName]) do
+		for idx, area in ipairs(areas or {}) do
+			if (area.ID == a_Area.ID) then
+				areas[idx] = a_Area
+			end
+		end
+		areas[a_Area.Name] = a_Area
+	end
+	
+	-- Replace in Allowances:
+	for _, allowances in pairs(g_PlayerAllowances[a_Area.Gallery.WorldName]) do
+		for idx, area in ipairs(allowances or {}) do
+			if (area.ID == a_Area.ID) then
+				areas[idx] = a_Area
+			end
+		end
+		allowances[a_Area.Name] = a_Area
+	end
+end
+
+
+
+
+
 --- Removes the specified area from the internal cache of player's areas
 function RemovePlayerArea(a_Player, a_Area)
 	-- Check params:
@@ -365,7 +399,7 @@ function RemovePlayerArea(a_Player, a_Area)
 	assert(type(a_Area) == "table")
 	assert(a_Area.ID ~= nil)
 
-	-- Remove the area from the cache:
+	-- Remove the area from the Ownership cache:
 	local PlayerAreas = GetPlayerAreas(a_Player);
 	for idx, area in ipairs(PlayerAreas) do
 		if (area.ID == a_Area.ID) then
@@ -374,6 +408,17 @@ function RemovePlayerArea(a_Player, a_Area)
 		end
 	end
 	PlayerAreas[a_Area.Name] = nil
+	
+	-- Remove the area from the Allowances:
+	for _, allowances in pairs(g_PlayerAllowances[a_Area.Gallery.WorldName]) do
+		for idx, area in ipairs(allowances or {}) do
+			if (area.ID == a_Area.ID) then
+				table.remove(allowances, idx)
+				break
+			end
+		end
+		allowances[a_Area.Name] = nil
+	end
 end
 
 
@@ -446,13 +491,22 @@ function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 		if (Allowance == nil) then
 			return false, "This area is owned by someone else.";
 		end
+		-- Is the allowance locked?
+		if (Allowance.IsLocked and not(a_Player:HasPermission("gallery.admin.overridelocked"))) then
+			return false, "This area is locked"
+		end
 		-- Allowed via an allowance, is it within the allowed buildable space? (exclude the sidewalks):
 		if not(IsInArea(Allowance, a_BlockX, a_BlockZ)) then
 			return false, "This is the public sidewalk.";
 		end
 		return true;
 	end
-	
+
+	-- Is the area locked?
+	if (Area.IsLocked and not(a_Player:HasPermission("gallery.admin.overridelocked"))) then
+		return false, "This area is locked"
+	end
+
 	-- This player's area, is it within the allowed buildable space? (exclude the sidewalks):
 	if not(IsInArea(Area, a_BlockX, a_BlockZ)) then
 		return false, "This is the public sidewalk.";

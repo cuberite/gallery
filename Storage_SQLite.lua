@@ -394,6 +394,31 @@ end
 
 
 
+--- Loads an area identified by its ID
+-- Returns the loaded area, or nil if there's no such area
+function SQLite:LoadAreaByID(a_AreaID)
+	-- Check params:
+	a_AreaID = tonumber(a_AreaID)
+	assert(a_AreaID ~= nil)
+	
+	local res = nil
+	self:ExecuteStatement(
+		"SELECT * FROM Areas WHERE ID = ?",
+		{
+			a_AreaID
+		},
+		function (a_Values)
+			res = self:FixupAreaAfterLoad(a_Values)
+		end
+	)
+	
+	return res
+end
+
+
+
+
+
 --- Loads whatever area intersects the given block coords.
 -- Returns the loaded area, or nil if there's no area
 function SQLite:LoadAreaByPos(a_WorldName, a_BlockX, a_BlockZ)

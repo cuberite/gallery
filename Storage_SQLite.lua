@@ -169,6 +169,10 @@ function SQLite:FixupAreaAfterLoad(a_Area)
 	-- Convert IsLocked from "number or bool" to "bool":
 	a_Area.IsLocked = (a_Area.IsLocked ~= 0) and (a_Area.IsLocked ~= false)
 	
+	-- Add some defaults:
+	a_Area.NumPlacedBlocks = a_Area.NumPlacedBlocks or 0
+	a_Area.NumBrokenBlocks = a_Area.NumBrokenBlocks or 0
+	
 	return a_Area
 end
 
@@ -497,8 +501,10 @@ function SQLite:AddArea(a_Area)
 	local DateTimeNow = FormatDateTime(os.time())
 	self:ExecuteStatement(
 		"INSERT INTO Areas \
-			(MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, PlayerName, Name, DateClaimed, ForkedFromID, IsLocked, DateLastChanged) \
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			(MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, \
+			PlayerName, Name, DateClaimed, ForkedFromID, IsLocked, DateLastChanged, \
+			NumPlacedBlocks, NumBrokenBlocks) \
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		{
 			a_Area.MinX, a_Area.MaxX, a_Area.MinZ, a_Area.MaxZ,
 			a_Area.StartX, a_Area.EndX, a_Area.StartZ, a_Area.EndZ,
@@ -510,6 +516,8 @@ function SQLite:AddArea(a_Area)
 			(a_Area.ForkedFrom or {}).ID or -1,
 			a_Area.IsLocked or 0,
 			DateTimeNow,
+			a_Area.NumPlacedBlocks or 0,
+			a_Area.NumBrokenBlocks or 0,
 		}
 	);
 	a_Area.ID = self.DB:last_insert_rowid();
@@ -548,11 +556,13 @@ function SQLite:ClaimArea(a_Gallery, a_PlayerName, a_ForkedFromArea)
 		EndX   = MaxX - a_Gallery.AreaEdge,
 		StartZ = MinZ + a_Gallery.AreaEdge,
 		EndZ   = MaxZ - a_Gallery.AreaEdge,
-		Gallery = a_Gallery;
-		GalleryIndex = NextAreaIdx;
-		PlayerName = a_PlayerName;
-		Name = a_Gallery.Name .. " " .. tostring(NextAreaIdx);
-		ForkedFrom = a_ForkedFromArea;
+		Gallery = a_Gallery,
+		GalleryIndex = NextAreaIdx,
+		PlayerName = a_PlayerName,
+		Name = a_Gallery.Name .. " " .. tostring(NextAreaIdx),
+		ForkedFrom = a_ForkedFromArea,
+		NumPlacedBlocks = 0,
+		NumBrokenBlocks = 0,
 	};
 	self:AddArea(Area);
 

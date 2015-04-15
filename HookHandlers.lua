@@ -73,6 +73,19 @@ end
 
 
 
+local function OnPlayerPlacingBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockType, a_BlockMeta)
+	local CanInteract, Reason = CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ);
+	if (CanInteract) then
+		return false;
+	end
+	a_Player:SendMessage("You are not allowed to build here. " .. Reason);
+	return true;
+end
+
+
+
+
+
 local function OnPlayerRightClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_BlockFace, a_CursorX, a_CursorY, a_CursorZ, a_Status)
 	if (a_BlockFace < 0) then
 		-- This really means "use item" and no valid coords are given
@@ -366,16 +379,17 @@ end
 
 --- Registers all hook handlers
 function InitHookHandlers()
-	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATED,     OnChunkGenerated)
-	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATING,    OnChunkGenerating)
-	cPluginManager:AddHook(cPluginManager.HOOK_EXPLODING,           OnExploding)
-	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_BROKEN_BLOCK, OnPlayerBrokenBlock)
-	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_DESTROYED,    OnPlayerDestroyed)
-	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_LEFT_CLICK,   OnPlayerLeftClick)
-	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_PLACED_BLOCK, OnPlayerPlacedBlock)
-	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_RIGHT_CLICK,  OnPlayerRightClick)
-	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_SPAWNED,      OnPlayerSpawned)
-	cPluginManager:AddHook(cPluginManager.HOOK_PLUGINS_LOADED,      OnPluginsLoaded)
+	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATED,      OnChunkGenerated)
+	cPluginManager:AddHook(cPluginManager.HOOK_CHUNK_GENERATING,     OnChunkGenerating)
+	cPluginManager:AddHook(cPluginManager.HOOK_EXPLODING,            OnExploding)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_BROKEN_BLOCK,  OnPlayerBrokenBlock)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_DESTROYED,     OnPlayerDestroyed)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_LEFT_CLICK,    OnPlayerLeftClick)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_PLACED_BLOCK,  OnPlayerPlacedBlock)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_PLACING_BLOCK, OnPlayerPlacingBlock)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_RIGHT_CLICK,   OnPlayerRightClick)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLAYER_SPAWNED,       OnPlayerSpawned)
+	cPluginManager:AddHook(cPluginManager.HOOK_PLUGINS_LOADED,       OnPluginsLoaded)
 end
 
 

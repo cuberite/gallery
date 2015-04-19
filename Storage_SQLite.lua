@@ -167,7 +167,7 @@ function SQLite:FixupAreaAfterLoad(a_Area)
 	end
 	
 	-- Convert IsLocked from "number or bool" to "bool":
-	a_Area.IsLocked = (a_Area.IsLocked ~= 0) and (a_Area.IsLocked ~= false)
+	a_Area.IsLocked = (a_Area.IsLocked ~= 0) and (a_Area.IsLocked ~= false) and (a_Area.IsLocked ~= nil)
 	
 	-- Add some defaults:
 	a_Area.NumPlacedBlocks = a_Area.NumPlacedBlocks or 0

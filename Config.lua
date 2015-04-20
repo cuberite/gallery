@@ -54,7 +54,7 @@ end
 --- Returns true if the gallery has all the minimum settings it needs
 -- a_Index is used instead of gallery name if the name is not present
 -- Also loads the gallery's schematic file and calculates helper dimensions
-function CheckGallery(a_Gallery, a_Index)
+local function CheckGallery(a_Gallery, a_Index)
 	-- Check if the name is given:
 	if (a_Gallery.Name == nil) then
 		LOGWARNNIG("Gallery #" .. a_Index .. " doesn't have a Name, disabling it.");
@@ -208,15 +208,17 @@ end
 
 
 --- Verifies that each gallery has all the minimum settings it needs
-function VerifyGalleries()
+-- Returns an array+map of the accepted galleries
+local function VerifyGalleries(a_Galleries)
 	-- Filter out galleries that are not okay:
-	local GalleriesOK = {};
-	for idx, gallery in ipairs(g_Galleries) do
+	local GalleriesOK = {}
+	for idx, gallery in ipairs(a_Galleries) do
 		if (CheckGallery(gallery, idx)) then
-			table.insert(GalleriesOK, gallery);
+			GalleriesOK[gallery.Name] = gallery
+			table.insert(GalleriesOK, gallery)
 		end
 	end
-	g_Galleries = GalleriesOK;
+	return GalleriesOK
 end
 
 
@@ -224,17 +226,20 @@ end
 
 
 --- Checks if g_Config has all the keys it needs, adds defaults for the missing ones
-function VerifyConfig()
-	g_Config.CommandPrefix = g_Config.CommandPrefix or "/gallery";
-	g_Config.DatabaseEngine = g_Config.DatabaseEngine or "sqlite";
-	g_Config.DatabaseParams = g_Config.DatabaseParams or {};
+-- Returns the corrected configuration (but changes the one in the parameter as well)
+local function VerifyConfig(a_Config)
+	a_Config.CommandPrefix = a_Config.CommandPrefix or "/gallery";
+	a_Config.DatabaseEngine = a_Config.DatabaseEngine or "sqlite";
+	a_Config.DatabaseParams = a_Config.DatabaseParams or {};
 
 	-- Apply the CommandPrefix - change the actual g_PluginInfo table:
-	g_Config.CommandPrefix = g_Config.CommandPrefix or "/gallery";
-	if (g_Config.CommandPrefix ~= "/gallery") then
-		g_PluginInfo.Commands[g_Config.CommandPrefix] = g_PluginInfo.Commands["/gallery"];
+	a_Config.CommandPrefix = a_Config.CommandPrefix or "/gallery";
+	if (a_Config.CommandPrefix ~= "/gallery") then
+		g_PluginInfo.Commands[a_Config.CommandPrefix] = g_PluginInfo.Commands["/gallery"];
 		g_PluginInfo.Commands["/gallery"] = nil;
 	end
+	
+	return a_Config
 end
 
 
@@ -251,6 +256,8 @@ function LoadConfig()
 		cFile:Copy(PluginFolder .. "/example.cfg", ExampleFile);
 		LOGWARNING(PLUGIN_PREFIX .. "The config file '" .. CONFIG_FILE .. "' doesn't exist. An example configuration file '" .. ExampleFile .. "' has been created for you.");
 		LOGWARNING(PLUGIN_PREFIX .. "No galleries were loaded");
+		g_Config = VerifyConfig({})
+		g_Galleries = VerifyGalleries({})
 		return;
 	end
 	
@@ -259,6 +266,8 @@ function LoadConfig()
 	if (cfg == nil) then
 		LOGWARNING(PLUGIN_PREFIX .. "Cannot open '" .. CONFIG_FILE .. "': " .. err);
 		LOGWARNING(PLUGIN_PREFIX .. "No galleries were loaded");
+		g_Config = VerifyConfig({})
+		g_Galleries = VerifyGalleries({})
 		return;
 	end
 	
@@ -269,15 +278,17 @@ function LoadConfig()
 	cfg();
 	
 	-- Retrieve the values we want from the sandbox:
-	g_Galleries, g_Config = Sandbox.Galleries, Sandbox.Config;
-	if (g_Galleries == nil) then
+	local Galleries, Config = Sandbox.Galleries, Sandbox.Config;
+	if (Galleries == nil) then
 		LOGWARNING(PLUGIN_PREFIX .. "Galleries not found in the config file '" .. CONFIG_FILE .. "'. Gallery plugin inactive.");
-		g_Galleries = {};
+		Galleries = {};
 	end
-	if (g_Config == nil) then
+	if (Config == nil) then
 		LOGWARNING(PLUGIN_PREFIX .. "Config not found in the config file '" .. CONFIG_FILE .. "'. Using defaults.");
-		g_Config = {};  -- Defaults will be inserted by VerifyConfig()
+		Config = {};  -- Defaults will be inserted by VerifyConfig()
 	end
+	g_Config = VerifyConfig(Config)
+	g_Galleries = VerifyGalleries(Galleries)
 end
 
 

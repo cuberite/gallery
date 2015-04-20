@@ -9,29 +9,25 @@
 
 function Initialize(a_Plugin)
 	-- Load the InfoReg library file for registering the Info.lua command table:
-	dofile(cPluginManager:GetPluginsPath() .. "/InfoReg.lua");
+	dofile(cPluginManager:GetPluginsPath() .. "/InfoReg.lua")
 	
 	-- Load the config
-	LoadConfig();
-
-	-- Verify the settings:
-	VerifyGalleries();
-	VerifyConfig();
+	LoadConfig()
 
 	-- Initialize the DB storage:
-	InitStorage();
+	InitStorage()
 
 	-- Initialize the values in galleries stored in the DB:
-	g_DB:LoadGalleries();
+	g_DB:LoadGalleries()
 
 	-- Load per-player list of areas for all currently connected players:
-	LoadAllPlayersAreas();
+	LoadAllPlayersAreas()
 
 	-- Initialize in-game commands:
-	RegisterPluginInfoCommands();
+	RegisterPluginInfoCommands()
 	
 	-- Hook to the player interaction events so that we can disable them:
-	InitHookHandlers();
+	InitHookHandlers()
 
 	return true;
 end

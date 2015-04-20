@@ -8,6 +8,7 @@
 
 
 --- The main list of galleries available
+-- Is both an array of gallery objects and a map (gallery name -> gallery object)
 g_Galleries = {};
 
 --- The per-world per-player list of owned areas. Access as "g_Areas[WorldName][PlayerName]"
@@ -23,8 +24,7 @@ g_PlayerAllowances = {};
 
 
 --[[
-The g_Galleries table is an array of the individual galleries. Each gallery is loaded from the config file,
-checked for validity and preprocessed to contain the following members:
+Each gallery is loaded from the config file, checked for validity and preprocessed to contain the following members:
 {
 	AreaEdge -- Edge of each area that is "public", i. e. non-buildable even by area's owner.
 	AreaMaxX, AreaMaxZ, AreaMinX, AreaMinZ -- The (tight) bounding box for all the areas in the gallery
@@ -368,7 +368,7 @@ function ReplaceAreaForAllPlayers(a_Area)
 	assert(a_Area.Gallery ~= nil)
 	
 	-- Replace in Ownership:
-	for _, areas in pairs(g_PlayerAreas[a_Area.Gallery.WorldName]) do
+	for _, areas in pairs(g_PlayerAreas[a_Area.Gallery.WorldName] or {}) do
 		for idx, area in ipairs(areas or {}) do
 			if (area.ID == a_Area.ID) then
 				areas[idx] = a_Area
@@ -378,7 +378,7 @@ function ReplaceAreaForAllPlayers(a_Area)
 	end
 	
 	-- Replace in Allowances:
-	for _, allowances in pairs(g_PlayerAllowances[a_Area.Gallery.WorldName]) do
+	for _, allowances in pairs(g_PlayerAllowances[a_Area.Gallery.WorldName] or {}) do
 		for idx, area in ipairs(allowances or {}) do
 			if (area.ID == a_Area.ID) then
 				areas[idx] = a_Area

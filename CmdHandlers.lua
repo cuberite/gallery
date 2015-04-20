@@ -1,7 +1,7 @@
 
 -- CmdHandlers.lua
 
--- Implements the handling of in-game commands available to players
+-- Implements the handling of in-game and console commands available to players
 
 
 
@@ -968,6 +968,34 @@ function HandleCmdVisit(a_Split, a_Player)
 	a_Player:TeleportToCoords(BlockX + 0.5, Gallery.TeleportCoordY + 0.001, BlockZ + 0.5);
 	a_Player:SendMessage("Welcome to " .. GalleryName .. " " .. AreaIndex .. ".");
 	return true;
+end
+
+
+
+
+
+function HandleConsoleCmdCheckIndices(a_Split, a_EntireCommand)
+	-- Check params:
+	local shouldForce = false
+	for _, v in ipairs(a_Split) do
+		if (v == "-force") then
+			shouldForce = true
+		end
+	end
+	
+	-- If there are any players connected, refuse to process unless forced explicitly:
+	if not(shouldForce) then
+		if (cRoot:Get():GetServer():GetNumPlayers() ~= 0) then
+			return true, "Cannot check indices, there are players connected to the server. If you know what you're doing, you can use the \"-force\" parameter to force checking despite players being present."
+		end
+	end
+	
+	-- Check the indices in each gallery:
+	for _, gallery in ipairs(g_Galleries) do
+		g_DB:CheckAreaIndices(gallery, "<console>")
+	end
+	
+	return true, "Indices checked"
 end
 
 

@@ -23,8 +23,9 @@ function Initialize(a_Plugin)
 	-- Load per-player list of areas for all currently connected players:
 	LoadAllPlayersAreas()
 
-	-- Initialize in-game commands:
+	-- Register commands:
 	RegisterPluginInfoCommands()
+	RegisterPluginInfoConsoleCommands()
 	
 	-- Hook to the player interaction events so that we can disable them:
 	InitHookHandlers()

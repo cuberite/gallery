@@ -371,6 +371,23 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 		},  -- ["/gallery"]
 	},  -- Commands
 	
+	
+	ConsoleCommands =
+	{
+		["gallery"] =
+		{
+			Subcommands =
+			{
+				checkindices =
+				{
+					HelpString = "Checks each gallery's area indices against the list of Claimed and Removed areas, if an area is in neither, it is moved to the Removed areas.",
+					Handler = HandleConsoleCmdCheckIndices,
+				},  -- checkindices
+			},  -- Subcommands
+		},  -- ["gallery"]
+	},  -- ConsoleCommands
+	
+	
 	Permissions =
 	{
 		["gallery.admin.buildanywhere"] =

@@ -492,6 +492,28 @@ end
 
 
 
+--- Returns a map of Idx -> Area for the areas in the specified index range in the specified gallery
+-- If an area is not claimed, the map entry for it will be nil
+function SQLite:LoadGalleryAreasRange(a_GalleryName, a_StartIndex, a_EndIndex)
+	local res = {}
+	self:ExecuteStatement(
+		"SELECT * FROM Areas WHERE GalleryName = ? AND GalleryIndex >= ? AND GalleryIndex <= ?",
+		{
+			a_GalleryName,
+			a_StartIndex,
+			a_EndIndex
+		},
+		function (a_Values)
+			res[a_Values.GalleryIndex] = self:FixupAreaAfterLoad(a_Values)
+		end
+	)
+	return res
+end
+
+
+
+
+
 --- Stores a new area into the DB
 function SQLite:AddArea(a_Area)
 	-- Check params:
@@ -521,6 +543,72 @@ function SQLite:AddArea(a_Area)
 		}
 	);
 	a_Area.ID = self.DB:last_insert_rowid();
+end
+
+
+
+
+
+--- Checks the specified gallery's area indices against the Claimed and Removed area lists.
+-- Areas that are in neither are added to the Removed list
+function SQLite:CheckAreaIndices(a_Gallery, a_RemovedBy)
+	-- Check params:
+	a_RemovedBy = tostring(a_RemovedBy)
+	assert(type(a_Gallery) == "table")
+	assert(a_Gallery.Name)
+	assert(a_RemovedBy)
+	
+	-- Walk through all claimed areas, remember them in a map of GalleryIndex -> true:
+	local IsPresent = {}
+	local MaxIndex = 0
+	self:ExecuteStatement(
+		"SELECT GalleryIndex FROM Areas WHERE GalleryName = ?",
+		{
+			a_Gallery.Name
+		},
+		function (a_Values)
+			IsPresent[a_Values.GalleryIndex] = true
+			if (a_Values.GalleryIndex > MaxIndex) then
+				MaxIndex = a_Values.GalleryIndex
+			end
+		end
+	)
+	
+	-- Walk through all removed areas, add them to the map:
+	self:ExecuteStatement(
+		"SELECT GalleryIndex FROM RemovedAreas WHERE GalleryName = ?",
+		{
+			a_Gallery.Name
+		},
+		function (a_Values)
+			IsPresent[a_Values.GalleryIndex] = true
+		end
+	)
+	
+	-- Add all areas between index 0 and MaxIndex that are not present into the RemovedAreas table:
+	local now = FormatDateTime(os.time())
+	for idx = 0, MaxIndex do
+		if not(IsPresent[idx]) then
+			self:ExecuteStatement(
+				"INSERT INTO RemovedAreas(GalleryName, GalleryIndex, RemovedBy, DateRemoved) VALUES (?, ?, ?, ?)",
+				{
+					a_Gallery.Name,
+					idx,
+					a_RemovedBy,
+					now
+				}
+			)
+		end  -- if not(IsPresent)
+	end  -- for idx
+	
+	-- Remove areas from RemovedAreas that are above the MaxIndex:
+	self:ExecuteStatement(
+		"DELETE FROM RemovedAreas WHERE GalleryName = ? AND GalleryIndex > ?",
+		{
+			a_Gallery.Name,
+			MaxIndex
+		}
+	)
 end
 
 

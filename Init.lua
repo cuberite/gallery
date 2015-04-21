@@ -30,6 +30,9 @@ function Initialize(a_Plugin)
 	-- Hook to the player interaction events so that we can disable them:
 	InitHookHandlers()
 
+	-- Initialize webadmin pages:
+	InitWebList()
+
 	return true;
 end
 

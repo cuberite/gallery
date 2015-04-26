@@ -182,7 +182,7 @@ local function ExecuteLock(a_Gallery, a_Request)
 	LockAreaByID(AreaID, a_Request.Username and ("<web: " .. a_Request.Username ..">") or "<web: unknown user>")
 	
 	-- Return the base page with a notification:
-	return "<p>Area locked</p>" .. BuildGalleryAreaList(a_Gallery, a_Request)
+	return "<p>Area locked</p>" .. BuildGalleryPager(a_Gallery, a_Request) .. BuildGalleryAreaList(a_Gallery, a_Request) .. BuildGalleryPager(a_Gallery, a_Request)
 end
 
 
@@ -202,7 +202,7 @@ local function ExecuteUnlock(a_Gallery, a_Request)
 	UnlockAreaByID(AreaID, a_Request.Username and ("<web: " .. a_Request.Username ..">") or "<web: unknown user>")
 	
 	-- Return the base page with a notification:
-	return "<p>Area unlocked</p>" .. BuildGalleryAreaList(a_Gallery, a_Request)
+	return "<p>Area unlocked</p>" .. BuildGalleryPager(a_Gallery, a_Request) .. BuildGalleryAreaList(a_Gallery, a_Request) .. BuildGalleryPager(a_Gallery, a_Request)
 end
 
 
@@ -277,7 +277,7 @@ local function ExecuteRemoveConfirmed(a_Gallery, a_Request)
 	end
 	
 	-- Return the base page with a notification:
-	return "<p>Area removed</p>" .. BuildGalleryAreaList(a_Gallery, a_Request)
+	return "<p>Area removed</p>" .. BuildGalleryPager(a_Gallery, a_Request) .. BuildGalleryAreaList(a_Gallery, a_Request) .. BuildGalleryPager(a_Gallery, a_Request)
 end
 
 
@@ -310,7 +310,7 @@ local function BuildGalleryPage(a_Gallery, a_Request)
 	end
 	
 	-- No action, or the action handler returned nothing
-	return BuildGalleryAreaList(a_Gallery, a_Request) .. BuildGalleryPager(a_Gallery, a_Request)
+	return BuildGalleryPager(a_Gallery, a_Request) .. BuildGalleryAreaList(a_Gallery, a_Request) .. BuildGalleryPager(a_Gallery, a_Request)
 end
 
 

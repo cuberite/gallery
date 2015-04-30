@@ -10,7 +10,39 @@
 --- The SQLite backend namespace:
 local SQLite = {};
 
-
+--- The columns definition for the Areas table
+-- A lookup map of LowerCaseColumnName => {ColumnName, ColumnType} is added in the initialization
+local g_AreasColumns =
+{
+	{"ID",              "INTEGER PRIMARY KEY AUTOINCREMENT"},
+	{"MinX",            "INTEGER"},  -- The bounds of this area, including the non-buildable "sidewalk"
+	{"MaxX",            "INTEGER"},  -- The bounds of this area, including the non-buildable "sidewalk"
+	{"MinZ",            "INTEGER"},  -- The bounds of this area, including the non-buildable "sidewalk"
+	{"MaxZ",            "INTEGER"},  -- The bounds of this area, including the non-buildable "sidewalk"
+	{"StartX",          "INTEGER"},  -- The buildable bounds of this area
+	{"EndX",            "INTEGER"},  -- The buildable bounds of this area
+	{"StartZ",          "INTEGER"},  -- The buildable bounds of this area
+	{"EndZ",            "INTEGER"},  -- The buildable bounds of this area
+	{"Name",            "TEXT"},     -- The name given to the area
+	{"WorldName",       "TEXT"},     -- Name of the world where the area belongs
+	{"PlayerName",      "TEXT"},     -- Name of the owner
+	{"GalleryName",     "TEXT"},     -- Name of the gallery from which the area has been claimed
+	{"GalleryIndex",    "INTEGER"},  -- Index of the area in the gallery from which this area has been claimed
+	{"DateClaimed",     "TEXT"},     -- ISO 8601 DateTime of the claiming
+	{"ForkedFromID",    "INTEGER"},  -- The ID of the area from which this one has been forked
+	{"IsLocked",        "INTEGER"},  -- If nonzero, the area is locked and cannot be edited unless the player has the "gallery.admin.overridelocked" permission
+	{"LockedBy",        "TEXT"},     -- Name of the player who last locked / unlocked the area
+	{"DateLocked",      "TEXT"},     -- ISO 8601 DateTime when the area was last locked / unlocked
+	{"DateLastChanged", "TEXT"},     -- ISO 8601 DateTime when the area was last changed
+	{"NumPlacedBlocks", "INTEGER"},  -- Total number of blocks that the players have placed in the area
+	{"NumBrokenBlocks", "INTEGER"},  -- Total number of blocks that the players have broken in the area
+	{"EditMaxX",        "INTEGER"},  -- Maximum X coord of the edits within the area
+	{"EditMaxY",        "INTEGER"},  -- Maximum Y coord of the edits within the area
+	{"EditMaxZ",        "INTEGER"},  -- Maximum Z coord of the edits within the area
+	{"EditMinX",        "INTEGER"},  -- Minimum X coord of the edits within the are
+	{"EditMinY",        "INTEGER"},  -- Minimum Y coord of the edits within the are
+	{"EditMinZ",        "INTEGER"},  -- Minimum Z coord of the edits within the are
+}
 
 
 
@@ -80,13 +112,20 @@ end
 
 --- Creates the table of the specified name and columns[]
 -- If the table exists, any columns missing are added; existing data is kept
+-- a_Columns is an array of {ColumnName, ColumnType}, it will receive a map of LowerCaseColumnName => {ColumnName, ColumnType}
 function SQLite:CreateDBTable(a_TableName, a_Columns)
-	assert(a_TableName ~= nil);
-	assert(a_Columns ~= nil);
+	assert(a_TableName ~= nil)
+	assert(a_Columns ~= nil)
+	assert(a_Columns[1])
+	assert(a_Columns[1][1])
 	
 	-- Try to create the table first
-	local sql = "CREATE TABLE IF NOT EXISTS '" .. a_TableName .. "' (";
-	sql = sql .. table.concat(a_Columns, ", ");
+	local ColumnDefs = {}
+	for _, col in ipairs(a_Columns) do
+		table.insert(ColumnDefs, col[1] .. " " .. (col[2] or ""))
+	end
+	local sql = "CREATE TABLE IF NOT EXISTS '" .. a_TableName .. "' ("
+	sql = sql .. table.concat(ColumnDefs, ", ");
 	sql = sql .. ")";
 	if (not(self:DBExec(sql))) then
 		LOGWARNING(PLUGIN_PREFIX .. "Cannot create DB Table " .. a_TableName);
@@ -94,43 +133,41 @@ function SQLite:CreateDBTable(a_TableName, a_Columns)
 	end
 	-- SQLite doesn't inform us if it created the table or not, so we have to continue anyway
 	
+	-- Add the map of LowerCaseColumnName => {ColumnName, ColumnType} to a_Columns:
+	for _, col in ipairs(a_Columns) do
+		a_Columns[string.lower(col[1])] = col
+	end
+	
 	-- Check each column whether it exists
 	-- Remove all the existing columns from a_Columns:
-	local RemoveExistingColumn = function(UserData, NumCols, Values, Names)
+	local RemoveExistingColumnFromDef = function(UserData, NumCols, Values, Names)
 		-- Remove the received column from a_Columns. Search for column name in the Names[] / Values[] pairs
 		for i = 1, NumCols do
 			if (Names[i] == "name") then
 				local ColumnName = Values[i]:lower();
 				-- Search the a_Columns if they have that column:
-				for j = 1, #a_Columns do
-					-- Cut away all column specifiers (after the first space), if any:
-					local SpaceIdx = string.find(a_Columns[j], " ");
-					if (SpaceIdx ~= nil) then
-						SpaceIdx = SpaceIdx - 1;
+				for idx, col in ipairs(a_Columns) do
+					if (ColumnName == col[1]:lower()) then
+						table.remove(a_Columns, idx);
+						break;
 					end
-					local ColumnTemplate = string.lower(string.sub(a_Columns[j], 1, SpaceIdx));
-					-- If it is a match, remove from a_Columns:
-					if (ColumnTemplate == ColumnName) then
-						table.remove(a_Columns, j);
-						break;  -- for j
-					end
-				end  -- for j - a_Columns[]
+				end  -- for col - a_Columns[]
 			end
 		end  -- for i - Names[] / Values[]
 		return 0;
 	end
-	if (not(self:DBExec("PRAGMA table_info(" .. a_TableName .. ")", RemoveExistingColumn))) then
+	if (not(self:DBExec("PRAGMA table_info(" .. a_TableName .. ")", RemoveExistingColumnFromDef))) then
 		LOGWARNING(PLUGIN_PREFIX .. "Cannot query DB table structure");
 		return false;
 	end
 	
 	-- Create the missing columns
 	-- a_Columns now contains only those columns that are missing in the DB
-	if (#a_Columns > 0) then
+	if (a_Columns[1]) then
 		LOGINFO(PLUGIN_PREFIX .. "Database table \"" .. a_TableName .. "\" is missing " .. #a_Columns .. " columns, fixing now.");
-		for idx, ColumnName in ipairs(a_Columns) do
-			if (not(self:DBExec("ALTER TABLE '" .. a_TableName .. "' ADD COLUMN " .. ColumnName))) then
-				LOGWARNING(PLUGIN_PREFIX .. "Cannot add DB table \"" .. a_TableName .. "\" column \"" .. ColumnName .. "\"");
+		for _, col in ipairs(a_Columns) do
+			if (not(self:DBExec("ALTER TABLE '" .. a_TableName .. "' ADD COLUMN " .. col[1] .. " " .. (col[2] or "")))) then
+				LOGWARNING(PLUGIN_PREFIX .. "Cannot add DB table \"" .. a_TableName .. "\" column \"" .. col[1] .. "\"");
 				return false;
 			end
 		end
@@ -519,19 +556,29 @@ end
 
 
 
---- Returns a map of Idx -> Area for the areas in the specified index range in the specified gallery
--- If an area is not claimed, the map entry for it will be nil
-function SQLite:LoadGalleryAreasRange(a_GalleryName, a_StartIndex, a_EndIndex)
+--- Returns an array Areas for the areas in the specified index range in the specified gallery
+-- If an area is not claimed, the array entry for it will be {}
+-- a_SortBy is the column on which to sort. It is checked against the list of columns and if it doesn't fit any, the default "GalleryIndex" is used instead
+function SQLite:LoadGalleryAreasRange(a_GalleryName, a_SortBy, a_StartIndex, a_EndIndex)
+	-- Check the a_SortBy column:
+	if not(g_AreasColumns[a_SortBy:lower()]) then
+		a_SortBy = "GalleryIndex"
+	end
+	if (g_AreasColumns[a_SortBy:lower()][2] == "TEXT") then
+		a_SortBy = a_SortBy .. " COLLATE NOCASE"
+	end
+	
+	-- Get the results:
 	local res = {}
 	self:ExecuteStatement(
-		"SELECT * FROM Areas WHERE GalleryName = ? AND GalleryIndex >= ? AND GalleryIndex <= ?",
+		"SELECT * FROM Areas WHERE GalleryName = ? ORDER BY " .. a_SortBy .. " LIMIT ? OFFSET ?",
 		{
 			a_GalleryName,
-			a_StartIndex,
-			a_EndIndex
+			a_EndIndex - a_StartIndex,
+			a_StartIndex
 		},
 		function (a_Values)
-			res[a_Values.GalleryIndex] = self:FixupAreaAfterLoad(a_Values)
+			table.insert(res, self:FixupAreaAfterLoad(a_Values) or {})
 		end
 	)
 	return res
@@ -1040,51 +1087,26 @@ function SQLite_CreateStorage(a_Params)
 	end
 	
 	-- Create the tables, if they don't exist yet:
-	local AreasColumns =
-	{
-		"ID INTEGER PRIMARY KEY AUTOINCREMENT",
-		"MinX", "MaxX", "MinZ", "MaxZ",      -- The bounds of this area, including the non-buildable "sidewalk"
-		"StartX", "EndX", "StartZ", "EndZ",  -- The buildable bounds of this area
-		"Name",                              -- The name given to the area
-		"WorldName",                         -- Name of the world where the area belongs
-		"PlayerName",                        -- Name of the owner
-		"GalleryName",                       -- Name of the gallery from which the area has been claimed
-		"GalleryIndex",                      -- Index of the area in the gallery from which this area has been claimed
-		"DateClaimed",                       -- ISO 8601 DateTime of the claiming
-		"ForkedFromID INTEGER",              -- The ID of the area from which this one has been forked
-		"IsLocked",                          -- If nonzero, the area is locked and cannot be edited unless the player has the "gallery.admin.overridelocked" permission
-		"LockedBy",                          -- Name of the player who last locked / unlocked the area
-		"DateLocked",                        -- ISO 8601 DateTime when the area was last locked / unlocked
-		"DateLastChanged",                   -- ISO 8601 DateTime when the area was last changed
-		"NumPlacedBlocks INTEGER",           -- Total number of blocks that the players have placed in the area
-		"NumBrokenBlocks INTEGER",           -- Total number of blocks that the players have broken in the area
-		"EditMaxX INTEGER",                  -- Maximum X coord of the edits within the area
-		"EditMaxY INTEGER",                  -- Maximum Y coord of the edits within the area
-		"EditMaxZ INTEGER",                  -- Maximum Z coord of the edits within the area
-		"EditMinX INTEGER",                  -- Minimum X coord of the edits within the are
-		"EditMinY INTEGER",                  -- Minimum Y coord of the edits within the are
-		"EditMinZ INTEGER",                  -- Minimum Z coord of the edits within the are
-	};
 	local GalleryEndColumns =
 	{
-		"GalleryName",
-		"NextAreaIdx",
+		{"GalleryName", "TEXT"},
+		{"NextAreaIdx", "INTEGER"},
 	};
 	local AllowancesColumns =
 	{
-		"AreaID",
-		"FriendName"
+		{"AreaID", "INTEGER"},
+		{"FriendName", "TEXT"},
 	};
 	local RemovedAreasColumns =
 	{
-		"ID INTEGER PRIMARY KEY AUTOINCREMENT",
-		"GalleryName",
-		"GalleryIndex",
-		"RemovedBy",
-		"DateRemoved",
+		{"ID",           "INTEGER PRIMARY KEY AUTOINCREMENT"},
+		{"GalleryName",  "TEXT"},
+		{"GalleryIndex", "INTEGER"},
+		{"RemovedBy",    "TEXT"},
+		{"DateRemoved",  "TEXT"},
 	}
 	if (
-		not(DB:CreateDBTable("Areas",        AreasColumns)) or
+		not(DB:CreateDBTable("Areas",        g_AreasColumns)) or
 		not(DB:CreateDBTable("GalleryEnd",   GalleryEndColumns)) or
 		not(DB:CreateDBTable("Allowances",   AllowancesColumns)) or
 		not(DB:CreateDBTable("RemovedAreas", RemovedAreasColumns))

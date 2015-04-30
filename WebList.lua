@@ -291,8 +291,13 @@ end
 
 
 --- Returns the (relative) path to the specified page number, based on the request's path
-local function PathToPage(a_RequestPath, a_PageNum)
-	return "/" .. a_RequestPath .. "?startidx=" .. tostring((a_PageNum - 1) * g_NumAreasPerPage)
+-- a_SortBy is the optional sorting parameter
+local function PathToPage(a_RequestPath, a_PageNum, a_SortBy)
+	local res = "/" .. a_RequestPath .. "?startidx=" .. tostring((a_PageNum - 1) * g_NumAreasPerPage)
+	if (a_SortBy) then
+		res = res .. "&sortby=" .. a_SortBy
+	end
+	return res
 end
 
 
@@ -304,9 +309,10 @@ local function BuildGalleryAreaList(a_Gallery, a_Request)
 	-- Read the request params:
 	local StartIdx = tonumber(a_Request.Params["startidx"]) or 0
 	local EndIdx = StartIdx + g_NumAreasPerPage - 1
+	local SortBy = a_Request.Params["sortby"] or "GalleryIdx"
 	
 	-- Get the areas from the DB, as a map of Idx -> Area
-	local Areas = g_DB:LoadGalleryAreasRange(a_Gallery.Name, StartIdx, EndIdx)
+	local Areas = g_DB:LoadGalleryAreasRange(a_Gallery.Name, SortBy, StartIdx, EndIdx)
 	
 	-- Queue the areas for re-export:
 	if (g_Config.WebPreview) then
@@ -318,16 +324,19 @@ local function BuildGalleryAreaList(a_Gallery, a_Request)
 	end
 	
 	-- Build the page:
-	local FormDest = "/" .. a_Request.Path .. "?startidx=" .. StartIdx
-	local Page = {"<table><tr><th>Index</th>"}
+	local FormDest = "/" .. a_Request.Path .. "?startidx=" .. StartIdx .. "&sortby=" .. SortBy
+	local Page = {"<table><tr><th><a href=\"/"}
+	ins(Page, a_Request.Path)
+	ins(Page, "?sortby=GalleryIndex\">Index</a></th>")
 	if (g_Config.WebPreview) then
 		ins(Page, "<th colspan=4>Preview</th>")
 	end
-	ins(Page, "<th>Area</th><th>Player</th><th>Date claimed</th><th colspan=2 width='1%'>Action</th></tr>")
-	for idx = StartIdx, EndIdx do
-		local Area = Areas[idx] or {}
+	ins(Page, "<th><a href=\"/")
+	ins(Page, a_Request.Path)
+	ins(Page, "?sortby=Name\">Area</a></th><th>Player</th><th>Date claimed</th><th colspan=2 width='1%'>Action</th></tr>")
+	for idx, Area in ipairs(Areas) do
 		ins(Page, "<tr><td valign='top'>")
-		ins(Page, idx)
+		ins(Page, Area.GalleryIndex or "&nbsp;")
 		ins(Page, "</td><td valign='top'>")
 		if (g_Config.WebPreview) then
 			for rot = 0, 3 do
@@ -375,12 +384,13 @@ local function BuildGalleryPager(a_Gallery, a_Request)
 	local EndIdx = StartIdx + g_NumAreasPerPage - 1
 	local CurrentPage = StartIdx / g_NumAreasPerPage + 1
 	local Path = a_Request.Path
+	local SortBy = a_Request.Params["sortby"]
 	local MaxPageNum = math.ceil(a_Gallery.NextAreaIdx / g_NumAreasPerPage)
 	
 	-- Insert the "first page" link:
 	local res = {"<table><tr><th><a href=\""}
-	ins(res, PathToPage(Path, 1))
-	ins(res, "\">|&lt;&lt;&lt</a></th><th width='100%' style='align: center'>")
+	ins(res, PathToPage(Path, 1, SortBy))
+	ins(res, "\">|&lt;&lt;&lt</a></th><th width='100%' style='align: center'><center>")
 	
 	-- Insert the page links for up to 5 pages in each direction:
 	local Pager = {}
@@ -388,7 +398,7 @@ local function BuildGalleryPager(a_Gallery, a_Request)
 		if ((PageNum > 0) and (PageNum <= MaxPageNum)) then
 			ins(Pager, table.concat({
 				"<a href=\"",
-				PathToPage(Path, PageNum),
+				PathToPage(Path, PageNum, SortBy),
 				"\">",
 				PageNum,
 				"</a>"
@@ -398,8 +408,8 @@ local function BuildGalleryPager(a_Gallery, a_Request)
 	ins(res, table.concat(Pager, " | "))
 	
 	-- Insert the "last page" link:
-	ins(res, "</th><th><a href=\"")
-	ins(res, PathToPage(Path, MaxPageNum))
+	ins(res, "</center></th><th><a href=\"")
+	ins(res, PathToPage(Path, MaxPageNum, SortBy))
 	ins(res, "\">&gt;&gt;&gt;|</a></th></table>")
 	
 	return table.concat(res)

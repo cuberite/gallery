@@ -350,6 +350,33 @@ end
 
 
 
+--- Loads all the areas in the DB
+-- Returns a table that has both an array of the area objects, as well as a map AreaName -> area object
+function SQLite:LoadAllAreas()
+	local res = {};
+	self:ExecuteStatement(
+		"SELECT * FROM Areas",
+		{
+			a_PlayerName
+		},
+		function (a_Values)
+			-- Assign the proper gallery:
+			local area = self:FixupAreaAfterLoad(a_Values)
+			if (area == nil) then
+				return
+			end
+			table.insert(res, area)
+			res[area.Name] = area
+		end
+	)
+	
+	return res;
+end
+
+
+
+
+
 --- Loads all the areas for a single player
 -- Returns a table that has both an array of the area objects, as well as a map AreaName -> area object
 function SQLite:LoadAllPlayerAreas(a_PlayerName)
@@ -863,6 +890,27 @@ end
 
 
 
+--- Updates the edit range values (MaxEditX etc.) in the DB for the specified area
+function SQLite:UpdateAreaEditRange(a_Area)
+	-- Check params:
+	assert(type(a_Area) == "table")
+	assert(a_Area.ID ~= nil)
+	
+	-- Update the DB:
+	self:ExecuteStatement(
+		"UPDATE Areas SET EditMaxX = ?, EditMaxY = ?, EditMaxZ = ?, EditMinX = ?, EditMinY = ?, EditMinZ = ? WHERE ID = ?",
+		{
+			a_Area.EditMaxX, a_Area.EditMaxY, a_Area.EditMaxZ,
+			a_Area.EditMinX, a_Area.EditMinY, a_Area.EditMinZ,
+			a_Area.ID
+		}
+	)
+end
+
+
+
+
+
 --- Updates the DateLastChanged, NumPlacedBlocks and NumBrokenBlocks values in the DB for the specified area
 function SQLite:UpdateAreaStats(a_Area)
 	-- Check params:
@@ -1010,6 +1058,12 @@ function SQLite_CreateStorage(a_Params)
 		"DateLastChanged",                   -- ISO 8601 DateTime when the area was last changed
 		"NumPlacedBlocks INTEGER",           -- Total number of blocks that the players have placed in the area
 		"NumBrokenBlocks INTEGER",           -- Total number of blocks that the players have broken in the area
+		"EditMaxX INTEGER",                  -- Maximum X coord of the edits within the area
+		"EditMaxY INTEGER",                  -- Maximum Y coord of the edits within the area
+		"EditMaxZ INTEGER",                  -- Maximum Z coord of the edits within the area
+		"EditMinX INTEGER",                  -- Minimum X coord of the edits within the are
+		"EditMinY INTEGER",                  -- Minimum Y coord of the edits within the are
+		"EditMinZ INTEGER",                  -- Minimum Z coord of the edits within the are
 	};
 	local GalleryEndColumns =
 	{

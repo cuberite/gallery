@@ -192,7 +192,7 @@ local function CheckGallery(a_Gallery, a_Index)
 	if (a_Gallery.Biome ~= nil) then
 		local BiomeType = StringToBiome(a_Gallery.Biome);
 		if (BiomeType == biInvalidBiome) then
-			LOGWARNING("Gallery " .. a_Gallery.Name .. " has invalid Biome \"" .. a_Gallery.Biome .. "\"; biome support turned off.");
+			LOGWARNING(PLUGIN_PREFIX .. "Gallery " .. a_Gallery.Name .. " has invalid Biome \"" .. a_Gallery.Biome .. "\"; biome support turned off.");
 			a_Gallery.Biome = nil;
 		else
 			a_Gallery.Biome = BiomeType;
@@ -228,15 +228,31 @@ end
 --- Checks if g_Config has all the keys it needs, adds defaults for the missing ones
 -- Returns the corrected configuration (but changes the one in the parameter as well)
 local function VerifyConfig(a_Config)
-	a_Config.CommandPrefix = a_Config.CommandPrefix or "/gallery";
-	a_Config.DatabaseEngine = a_Config.DatabaseEngine or "sqlite";
-	a_Config.DatabaseParams = a_Config.DatabaseParams or {};
+	a_Config.CommandPrefix = a_Config.CommandPrefix or "/gallery"
+	a_Config.DatabaseEngine = a_Config.DatabaseEngine or "sqlite"
+	a_Config.DatabaseParams = a_Config.DatabaseParams or {}
+	
+	-- Check the WebPreview, if it doesn't have all the requirements, set it to nil to disable previewing:
+	if (a_Config.WebPreview) then
+		if not(a_Config.WebPreview.ThumbnailFolder) then
+			LOGINFO(PLUGIN_PREFIX .. "Gallery: The config doesn't define WebPreview.ThumbnailFolder. Web preview is disabled.")
+			a_Config.WebPreview = nil
+		end
+		if not(a_Config.WebPreview.MCSchematicToPng) then
+			LOGINFO(PLUGIN_PREFIX .. "Gallery: The config doesn't define WebPreview.MCSchematicToPng. Web preview is disabled.")
+			a_Config.WebPreview = nil
+		end
+		if not(cFile:Exists(a_Config.WebPreview.MCSchematicToPng)) then
+			LOGINFO(PLUGIN_PREFIX .. "Gallery: The WebPreview.MCSchematicToPng in the config is not valid. Web preview is disabled.")
+			a_Config.WebPreview = nil
+		end
+	end
 
 	-- Apply the CommandPrefix - change the actual g_PluginInfo table:
-	a_Config.CommandPrefix = a_Config.CommandPrefix or "/gallery";
+	a_Config.CommandPrefix = a_Config.CommandPrefix or "/gallery"
 	if (a_Config.CommandPrefix ~= "/gallery") then
-		g_PluginInfo.Commands[a_Config.CommandPrefix] = g_PluginInfo.Commands["/gallery"];
-		g_PluginInfo.Commands["/gallery"] = nil;
+		g_PluginInfo.Commands[a_Config.CommandPrefix] = g_PluginInfo.Commands["/gallery"]
+		g_PluginInfo.Commands["/gallery"] = nil
 	end
 	
 	return a_Config

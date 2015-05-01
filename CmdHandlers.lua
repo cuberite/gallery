@@ -986,7 +986,7 @@ function HandleConsoleCmdCheckIndices(a_Split, a_EntireCommand)
 	-- If there are any players connected, refuse to process unless forced explicitly:
 	if not(shouldForce) then
 		if (cRoot:Get():GetServer():GetNumPlayers() ~= 0) then
-			return true, "Cannot check indices, there are players connected to the server. If you know what you're doing, you can use the \"-force\" parameter to force checking despite players being present."
+			return true, "Cannot check indices, there are players connected to the server. You can use the \"-force\" parameter to force checking despite players being present."
 		end
 	end
 	
@@ -996,6 +996,91 @@ function HandleConsoleCmdCheckIndices(a_Split, a_EntireCommand)
 	end
 	
 	return true, "Indices checked"
+end
+
+
+
+
+
+function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
+	-- Check params:
+	local shouldForce = false
+	for _, v in ipairs(a_Split) do
+		if (v == "-force") then
+			shouldForce = true
+		end
+	end
+	
+	-- If there are any players connected, refuse to process unless forced explicitly:
+	if not(shouldForce) then
+		if (cRoot:Get():GetServer():GetNumPlayers() ~= 0) then
+			return true, "Cannot fix block stats, there are players connected to the server. You can use the \"-force\" parameter to force fixing despite players being present."
+		end
+	end
+	
+	-- Find all areas that need fixing:
+	local Areas = g_DB:LoadAllAreas()
+	local ToFix = {}
+	for _, area in ipairs(Areas) do
+		if ((area.NumPlacedBlocks == 0) and area.Gallery.AreaTemplateSchematic) then
+			table.insert(ToFix, area)
+		end
+	end
+	
+	-- Sort the areas by their X coord first, Z coord second, to put near areas together for chunk sharing:
+	table.sort(ToFix,
+		function (a_Item1, a_Item2)
+			-- Compare the X coord first:
+			if (a_Item1.MinX < a_Item2.MinX) then
+				return true
+			end
+			if (a_Item1.MinX > a_Item2.MinX) then
+				return false
+			end
+			-- The X coord is the same, compare the Z coord:
+			return (a_Item1.MinZ < a_Item2.MinZ)
+		end
+	)
+	Areas = nil
+
+	-- Fix each area that has a nil blockstat, queueing each next area to the world tick thread of the world in which it resides:
+	local idx = 1
+	local NumToFix = #ToFix
+	local FixNextArea
+	FixNextArea = function(a_CBWorld)
+		-- After each 50 areas log progress and unload the chunks:
+		if (idx % 50 == 0) then
+			LOG("Fixing block stats for area " .. idx .. " out of " .. NumToFix)
+			a_CBWorld:QueueUnloadUnusedChunks()
+		end
+		
+		-- Fix the area:
+		ToFix[idx].Gallery.World:ChunkStay(GetAreaChunkCoords(ToFix[idx]), nil,
+			function()
+				local area = ToFix[idx]
+				local gal = area.Gallery
+				local ba = cBlockArea()
+				ba:Read(gal.World, area.MinX + gal.AreaEdge, area.MaxX - gal.AreaEdge - 1, 0, 255, area.MinZ + gal.AreaEdge, area.MaxZ - gal.AreaEdge - 1)
+				ba:Merge(gal.AreaTemplateSchematic, -gal.AreaEdge, 0, -gal.AreaEdge, cBlockArea.msSimpleCompare)
+				area.NumPlacedBlocks = ba:CountNonAirBlocks()
+				g_DB:UpdateAreaBlockStats(area)
+				
+				-- Queue the next area:
+				idx = idx + 1
+				if (ToFix[idx]) then
+					ToFix[idx].Gallery.World:QueueTask(FixNextArea)
+				else
+					LOG("Area block stats fixed")
+				end
+			end
+		)
+	end
+
+	if (ToFix[1]) then
+		LOG("Fixing area block stats...")
+		ToFix[1].Gallery.World:QueueTask(FixNextArea)
+	end
+	return true
 end
 
 

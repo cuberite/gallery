@@ -958,6 +958,27 @@ end
 
 
 
+--- Updates the NumPlacedBlocks and NumBrokenBlocks values in the DB for the specified area
+function SQLite:UpdateAreaBlockStats(a_Area)
+	-- Check params:
+	assert(type(a_Area) == "table")
+	assert(a_Area.ID ~= nil)
+	
+	-- Update the DB:
+	self:ExecuteStatement(
+		"UPDATE Areas SET NumPlacedBlocks = ?, NumBrokenBlocks = ? WHERE ID = ?",
+		{
+			a_Area.NumPlacedBlocks,
+			a_Area.NumBrokenBlocks,
+			a_Area.ID
+		}
+	)
+end
+
+
+
+
+
 --- Updates the DateLastChanged, NumPlacedBlocks and NumBrokenBlocks values in the DB for the specified area
 function SQLite:UpdateAreaStats(a_Area)
 	-- Check params:

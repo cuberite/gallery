@@ -383,6 +383,12 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					HelpString = "Checks each gallery's area indices against the list of Claimed and Removed areas, if an area is in neither, it is moved to the Removed areas.",
 					Handler = HandleConsoleCmdCheckIndices,
 				},  -- checkindices
+				
+				fixblockstats =
+				{
+					HelpString = "Fixes placed and broken block counts for areas edited before the statistics were implemented.",
+					Handler = HandleConsoleCmdFixBlockStats,
+				}
 			},  -- Subcommands
 		},  -- ["gallery"]
 	},  -- ConsoleCommands

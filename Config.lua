@@ -238,11 +238,11 @@ local function VerifyConfig(a_Config)
 			LOGINFO(PLUGIN_PREFIX .. "Gallery: The config doesn't define WebPreview.ThumbnailFolder. Web preview is disabled.")
 			a_Config.WebPreview = nil
 		end
-		if not(a_Config.WebPreview.MCSchematicToPng) then
+		if (a_Config.WebPreview and not(a_Config.WebPreview.MCSchematicToPng)) then
 			LOGINFO(PLUGIN_PREFIX .. "Gallery: The config doesn't define WebPreview.MCSchematicToPng. Web preview is disabled.")
 			a_Config.WebPreview = nil
 		end
-		if not(cFile:Exists(a_Config.WebPreview.MCSchematicToPng)) then
+		if (a_Config.WebPreview and not(cFile:Exists(a_Config.WebPreview.MCSchematicToPng))) then
 			LOGINFO(PLUGIN_PREFIX .. "Gallery: The WebPreview.MCSchematicToPng in the config is not valid. Web preview is disabled.")
 			a_Config.WebPreview = nil
 		end

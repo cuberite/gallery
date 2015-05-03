@@ -68,13 +68,11 @@ local function ExportPreviewForAreas(a_Areas)
 	
 	-- Start MCSchematicToPng:
 	local cmdline = g_Config.WebPreview.MCSchematicToPng .. " " .. fnam .. " >" .. fnam .. ".out 2>" .. fnam .. ".err"
-	local process
-	process, msg = io.popen(cmdline, "w")  -- Just let it GC later on
-	if not(process) then
-		LOG(PLUGIN_PREFIX .. "Cannot start MCSchematicToPng: " .. (msg or "<unknown error>"))
+	local ret
+	msg, ret = os.execute(cmdline)
+	if (ret ~= 0) then
+		LOG(PLUGIN_PREFIX .. "Cannot start MCSchematicToPng ('" .. cmdline .. "': " .. (msg or "<unknown error>"))
 	end
-	process:write("hello")
-	process:close()
 end
 
 

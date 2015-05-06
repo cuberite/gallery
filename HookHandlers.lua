@@ -318,10 +318,10 @@ end
 
 --- This function gets called by WorldEdit each time a player performs a WE operation
 -- Return true to abort the operation, false to continue
-function WorldEditCallback(a_MinX, a_MaxX, a_MinY, a_MaxY, a_MinZ, a_MaxZ, a_Player, a_World, a_Operation)
+function WorldEditCallback(a_AffectedAreaCuboid, a_Player, a_World, a_Operation)
 	-- If the minima and maxima aren't in the same gallery, disallow (yes, even admins canNOT use those)
-	local GalMin = FindGalleryByCoords(a_World, a_MinX, a_MinZ);
-	local GalMax = FindGalleryByCoords(a_World, a_MaxX, a_MaxZ);
+	local GalMin = FindGalleryByCoords(a_World, a_AffectedAreaCuboid.p1.x, a_AffectedAreaCuboid.p1.z);
+	local GalMax = FindGalleryByCoords(a_World, a_AffectedAreaCuboid.p2.x, a_AffectedAreaCuboid.p2.z);
 	if (GalMin ~= GalMax) then
 		a_Player:SendMessage(cChatColor.LightPurple .. "WorldEdit actions across galleries are not allowed");
 		return true;
@@ -339,11 +339,11 @@ function WorldEditCallback(a_MinX, a_MaxX, a_MinY, a_MaxY, a_MinZ, a_MaxZ, a_Pla
 	end
 	
 	-- If the minima and maxima aren't in the same area, disallow unless admin override permission
-	local Area = FindPlayerAreaByCoords(a_Player, a_MinX, a_MinZ);
+	local Area = FindPlayerAreaByCoords(a_Player, a_AffectedAreaCuboid.p1.x, a_AffectedAreaCuboid.p1.z);
 	if (
 		(Area == nil) or
-		(a_MinX <  Area.StartX) or (a_MinZ <  Area.StartZ) or  -- Min is on sidewalk
-		(a_MaxX >= Area.EndX)   or (a_MaxZ >= Area.EndZ)       -- Max not in area / on sidewalk
+		(a_AffectedAreaCuboid.p1.x <  Area.StartX) or (a_AffectedAreaCuboid.p1.z <  Area.StartZ) or  -- Min is on sidewalk
+		(a_AffectedAreaCuboid.p2.x >= Area.EndX)   or (a_AffectedAreaCuboid.p2.z >= Area.EndZ)       -- Max not in area / on sidewalk
 	) then
 		-- The player doesn't own this area, allow WE only with an admin permission
 		if (a_Player:HasPermission("gallery.admin.worldedit")) then
@@ -365,12 +365,8 @@ end
 
 
 local function OnPluginsLoaded()
-	-- Add a WE hook to each world
-	cRoot:Get():ForEachWorld(
-		function (a_World)
-			local res = cPluginManager:CallPlugin("WorldEdit", "RegisterAreaCallback", "Gallery", "WorldEditCallback", a_World:GetName());
-		end
-	);
+	-- Add a WE hook
+	cPluginManager:CallPlugin("WorldEdit", "AddHook", "OnAreaChanging", "Gallery", "WorldEditCallback");
 end
 
 

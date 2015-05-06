@@ -68,11 +68,14 @@ local function ExportPreviewForAreas(a_Areas)
 	
 	-- Start MCSchematicToPng:
 	local cmdline = g_Config.WebPreview.MCSchematicToPng .. " " .. fnam .. " >" .. fnam .. ".out 2>" .. fnam .. ".err"
-	local ret
-	msg, ret = os.execute(cmdline)
-	if (ret ~= 0) then
-		LOG(PLUGIN_PREFIX .. "Cannot start MCSchematicToPng ('" .. cmdline .. "': " .. (msg or "<unknown error>"))
+	if (cFile:GetExecutableExt() == ".exe") then
+		-- We're on a Windows-like OS, use "start /b <cmd>" to execute in the background:
+		cmdline = "start /b " .. cmdline
+	else
+		-- We're on a Linux-like OS, use "<cmd> &" to execute in the background:
+		cmdline = cmdline .. " &"
 	end
+	os.execute(cmdline)  -- There's no platform-independent way of checking the result
 end
 
 

@@ -129,13 +129,19 @@ end
 
 --- Returns the gallery that covers the entire chunk's area
 -- Returns nil if no such gallery
-local function GetGalleryForEntireChunk(a_ChunkX, a_ChunkZ)
+local function GetGalleryForEntireChunk(a_WorldName, a_ChunkX, a_ChunkZ)
+	-- Check params:
+	assert(type(a_WorldName) == "string")
+	assert(type(a_ChunkX) == "number")
+	assert(type(a_ChunkZ) == "number")
+
 	local MinX = a_ChunkX * 16;
 	local MinZ = a_ChunkZ * 16;
 	local MaxX = MinX + 16;
 	local MaxZ = MinZ + 16;
 	for idx, gal in ipairs(g_Galleries) do
 		if (
+			(gal.WorldName == a_WorldName) and
 			(gal.AreaMinX <= MinX) and (gal.AreaMaxX >= MaxX) and
 			(gal.AreaMinZ <= MinZ) and (gal.AreaMaxZ >= MaxZ)
 		) then
@@ -237,13 +243,20 @@ end
 
 --- Imprints the specified chunk with all the intersecting galleries' templates
 -- if a_ClearAbove is true, the AreaTemplateSchematicTop is applied, too
-local function ImprintChunk(a_ChunkX, a_ChunkZ, a_ChunkDesc, a_ClearAbove)
+local function ImprintChunk(a_WorldName, a_ChunkX, a_ChunkZ, a_ChunkDesc, a_ClearAbove)
+	-- Check params:
+	assert(type(a_WorldName) == "string")
+	assert(type(a_ChunkX) == "number")
+	assert(type(a_ChunkZ) == "number")
+
 	local MinX = a_ChunkX * 16;
 	local MinZ = a_ChunkZ * 16;
 	local MaxX = MinX + 16;
 	local MaxZ = MinZ + 16;
 	for idx, gal in ipairs(g_Galleries) do
-		ImprintChunkWithGallery(MinX, MinZ, MaxX, MaxZ, a_ChunkDesc, gal, a_ClearAbove);
+		if (gal.WorldName == a_WorldName) then
+			ImprintChunkWithGallery(MinX, MinZ, MaxX, MaxZ, a_ChunkDesc, gal, a_ClearAbove);
+		end
 	end
 end
 
@@ -252,14 +265,15 @@ end
 
 
 local function OnChunkGenerated(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
-	local Gallery = GetGalleryForEntireChunk(a_ChunkX, a_ChunkZ);
-	if ((Gallery ~= nil) and (Gallery.AreaTemplateSchematic ~= nil)) then
+	local WorldName = a_World:GetName()
+	local Gallery = GetGalleryForEntireChunk(WorldName, a_ChunkX, a_ChunkZ);
+	if (Gallery and Gallery.AreaTemplateSchematic) then
 		-- The chunk has already been generated in OnChunkGenerating(), skip it
 		return false;
 	end
 	
 	-- Imprint whatever galleries intersect the chunk:
-	ImprintChunk(a_ChunkX, a_ChunkZ, a_ChunkDesc, true);
+	ImprintChunk(WorldName, a_ChunkX, a_ChunkZ, a_ChunkDesc, true);
 end
 
 
@@ -267,13 +281,15 @@ end
 
 
 local function OnChunkGenerating(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
-	local Gallery = GetGalleryForEntireChunk(a_ChunkX, a_ChunkZ);
-	if ((Gallery == nil) or (Gallery.AreaTemplateSchematic == nil)) then
-		-- The chunks is not covered by one gallery, or the gallery doesn't use a schematic
+	local WorldName = a_World:GetName()
+	local Gallery = GetGalleryForEntireChunk(WorldName, a_ChunkX, a_ChunkZ);
+	if (not(Gallery) or not(Gallery.AreaTemplateSchematic)) then
+		-- The chunks is not entirely covered by a gallery, or the gallery doesn't use a schematic
 		return false;
 	end
 
 	-- The entire chunk is in a single gallery. Imprint the gallery schematic:
+	GetGalleryForEntireChunk(WorldName, a_ChunkX, a_ChunkZ)
 	a_ChunkDesc:SetUseDefaultComposition(false);
 	a_ChunkDesc:SetUseDefaultHeight(false);
 	a_ChunkDesc:SetUseDefaultFinish(false);
@@ -281,7 +297,7 @@ local function OnChunkGenerating(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
 		a_ChunkDesc:SetUseDefaultBiomes(false);
 		-- The biome will be set in ImprintChunk()
 	end
-	ImprintChunk(a_ChunkX, a_ChunkZ, a_ChunkDesc, false);
+	ImprintChunk(WorldName, a_ChunkX, a_ChunkZ, a_ChunkDesc, false);
 	return true;
 end
 

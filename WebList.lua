@@ -18,64 +18,52 @@ local g_PreviewNotAvailableYetPng
 
 
 --- Uses MCSchematicToPng to convert .schematic files into PNG previews for the specified areas
-local ExportCounter = 0
 local function ExportPreviewForAreas(a_Areas)
-	-- Write the list file:
-	local fnam = g_Config.WebPreview.ThumbnailFolder .. "/export" .. ExportCounter .. ".txt"
-	ExportCounter = ExportCounter + 1
-	local f, msg = io.open(fnam, "w")
-	if not(f) then
-		LOG(PLUGIN_PREFIX .. "Cannot export preview, failed to open list file for MCSchematicToPng: " .. (msg or "<unknown error>"))
+	local stp = g_Config.WebPreview.MCSchematicToPng
+	if not(stp) then
+		-- MCSchematicToPng is not available, bail out
 		return
 	end
+	stp:ReconnectIfNeeded()
+
+	-- Write the list to MCSchematicToPng's TCP link:
 	for _, area in ipairs(a_Areas) do
 		local base = g_Config.WebPreview.ThumbnailFolder .. "/" .. area.Area.GalleryName .. "/" .. area.Area.GalleryIndex
-		f:write(base .. ".schematic\n")
-		f:write(" outfile: " .. base .. "." .. area.NumRotations .. ".png\n")
-		f:write(" numcwrotations: " .. area.NumRotations .. "\n")
+		stp:Write(base .. ".schematic\n")
+		stp:Write(" outfile: " .. base .. "." .. area.NumRotations .. ".png\n")
+		stp:Write(" numcwrotations: " .. area.NumRotations .. "\n")
 		if (area.Area.EditMinX) then
-			f:write(" startx: " .. area.Area.EditMinX .. "\n")
+			stp:Write(" startx: " .. area.Area.EditMinX .. "\n")
 		elseif (area.Area.ExportMinX) then
-			f:write(" startx: " .. area.Area.ExportMinX - area.Area.MinX .. "\n")
+			stp:Write(" startx: " .. area.Area.ExportMinX - area.Area.MinX .. "\n")
 		end
 		if (area.Area.EditMinY) then
-			f:write(" starty: " .. area.Area.EditMinY .. "\n")
+			stp:Write(" starty: " .. area.Area.EditMinY .. "\n")
 		elseif (area.Area.ExportMinY) then
-			f:write(" starty: " .. area.Area.ExportMinY .. "\n")
+			stp:Write(" starty: " .. area.Area.ExportMinY .. "\n")
 		end
 		if (area.Area.EditMinZ) then
-			f:write(" startz: " .. area.Area.EditMinZ .. "\n")
+			stp:Write(" startz: " .. area.Area.EditMinZ .. "\n")
 		elseif (area.Area.ExportMinZ) then
-			f:write(" startz: " .. area.Area.ExportMinZ - area.Area.MinZ .. "\n")
+			stp:Write(" startz: " .. area.Area.ExportMinZ - area.Area.MinZ .. "\n")
 		end
 		if (area.Area.EditMaxX) then
-			f:write(" endx: " .. area.Area.EditMaxX .. "\n")
+			stp:Write(" endx: " .. area.Area.EditMaxX .. "\n")
 		elseif (area.Area.ExportMaxX) then
-			f:write(" endx: " .. area.Area.ExportMaxX - area.Area.MinX .. "\n")
+			stp:Write(" endx: " .. area.Area.ExportMaxX - area.Area.MinX .. "\n")
 		end
 		if (area.Area.EditMaxY) then
-			f:write(" endy: " .. area.Area.EditMaxY .. "\n")
+			stp:Write(" endy: " .. area.Area.EditMaxY .. "\n")
 		elseif (area.Area.ExportMaxY) then
-			f:write(" endy: " .. area.Area.ExportMaxY .. "\n")
+			stp:Write(" endy: " .. area.Area.ExportMaxY .. "\n")
 		end
 		if (area.Area.EditMaxZ) then
-			f:write(" endz: " .. area.Area.EditMaxZ .. "\n")
+			stp:Write(" endz: " .. area.Area.EditMaxZ .. "\n")
 		elseif (area.Area.ExportMaxZ) then
-			f:write(" endz: " .. area.Area.ExportMaxZ - area.Area.MinZ .. "\n")
+			stp:Write(" endz: " .. area.Area.ExportMaxZ - area.Area.MinZ .. "\n")
 		end
 	end
-	f:close()
-	
-	-- Start MCSchematicToPng:
-	local cmdline = g_Config.WebPreview.MCSchematicToPng .. " " .. fnam .. " >" .. fnam .. ".out 2>" .. fnam .. ".err"
-	if (cFile:GetExecutableExt() == ".exe") then
-		-- We're on a Windows-like OS, use "start /b <cmd>" to execute in the background:
-		cmdline = "start /b " .. cmdline
-	else
-		-- We're on a Linux-like OS, use "<cmd> &" to execute in the background:
-		cmdline = cmdline .. " &"
-	end
-	os.execute(cmdline)  -- There's no platform-independent way of checking the result
+	stp:Write("\4\n")  -- End of text - to process the last item sent
 end
 
 

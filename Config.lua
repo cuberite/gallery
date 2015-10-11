@@ -235,16 +235,15 @@ local function VerifyConfig(a_Config)
 	-- Check the WebPreview, if it doesn't have all the requirements, set it to nil to disable previewing:
 	if (a_Config.WebPreview) then
 		if not(a_Config.WebPreview.ThumbnailFolder) then
-			LOGINFO(PLUGIN_PREFIX .. "Gallery: The config doesn't define WebPreview.ThumbnailFolder. Web preview is disabled.")
+			LOGINFO(PLUGIN_PREFIX .. "The config doesn't define WebPreview.ThumbnailFolder. Web preview is disabled.")
 			a_Config.WebPreview = nil
 		end
-		if (a_Config.WebPreview and not(a_Config.WebPreview.MCSchematicToPng)) then
-			LOGINFO(PLUGIN_PREFIX .. "Gallery: The config doesn't define WebPreview.MCSchematicToPng. Web preview is disabled.")
+		if (a_Config.WebPreview and not(a_Config.WebPreview.MCSchematicToPngPort)) then
+			LOGINFO(PLUGIN_PREFIX .. "The config doesn't define WebPreview.MCSchematicToPngPort. Web preview is disabled.")
 			a_Config.WebPreview = nil
 		end
-		if (a_Config.WebPreview and not(cFile:IsFile(a_Config.WebPreview.MCSchematicToPng))) then
-			LOGINFO(PLUGIN_PREFIX .. "Gallery: The WebPreview.MCSchematicToPng in the config is not valid. Web preview is disabled.")
-			a_Config.WebPreview = nil
+		if (a_Config.WebPreview) then
+			a_Config.WebPreview.MCSchematicToPng = SchematicToPng_new(a_Config.WebPreview.MCSchematicToPngPort)
 		end
 	end
 

@@ -25,9 +25,9 @@ is then protected so that only the area owner can interact with the area.
 [[
 Before the plugin can be fully used, the server admin needs to set up the galleries - define the galleries
 where players are allowed to claim areas. Some other configuration options are available, too.
-The configuration is read from the Galleries.cfg file located in the same folder as the MCServer executable.
+The configuration is read from the Galleries.cfg file located in the same folder as the Cuberite executable.
 If the file doesn't exist, the plugin outputs a message in the server console and stays inactive. The plugin
-also creates an example configuration file named Galleries.example.cfg located next to the MCServer
+also creates an example configuration file named Galleries.example.cfg located next to the Cuberite
 executable. This file contains an example configuration with documentation on all of the used variables. You
 might want to consult that file while continuing to read this description.
 

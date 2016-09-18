@@ -22,22 +22,22 @@ function LockAreaByCoords(a_WorldName, a_BlockX, a_BlockZ, a_LockedByName)
 	) then
 		return false, "ParamError", "Invalid parameters. Expected string, number, number and string."
 	end
-	
+
 	-- Find the appropriate area:
 	local Area = g_DB:LoadAreaByPos(a_WorldName, a_BlockX, a_BlockZ)
 	if (Area == nil) then
 		return false, "NoAreaHere", "There is no gallery area here"
 	end
-	
+
 	-- If the area is already locked, bail out:
 	if (Area.IsLocked) then
 		return false, "AlreadyLocked", "This area has already been locked by " .. Area.LockedBy .. " on " .. Area.DateLocked
 	end
-	
+
 	-- Lock the area:
 	g_DB:LockArea(Area, a_LockedByName)
 	ReplaceAreaForAllPlayers(Area)
-	
+
 	return true
 end
 
@@ -57,22 +57,22 @@ function LockAreaByID(a_AreaID, a_LockedByName)
 	) then
 		return false, "ParamError", "Invalid parameters. Expected number and string."
 	end
-	
+
 	-- Find the appropriate area:
 	local Area = g_DB:LoadAreaByID(a_AreaID)
 	if (Area == nil) then
 		return false, "NoSuchArea", "There is no such area"
 	end
-	
+
 	-- If the area is already locked, bail out:
 	if (Area.IsLocked) then
 		return false, "AlreadyLocked", "This area has already been locked by " .. Area.LockedBy .. " on " .. Area.DateLocked
 	end
-	
+
 	-- Lock the area:
 	g_DB:LockArea(Area, a_LockedByName)
 	ReplaceAreaForAllPlayers(Area)
-	
+
 	return true
 end
 
@@ -91,26 +91,26 @@ function UnlockAreaByCoords(a_WorldName, a_BlockX, a_BlockZ, a_UnlockedByName)
 		(type(a_WorldName) ~= "string") or
 		(type(a_BlockX) ~= "number") or
 		(type(a_BlockZ) ~= "number") or
-		(type(a_LockedByName) ~= "string")
+		(type(a_UnlockedByName) ~= "string")
 	) then
 		return false, "ParamError", "Invalid parameters. Expected string, number, number and string."
 	end
-	
+
 	-- Find the appropriate area:
 	local Area = g_DB:LoadAreaByPos(a_WorldName, a_BlockX, a_BlockZ)
 	if (Area == nil) then
 		return false, "NoAreaHere", "There is no gallery area here"
 	end
-	
+
 	-- If the area isn't locked, bail out:
 	if not(Area.IsLocked) then
 		return false, "NotLocked", "This area hasn't been locked."
 	end
-	
+
 	-- Lock the area:
 	g_DB:UnlockArea(Area, a_UnlockedByName)
 	ReplaceAreaForAllPlayers(Area)
-	
+
 	return true
 end
 
@@ -130,22 +130,22 @@ function UnlockAreaByID(a_AreaID, a_UnlockedByName)
 	) then
 		return false, "ParamError", "Invalid parameters. Expected number and string."
 	end
-	
+
 	-- Find the appropriate area:
 	local Area = g_DB:LoadAreaByID(a_AreaID)
 	if (Area == nil) then
 		return false, "NoSuchArea", "There is no such area"
 	end
-	
+
 	-- If the area is already unlocked, bail out:
 	if not(Area.IsLocked) then
 		return false, "NotLocked", "This area has already been unlocked by " .. Area.LockedBy .. " on " .. Area.DateLocked
 	end
-	
+
 	-- Unlock the area:
 	g_DB:UnlockArea(Area, a_UnlockedByName)
 	ReplaceAreaForAllPlayers(Area)
-	
+
 	return true
 end
 

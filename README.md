@@ -41,12 +41,16 @@ Note that most admin-level permissions need their non-admin-level permissions in
 |/gallery help | gallery.help | prints detailed help for the subcommand|
 |/gallery info | gallery.info | prints information on the area you're currently standing at|
 |/gallery list | gallery.list | lists all available galleries|
+|/gallery lockarea | gallery.admin.lockarea | locks an area so that even the owner can't build there|
 |/gallery my | gallery.my | lists all your areas|
 |/gallery name | gallery.name | renames the area you're currently standing at|
+|/gallery remove | gallery.admin.remove | removes the area you're standing on from its owner|
 |/gallery reset | gallery.reset | resets the area you're standing on to its original state|
 |/gallery select | gallery.select | selects the entire area you're standing in.|
 |/gallery stats | gallery.stats | shows statistics about the galleries on this server|
 |/gallery template | gallery.admin.template | creates new .schematic template based on your selection|
+|/gallery unclaim | gallery.unclaim | removes your claim on the area you're standing in|
+|/gallery unlockarea | gallery.admin.unlockarea | unlocks a previously locked area|
 |/gallery visit | gallery.visit | teleports you to the specified gallery|
 
 
@@ -58,22 +62,27 @@ Note that most admin-level permissions need their non-admin-level permissions in
 | gallery.admin.buildanywhere.<GalleryName> | Build in other people's areas and the public sidewalks in the specific gallery. |  | local admins, local mods |
 | gallery.admin.goto | Teleport to any player's area. | `/gallery goto @PlayerName AreaName`, `/gallery goto`, `/gallery goto @PlayerName AreaName` | VIPs |
 | gallery.admin.info | View information on any area. | `/gallery info` | VIPs |
+| gallery.admin.lockarea | Lock an area so that not even the owner can build in there. | `/gallery lockarea` | admins |
 | gallery.admin.my | View list of areas for other players, using the "/gallery my @playername [<galleryname>]" form. | `/gallery my @PlayerName`, `/gallery my @PlayerName GalleryName`, `/gallery my`, `/gallery my @PlayerName`, `/gallery my @PlayerName GalleryName` | VIPs |
 | gallery.admin.name | Rename any area for any player. | `/gallery name NewName`, `/gallery name @PlayerName OldName NewName`, `/gallery name`, `/gallery name NewName`, `/gallery name @PlayerName OldName NewName` | admins, mods |
-| gallery.admin.template | Create a .schematic file out of an in-game cuboid. | `/gallery template`, `/gallery template` | admins |
+| gallery.admin.overridelocked | Allows a player to build in areas that have been locked. The player still needs to have access to the area - either ownership or by allowance. |  | admins |
+| gallery.admin.remove |  | `/gallery remove` |  |
+| gallery.admin.template | Create a .schematic file out of an in-game cuboid. | `/gallery template` | admins |
+| gallery.admin.unlockarea | Unlock a previously locked area. See also "gallery.admin.lock." | `/gallery unlockarea` | admins |
 | gallery.admin.worldedit | Allows the use of worldedit anywhere in the gallery. |  | admins |
-| gallery.allow | Allow another player to build in your area. | `/gallery allow`, `/gallery allow` | normal users |
-| gallery.claim | Claim an area in any gallery. | `/gallery claim`, `/gallery claim` | normal users |
-| gallery.deny | Deny another player to build in your area. | `/gallery deny`, `/gallery deny` | normal users |
-| gallery.fork |  | `/gallery fork`, `/gallery fork` |  |
+| gallery.allow | Allow another player to build in your area. | `/gallery allow` | normal users |
+| gallery.claim | Claim an area in any gallery. | `/gallery claim` | normal users |
+| gallery.deny | Deny another player to build in your area. | `/gallery deny` | normal users |
+| gallery.fork |  | `/gallery fork` |  |
 | gallery.goto | Teleport to any player's area. | `/gallery goto @PlayerName AreaName`, `/gallery goto`, `/gallery goto @PlayerName AreaName` | VIPs |
-| gallery.help | Display help for subcommands. | `/gallery help`, `/gallery help` | everyone |
-| gallery.info | View information on an area owned by self. | `/gallery info`, `/gallery info` | normal users |
-| gallery.list | List available gallery. | `/gallery list`, `/gallery list` | normal users |
+| gallery.help | Display help for subcommands. | `/gallery help` | everyone |
+| gallery.info | View information on an area owned by self. | `/gallery info` | normal users |
+| gallery.list | List available gallery. | `/gallery list` | normal users |
 | gallery.my | View list of areas for other players, using the "/gallery my @playername [<galleryname>]" form. | `/gallery my @PlayerName`, `/gallery my @PlayerName GalleryName`, `/gallery my`, `/gallery my @PlayerName`, `/gallery my @PlayerName GalleryName` | VIPs |
 | gallery.name | Rename any area for any player. | `/gallery name NewName`, `/gallery name @PlayerName OldName NewName`, `/gallery name`, `/gallery name NewName`, `/gallery name @PlayerName OldName NewName` | admins, mods |
 | gallery.reset |  | `/gallery reset` |  |
-| gallery.select |  | `/gallery select`, `/gallery select` |  |
-| gallery.stats |  | `/gallery stats`, `/gallery stats` |  |
-| gallery.visit | Teleport to any gallery. | `/gallery visit`, `/gallery visit` | normal users |
+| gallery.select |  | `/gallery select` |  |
+| gallery.stats |  | `/gallery stats` |  |
+| gallery.unclaim |  | `/gallery unclaim` |  |
+| gallery.visit | Teleport to any gallery. | `/gallery visit` | normal users |
 | gallery.worldedit | Allows the use of WorldEdit within each individual area. |  | normal users |

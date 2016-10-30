@@ -7,11 +7,10 @@ addons:
     - luarocks
 
 install:
-  - cd / && find -name libssl.so
   - luarocks --local install luafilesystem
   - luarocks --local install lsqlite3
   - luarocks --local install luasocket
-  - luarocks --local install luasec
+  - luarocks --local install luasec OPENSSL_LIBDIR=/usr/lib/x86_64-linux-gnu/
   - wget -O ~/InfoReg.lua https://raw.githubusercontent.com/cuberite/cuberite/master/Server/Plugins/InfoReg.lua
   - mkdir ~/AutoAPI
   - wget -O ~/AutoAPI.zip https://builds.cuberite.org/job/Cuberite%20Windows%20x64%20Master/lastSuccessfulBuild/artifact/AutoAPI.zip

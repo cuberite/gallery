@@ -38,7 +38,7 @@ Each gallery is loaded from the config file, checked for validity and preprocess
 	TeleportCoordY  -- Y coord where the player is teleported upon claiming.
 	World -- The cWorld where the gallery is placed
 	WorldName -- Name of the world for which the gallery is defined.
-	
+
 	-- Optional members:
 	AreaTemplate -- The name of the schematic file that will be used to initialize new areas within the gallery
 	AreaTemplateSchematic -- The loaded schematic used for new areas
@@ -127,19 +127,18 @@ end
 -- a_ForkedFromArea is an optional param, specifying the area from which the new area is forking; used to write statistics into DB
 function ClaimArea(a_Player, a_Gallery, a_ForkedFromArea)
 	-- Check params:
-	assert(type(a_Player) == "userdata")
 	assert(tolua.type(a_Player) == "cPlayer")
 	assert(type(a_Gallery) == "table")
 	assert((a_ForkedFromArea == nil) or (type(a_ForkedFromArea) == "table"))
-	
+
 	-- Claim in the DB:
 	local Area = g_DB:ClaimArea(a_Gallery, a_Player:GetName(), a_ForkedFromArea)
-	
+
 	-- Add this area to Player's areas:
 	local PlayerAreas = GetPlayerAreas(a_Player);
 	table.insert(PlayerAreas, Area);
 	PlayerAreas[Area.Name] = Area;
-	
+
 	return Area;
 end
 
@@ -176,10 +175,10 @@ function CopyAreaContents(a_SrcArea, a_DstArea, a_DoneCallback)
 	assert(a_SrcArea.Gallery == a_DstArea.Gallery);  -- Only supports copying in the same gallery
 	assert(a_SrcArea.Gallery.World ~= nil);
 	assert((a_DoneCallback == nil) or (type(a_DoneCallback) == "function"));
-	
+
 	local Clipboard = cBlockArea();
 	local World = a_SrcArea.Gallery.World;
-	
+
 	-- Callback that is scheduled once the src is copied into Clipboard
 	local function WriteDst()
 		World:ChunkStay(GetAreaChunkCoords(a_DstArea), nil,
@@ -191,7 +190,7 @@ function CopyAreaContents(a_SrcArea, a_DstArea, a_DoneCallback)
 			end
 		)
 	end
-	
+
 	-- Copy the source area into a clipboard:
 	World:ChunkStay(GetAreaChunkCoords(a_SrcArea), nil,
 		function()
@@ -215,7 +214,7 @@ function FindGalleryByName(a_GalleryName)
 	) then
 		return LastGalleryByName;
 	end
-	
+
 	for idx, gal in ipairs(g_Galleries) do
 		if (gal.Name == a_GalleryName) then
 			LastGalleryByName = gal;
@@ -279,7 +278,7 @@ function GetAreaBuildableCoordsFromBlockCoords(a_Gallery, a_BlockX, a_BlockZ)
 		-- Not inside this gallery
 		return;
 	end
-	
+
 	local SizeX = a_Gallery.AreaSizeX;
 	local SizeZ = a_Gallery.AreaSizeZ;
 	local MinX = a_Gallery.AreaMinX + SizeX * math.floor((a_BlockX - a_Gallery.AreaMinX) / SizeX);
@@ -302,7 +301,7 @@ function GetAreaCoordsFromBlockCoords(a_Gallery, a_BlockX, a_BlockZ)
 		-- Not inside this gallery
 		return;
 	end
-	
+
 	local SizeX = a_Gallery.AreaSizeX;
 	local SizeZ = a_Gallery.AreaSizeZ;
 	local MinX = a_Gallery.AreaMinX + SizeX * math.floor((a_BlockX - a_Gallery.AreaMinX) / SizeX);
@@ -347,7 +346,7 @@ end
 function GetPlayerAllowances(a_WorldName, a_PlayerName)
 	assert(a_WorldName ~= nil);
 	assert(a_PlayerName ~= nil);
-	
+
 	local res = g_PlayerAllowances[a_WorldName][a_PlayerName];
 	if (res == nil) then
 		res = {};
@@ -366,7 +365,7 @@ function ReplaceAreaForAllPlayers(a_Area)
 	assert(type(a_Area) == "table")
 	assert(a_Area.ID ~= nil)
 	assert(a_Area.Gallery ~= nil)
-	
+
 	-- Replace in Ownership:
 	for _, areas in pairs(g_PlayerAreas[a_Area.Gallery.WorldName] or {}) do
 		for idx, area in ipairs(areas or {}) do
@@ -376,7 +375,7 @@ function ReplaceAreaForAllPlayers(a_Area)
 		end
 		areas[a_Area.Name] = a_Area
 	end
-	
+
 	-- Replace in Allowances:
 	for _, allowances in pairs(g_PlayerAllowances[a_Area.Gallery.WorldName] or {}) do
 		for idx, area in ipairs(allowances or {}) do
@@ -408,7 +407,7 @@ function RemovePlayerArea(a_Player, a_Area)
 		end
 	end
 	PlayerAreas[a_Area.Name] = nil
-	
+
 	-- Remove the area from the Allowances:
 	for _, allowances in pairs(g_PlayerAllowances[a_Area.Gallery.WorldName]) do
 		for idx, area in ipairs(allowances or {}) do
@@ -428,7 +427,7 @@ end
 function SetPlayerAllowances(a_WorldName, a_PlayerName, a_Allowances)
 	assert(a_WorldName ~= nil);
 	assert(a_PlayerName ~= nil);
-	
+
 	local WorldAllowances = g_PlayerAllowances[a_WorldName];
 	if (WorldAllowances == nil) then
 		WorldAllowances = {};
@@ -462,7 +461,7 @@ function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	if (a_Player:HasPermission("gallery.admin.buildanywhere")) then
 		return true;
 	end
-	
+
 	-- If the player is outside all galleries, bail out:
 	local Gallery = FindGalleryByCoords(a_Player:GetWorld(), a_BlockX, a_BlockZ);
 	if (Gallery == nil) then
@@ -477,12 +476,12 @@ function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 		end
 		return false, "Building outside galleries is forbidden. Use the " .. g_Config.CommandPrefix .. " command to interact with the galleries.";
 	end
-	
+
 	-- If the player has the admin permission for this gallery, allow them:
 	if (a_Player:HasPermission("gallery.admin.buildanywhere." .. Gallery.Name)) then
 		return true;
 	end
-	
+
 	-- Inside a gallery, retrieve the areas:
 	local Area = FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ);
 	if (Area == nil) then
@@ -511,7 +510,7 @@ function CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 	if not(IsInArea(Area, a_BlockX, a_BlockZ)) then
 		return false, "This is the public sidewalk.";
 	end
-	
+
 	-- Allowed:
 	return true;
 end
@@ -528,7 +527,7 @@ function FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ)
 	a_BlockZ = tonumber(a_BlockZ)
 	assert(a_BlockX ~= nil, "a_BlockX is not a number")
 	assert(a_BlockZ ~= nil, "a_BlockZ is not a number")
-	
+
 	-- Search for the area:
 	for idx, area in ipairs(GetPlayerAreas(a_Player)) do
 		if (
@@ -538,7 +537,7 @@ function FindPlayerAreaByCoords(a_Player, a_BlockX, a_BlockZ)
 			return area;
 		end
 	end
-	
+
 	-- No area found:
 	return nil;
 end

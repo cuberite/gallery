@@ -14,7 +14,7 @@ local function OnPlayerBrokenBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 		Area.NumBrokenBlocks = Area.NumBrokenBlocks + 1
 		g_DB:UpdateAreaStats(Area)
 	end
-	
+
 	-- Allow other plugins to execute:
 	return false
 end
@@ -44,7 +44,7 @@ local function OnPlayerLeftClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_Block
 	if ((a_BlockFace >= 0) and (HandleTemplatingLeftClick(a_Player, a_BlockX, a_BlockZ))) then
 		return true;
 	end
-	
+
 	local CanInteract, Reason = CanPlayerInteractWithBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ);
 	if (CanInteract) then
 		return false;
@@ -64,7 +64,7 @@ local function OnPlayerPlacedBlock(a_Player, a_BlockX, a_BlockY, a_BlockZ)
 		Area.NumPlacedBlocks = Area.NumPlacedBlocks + 1
 		g_DB:UpdateAreaStats(Area)
 	end
-	
+
 	-- Allow other plugins to execute:
 	return false
 end
@@ -91,21 +91,21 @@ local function OnPlayerRightClick(a_Player, a_BlockX, a_BlockY, a_BlockZ, a_Bloc
 		-- This really means "use item" and no valid coords are given
 		return false;
 	end
-	
+
 	if (HandleTemplatingRightClick(a_Player, a_BlockX, a_BlockZ)) then
 		return true;
 	end
-	
+
 	local BlockX, BlockY, BlockZ = AddFaceDirection(a_BlockX, a_BlockY, a_BlockZ, a_BlockFace);
 	local CanInteract, Reason = CanPlayerInteractWithBlock(a_Player, BlockX, BlockY, BlockZ);
 	if (CanInteract) then
 		return false;
 	end
-	
+
 	if (a_Player:GetEquippedItem().m_ItemType == E_BLOCK_AIR) then
 		return false
 	end
-	
+
 	a_Player:SendMessage("You are not allowed to build here. " .. Reason);
 	return true;
 end
@@ -169,7 +169,7 @@ local function ImprintChunkWithGallery(a_MinX, a_MinZ, a_MaxX, a_MaxZ, a_ChunkDe
 		-- This gallery doesn't intersect the chunk
 		return;
 	end
-	
+
 	-- Calc the bounds of the areas that should be present in this chunk:
 	local SizeX = a_Gallery.AreaSizeX;
 	local SizeZ = a_Gallery.AreaSizeZ;
@@ -193,7 +193,7 @@ local function ImprintChunkWithGallery(a_MinX, a_MinZ, a_MaxX, a_MaxZ, a_ChunkDe
 	local ToX   = EndX   - a_ChunkDesc:GetChunkX() * 16 - 1;
 	local FromZ = StartZ - a_ChunkDesc:GetChunkZ() * 16;
 	local ToZ   = EndZ   - a_ChunkDesc:GetChunkZ() * 16 - 1;
-	
+
 	-- Imprint the schematic into the chunk
 	local Template = a_Gallery.AreaTemplateSchematic;
 	local TemplateTop = a_Gallery.AreaTemplateSchematicTop;
@@ -232,7 +232,7 @@ local function ImprintChunkWithGallery(a_MinX, a_MinZ, a_MaxX, a_MaxZ, a_ChunkDe
 			a_ChunkDesc:SetBiome(x, z, Biome);
 		end end
 	end
-	
+
 	-- Fix the heightmap after all those changes:
 	a_ChunkDesc:UpdateHeightmap();
 end
@@ -271,7 +271,7 @@ local function OnChunkGenerated(a_World, a_ChunkX, a_ChunkZ, a_ChunkDesc)
 		-- The chunk has already been generated in OnChunkGenerating(), skip it
 		return false;
 	end
-	
+
 	-- Imprint whatever galleries intersect the chunk:
 	ImprintChunk(WorldName, a_ChunkX, a_ChunkZ, a_ChunkDesc, true);
 end
@@ -323,7 +323,7 @@ local function OnExploding(a_World, a_ExplosionSize, a_CanCauseFire, a_BlockX, a
 			return true;
 		end
 	end
-	
+
 	-- Let it explode
 	return false;
 end
@@ -353,7 +353,7 @@ function WorldEditCallback(a_AffectedAreaCuboid, a_Player, a_World, a_Operation)
 		a_Player:SendMessage(cChatColor.LightPurple .. "Cannot allow WorldEdit action, outside the galleries");
 		return true;
 	end
-	
+
 	-- If the minima and maxima aren't in the same area, disallow unless admin override permission
 	local Area = FindPlayerAreaByCoords(a_Player, a_AffectedAreaCuboid.p1.x, a_AffectedAreaCuboid.p1.z);
 	if (
@@ -368,7 +368,7 @@ function WorldEditCallback(a_AffectedAreaCuboid, a_Player, a_World, a_Operation)
 		a_Player:SendMessage(cChatColor.LightPurple .. "Cannot allow WorldEdit action, you don't own the area");
 		return true;
 	end
-	
+
 	if (a_Player:HasPermission("gallery.worldedit")) then
 		return false;
 	end

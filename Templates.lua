@@ -38,7 +38,7 @@ end
 function SendTemplatingStatus(a_Player)
 	assert(a_Player ~= nil);
 	assert(IsPlayerTemplating(a_Player));
-	
+
 	local PlayerTemplate = g_Templates[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()];
 	local msg = "You are templating with the export file set to '" .. PlayerTemplate.FileName .. "'. Left-click on a block to (re)set the first corner. Right-click on a block to (re)set the second corner. ";
 	local HasBothPoints = true;
@@ -65,7 +65,7 @@ end
 --- Returns true if the player currently is in the templating mode
 function IsPlayerTemplating(a_Player)
 	assert(a_Player ~= nil);
-	
+
 	local WorldTemplates = g_Templates[a_Player:GetWorld():GetName()];
 	return (WorldTemplates ~= nil) and (WorldTemplates[a_Player:GetUniqueID()] ~= nil);
 end
@@ -79,7 +79,7 @@ function BeginTemplating(a_Player, a_FileName)
 	assert(a_Player ~= nil);
 	assert(a_FileName ~= nil);
 	assert(not(IsPlayerTemplating(a_Player)));
-	
+
 	local WorldName = a_Player:GetWorld():GetName();
 	if (g_Templates[WorldName] == nil) then
 		g_Templates[WorldName] = {};
@@ -102,7 +102,7 @@ end
 function CancelTemplating(a_Player)
 	assert(a_Player ~= nil);
 	assert(IsPlayerTemplating(a_Player));
-	
+
 	g_Templates[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()] = nil;
 end
 
@@ -121,7 +121,7 @@ function ExportTemplate(a_Player)
 	if ((PlayerTemplate.FirstPoint == nil) or (PlayerTemplate.SecondPoint == nil)) then
 		return false, "One of the corners haven't been set.";
 	end
-	
+
 	-- Read the coords, sort them:
 	local MinX = PlayerTemplate.FirstPoint.x;
 	local MaxX = PlayerTemplate.SecondPoint.x;
@@ -139,19 +139,19 @@ function ExportTemplate(a_Player)
 	if not(BlockArea:Read(a_Player:GetWorld(), MinX, MaxX, 0, 255, MinZ, MaxZ, cBlockArea.baTypes + cBlockArea.baMetas)) then
 		return false, "Cannot read the template data.";
 	end
-	
+
 	-- Crop the area up to the max height:
 	local AreaHeight = GetAreaHeight(BlockArea);
 	local CroppedArea = cBlockArea();
 	CroppedArea:Create(MaxX - MinX + 1, AreaHeight + 1, MaxZ - MinZ + 1, cBlockArea.baTypes + cBlockArea.baMetas);
 	CroppedArea:Merge(BlockArea, 0, 0, 0, cBlockArea.msOverwrite);
-	
+
 	-- Save to file:
 	LOG("Saving to file '" .. PlayerTemplate.FileName .. "'...");
 	if not(CroppedArea:SaveToSchematicFile(PlayerTemplate.FileName)) then
 		return false, "Cannot save schematic";
 	end
-	
+
 	return true, "Template has been exported to '" .. PlayerTemplate.FileName .. "'.";
 end
 
@@ -170,18 +170,18 @@ function HandleTemplatingLeftClick(a_Player, a_BlockX, a_BlockZ)
 		g_Templates[a_Player:GetWorld():GetName()] = {};
 		return false;
 	end
-	
+
 	-- If the player is not templating, return control to the normal handler:
 	local PlayerTemplate = WorldTemplates[a_Player:GetUniqueID()];
 	if (PlayerTemplate == nil) then
 		return false;
 	end
-	
+
 	-- The player is templating, (re-)set the first point:
 	PlayerTemplate.FirstPoint = {x = a_BlockX, z = a_BlockZ};
 	a_Player:SendMessage("First corner set to {" .. a_BlockX .. ", " .. a_BlockZ .. "}.");
 	SendTemplatingStatus(a_Player);
-	
+
 	return true;
 end
 
@@ -201,18 +201,18 @@ function HandleTemplatingRightClick(a_Player, a_BlockX, a_BlockZ)
 		g_Templates[a_Player:GetWorld():GetName()] = {};
 		return false;
 	end
-	
+
 	-- If the player is not templating, return control to the normal handler:
 	local PlayerTemplate = WorldTemplates[a_Player:GetUniqueID()];
 	if (PlayerTemplate == nil) then
 		return false;
 	end
-	
+
 	-- The player is templating, (re-)set the second point:
 	PlayerTemplate.SecondPoint = {x = a_BlockX, z = a_BlockZ};
 	a_Player:SendMessage("Second corner set to {" .. a_BlockX .. ", " .. a_BlockZ .. "}.");
 	SendTemplatingStatus(a_Player);
-	
+
 	return true;
 end
 

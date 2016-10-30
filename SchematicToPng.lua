@@ -17,7 +17,7 @@ function cSchematicToPng:Connect()
 	-- Check params:
 	assert(self)
 	assert(self.Port)
-	
+
 	-- Start the connection:
 	cNetwork:Connect("localhost", self.Port,
 	{
@@ -61,7 +61,7 @@ end
 -- Resets all internal variables to their defaults, so that reconnection works
 function cSchematicToPng:Disconnected()
 	assert(self)
-	
+
 	self.Link = nil
 	self.Version = nil
 	self.RecvBuffer = nil
@@ -73,12 +73,12 @@ end
 
 function cSchematicToPng:ReconnectIfNeeded()
 	assert(self)
-	
+
 	if (self.Link) then
 		-- The link is valid, no reconnection needed
 		return
 	end
-	
+
 	-- The link is not valid, try to reconnect:
 	self:Connect()
 end

@@ -21,7 +21,7 @@ function InitStorage()
 	elseif (DBEngine == "mysql") then
 		-- TODO: MySQL bindings (via LuaRocks)
 	end
-	
+
 	-- If the DB failed to initialize, fall back to SQLite:
 	if (g_DB == nil) then
 		LOGWARNING(PLUGIN_PREFIX .. "DB access failed to initialize, falling back to SQLite.");

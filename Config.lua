@@ -60,7 +60,7 @@ local function CheckGallery(a_Gallery, a_Index)
 		LOGWARNNIG("Gallery #" .. a_Index .. " doesn't have a Name, disabling it.");
 		return false;
 	end
-	
+
 	-- Check all required parameters by name and type:
 	for idx, param in ipairs(g_GalleryRequiredParams) do
 		local p = a_Gallery[param.Name];
@@ -73,7 +73,7 @@ local function CheckGallery(a_Gallery, a_Index)
 			return false;
 		end
 	end
-	
+
 	-- Check all optional parameters' types:
 	for idx, param in ipairs(g_GalleryOptionalParams) do
 		local p = a_Gallery[param.Name];
@@ -84,7 +84,7 @@ local function CheckGallery(a_Gallery, a_Index)
 			end
 		end
 	end
-	
+
 	-- Check the FillStrategy param:
 	local AllowedStrategies = {"x+z+", "x-z+", "x+z-", "x-z-", "z+x+", "z+x-", "z-x+", "z-x-"};
 	local ReqStrategy = a_Gallery.FillStrategy;
@@ -98,7 +98,7 @@ local function CheckGallery(a_Gallery, a_Index)
 		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\"'s FillStrategy is not recognized. The gallery is disabled.");
 		return false;
 	end
-	
+
 	-- Assign the world:
 	a_Gallery.World = cRoot:Get():GetWorld(a_Gallery.WorldName);
 	if (a_Gallery.World == nil) then
@@ -137,7 +137,7 @@ local function CheckGallery(a_Gallery, a_Index)
 		end
 		a_Gallery.TeleportCoordY = 256;
 	end
-	
+
 	-- Calculate and check the number of areas per X / Z dimension:
 	a_Gallery.NumAreasPerX = math.floor((a_Gallery.MaxX -  a_Gallery.MinX) / a_Gallery.AreaSizeX);
 	if (a_Gallery.NumAreasPerX <= 0) then
@@ -152,7 +152,7 @@ local function CheckGallery(a_Gallery, a_Index)
 		return false;
 	end
 	a_Gallery.MaxAreaIdx = a_Gallery.NumAreasPerX * a_Gallery.NumAreasPerZ;
-	
+
 	-- Apply defaults:
 	a_Gallery.AreaEdge = a_Gallery.AreaEdge or 2;
 
@@ -166,7 +166,7 @@ local function CheckGallery(a_Gallery, a_Index)
 			"AreaEdge = " .. a_Gallery.AreaEdge .. ", GallerySizeZ = " .. a_Gallery.AreaSizeZ .. ". Gallery is disabled");
 		return false;
 	end
-	
+
 	-- Set the gallery's minimum and maximum area coords
 	-- (that is, minima and maxima rounded to the area coords)
 	if (a_Gallery.FillStrategy:find("x%+")) then
@@ -187,7 +187,7 @@ local function CheckGallery(a_Gallery, a_Index)
 		a_Gallery.AreaMinZ = a_Gallery.MaxZ - a_Gallery.AreaSizeZ * a_Gallery.NumAreasPerZ;
 		a_Gallery.AreaMaxZ = a_Gallery.MaxZ;
 	end
-	
+
 	-- Look up biome, if set, and convert to EMCSBiome enum:
 	if (a_Gallery.Biome ~= nil) then
 		local BiomeType = StringToBiome(a_Gallery.Biome);
@@ -231,7 +231,7 @@ local function VerifyConfig(a_Config)
 	a_Config.CommandPrefix = a_Config.CommandPrefix or "/gallery"
 	a_Config.DatabaseEngine = a_Config.DatabaseEngine or "sqlite"
 	a_Config.DatabaseParams = a_Config.DatabaseParams or {}
-	
+
 	-- Check the WebPreview, if it doesn't have all the requirements, set it to nil to disable previewing:
 	if (a_Config.WebPreview) then
 		if not(a_Config.WebPreview.ThumbnailFolder) then
@@ -253,7 +253,7 @@ local function VerifyConfig(a_Config)
 		g_PluginInfo.Commands[a_Config.CommandPrefix] = g_PluginInfo.Commands["/gallery"]
 		g_PluginInfo.Commands["/gallery"] = nil
 	end
-	
+
 	return a_Config
 end
 
@@ -275,7 +275,7 @@ function LoadConfig()
 		g_Galleries = VerifyGalleries({})
 		return;
 	end
-	
+
 	-- Load and compile the config file:
 	local cfg, err = loadfile(CONFIG_FILE);
 	if (cfg == nil) then
@@ -285,13 +285,13 @@ function LoadConfig()
 		g_Galleries = VerifyGalleries({})
 		return;
 	end
-	
+
 	-- Execute the loaded file in a sandbox:
 	-- This is Lua-5.1-specific and won't work in Lua 5.2!
 	local Sandbox = {};
 	setfenv(cfg, Sandbox);
 	cfg();
-	
+
 	-- Retrieve the values we want from the sandbox:
 	local Galleries, Config = Sandbox.Galleries, Sandbox.Config;
 	if (Galleries == nil) then

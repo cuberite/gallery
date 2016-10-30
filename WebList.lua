@@ -80,12 +80,12 @@ local function UpdateAreaEditRange(a_Area, a_BlockArea)
 	assert(type(a_Area) == "table")
 	assert(a_Area.Gallery)
 	assert(tolua.type(a_BlockArea) == "cBlockArea")
-	
+
 	-- If there's no gallery template, bail out:
 	if not(a_Area.Gallery.AreaTemplateSchematic) then
 		return
 	end
-	
+
 	-- Get the range of the edits by msSimpleCompare-ing to the gallery's template:
 	a_BlockArea:Merge(a_Area.Gallery.AreaTemplateSchematic, -a_Area.Gallery.AreaEdge, 0, -a_Area.Gallery.AreaEdge, cBlockArea.msSimpleCompare)
 	a_Area.EditMinX, a_Area.EditMinY, a_Area.EditMinZ, a_Area.EditMaxX, a_Area.EditMaxY, a_Area.EditMaxZ = a_BlockArea:GetNonAirCropRelCoords()
@@ -106,7 +106,7 @@ local function GeneratePreviewForAreas(a_Areas)
 	if not(a_Areas[1]) then
 		return
 	end
-	
+
 	-- Get a list of .schematic files that need updating
 	local ToExport = {}
 	for _, area in ipairs(a_Areas) do
@@ -119,7 +119,7 @@ local function GeneratePreviewForAreas(a_Areas)
 			ToExport[area] = true
 		end
 	end
-	
+
 	-- Export the .schematic files for each area, process one are after another, using ChunkStays:
 	-- (after one area is written to a file, schedule another ChunkStay for the next area)
 	-- Note that due to multithreading, the export needs to be scheduled onto the World Tick thread, otherwise a deadlock may occur
@@ -176,7 +176,7 @@ local function RefreshPreviewForAreas(a_Areas)
 	-- Check params and preconditions:
 	assert(type(a_Areas) == "table")
 	assert(g_Config.WebPreview)
-	
+
 	local ToExport = {}  -- array of {Area = <db-area>, NumRotations = <number>}
 	for _, area in ipairs(a_Areas) do
 		local fnam = g_Config.WebPreview.ThumbnailFolder .. "/" .. area.GalleryName .. "/" .. area.GalleryIndex
@@ -208,7 +208,7 @@ local function RefreshPreviewForAreas(a_Areas)
 			return (a_Item1.Area.MinZ < a_Item2.Area.MinZ)
 		end
 	)
-	
+
 	-- Export each area:
 	GeneratePreviewForAreas(ToExport)
 end
@@ -220,12 +220,12 @@ end
 --- Returns the description of the specified area
 local function GetAreaDescription(a_Area)
 	assert(type(a_Area) == "table")
-	
+
 	-- If the area is not valid, return "<unclaimed>":
 	if (a_Area.Name == nil) then
 		return "<p style='color: grey'>&lt;unclaimed&gt;</p>"
 	end
-	
+
 	-- Return the area's name and position, unless they're equal:
 	local Position = a_Area.GalleryName .. " " .. a_Area.GalleryIndex
 	if (Position == a_Area.Name) then
@@ -247,7 +247,7 @@ local function AddActionButton(a_Action, a_FormDest, a_AreaID, a_GalleryName, a_
 	assert(a_FormDest)
 	assert(a_AreaID or (a_GalleryName and a_GalleryIndex))
 	assert(a_ButtonText)
-	
+
 	if (a_AreaID) then
 		return
 			[[<form action="]]..
@@ -299,10 +299,10 @@ local function BuildGalleryAreaList(a_Gallery, a_Request)
 	local StartIdx = tonumber(a_Request.Params["startidx"]) or 0
 	local EndIdx = StartIdx + g_NumAreasPerPage - 1
 	local SortBy = a_Request.Params["sortby"] or "GalleryIdx"
-	
+
 	-- Get the areas from the DB, as a map of Idx -> Area
 	local Areas = g_DB:LoadGalleryAreasRange(a_Gallery.Name, SortBy, StartIdx, EndIdx)
-	
+
 	-- Queue the areas for re-export:
 	if (g_Config.WebPreview) then
 		local AreaArray = {}
@@ -311,7 +311,7 @@ local function BuildGalleryAreaList(a_Gallery, a_Request)
 		end
 		RefreshPreviewForAreas(AreaArray)
 	end
-	
+
 	-- Build the page:
 	local FormDest = "/" .. a_Request.Path .. "?startidx=" .. StartIdx .. "&sortby=" .. SortBy
 	local Page = {"<table><tr><th><a href=\"/"}
@@ -358,7 +358,7 @@ local function BuildGalleryAreaList(a_Gallery, a_Request)
 		end
 		ins(Page, "</td></tr>")
 	end
-	
+
 	return table.concat(Page)
 end
 
@@ -375,12 +375,12 @@ local function BuildGalleryPager(a_Gallery, a_Request)
 	local Path = a_Request.Path
 	local SortBy = a_Request.Params["sortby"]
 	local MaxPageNum = math.ceil(a_Gallery.NextAreaIdx / g_NumAreasPerPage)
-	
+
 	-- Insert the "first page" link:
 	local res = {"<table><tr><th><a href=\""}
 	ins(res, PathToPage(Path, 1, SortBy))
 	ins(res, "\">|&lt;&lt;&lt</a></th><th width='100%' style='align: center'><center>")
-	
+
 	-- Insert the page links for up to 5 pages in each direction:
 	local Pager = {}
 	for PageNum = CurrentPage - 5, CurrentPage + 5 do
@@ -395,12 +395,12 @@ local function BuildGalleryPager(a_Gallery, a_Request)
 		end
 	end
 	ins(res, table.concat(Pager, " | "))
-	
+
 	-- Insert the "last page" link:
 	ins(res, "</center></th><th><a href=\"")
 	ins(res, PathToPage(Path, MaxPageNum, SortBy))
 	ins(res, "\">&gt;&gt;&gt;|</a></th></table>")
-	
+
 	return table.concat(res)
 end
 
@@ -416,10 +416,10 @@ local function ExecuteLock(a_Gallery, a_Request)
 		-- invalid request, just return the base page:
 		return BuildGalleryAreaList(a_Gallery, a_Request)
 	end
-	
+
 	-- Lock the area:
 	LockAreaByID(AreaID, a_Request.Username and ("<web: " .. a_Request.Username ..">") or "<web: unknown user>")
-	
+
 	-- Return the base page with a notification:
 	return "<p>Area locked</p>" .. BuildGalleryPager(a_Gallery, a_Request) .. BuildGalleryAreaList(a_Gallery, a_Request) .. BuildGalleryPager(a_Gallery, a_Request)
 end
@@ -436,10 +436,10 @@ local function ExecuteUnlock(a_Gallery, a_Request)
 		-- invalid request, just return the base page:
 		return BuildGalleryAreaList(a_Gallery, a_Request)
 	end
-	
+
 	-- Unlock the area:
 	UnlockAreaByID(AreaID, a_Request.Username and ("<web: " .. a_Request.Username ..">") or "<web: unknown user>")
-	
+
 	-- Return the base page with a notification:
 	return "<p>Area unlocked</p>" .. BuildGalleryPager(a_Gallery, a_Request) .. BuildGalleryAreaList(a_Gallery, a_Request) .. BuildGalleryPager(a_Gallery, a_Request)
 end
@@ -456,14 +456,14 @@ local function ExecuteRemove(a_Gallery, a_Request)
 		-- Invalid request, just return the base page:
 		return BuildGalleryAreaList(a_Gallery, a_Request)
 	end
-	
+
 	-- Get the area details:
 	local Area = g_DB:LoadAreaByID(AreaID)
 	if not(Area) then
 		-- Invalid area specified, just return the base page:
 		return BuildGalleryAreaList(a_Gallery, a_Request)
 	end
-	
+
 	-- Show ALL the area's properties, alpha-sorted:
 	local res =
 	{
@@ -492,7 +492,7 @@ local function ExecuteRemove(a_Gallery, a_Request)
 		ins(res, "</td></tr>")
 	end
 	ins(res, "</table>")
-	
+
 	return table.concat(res)
 end
 
@@ -508,13 +508,13 @@ local function ExecuteRemoveConfirmed(a_Gallery, a_Request)
 		-- invalid request, just return the base page:
 		return BuildGalleryAreaList(a_Gallery, a_Request)
 	end
-	
+
 	-- Remove the area:
 	local Area = g_DB:LoadAreaByID(AreaID)
 	if (Area) then
 		g_DB:RemoveArea(Area, a_Request.Username and ("<web: " .. a_Request.Username ..">") or "<web: unknown user>")
 	end
-	
+
 	-- Return the base page with a notification:
 	return "<p>Area removed</p>" .. BuildGalleryPager(a_Gallery, a_Request) .. BuildGalleryAreaList(a_Gallery, a_Request) .. BuildGalleryPager(a_Gallery, a_Request)
 end
@@ -531,7 +531,7 @@ local function ExecuteGetPreview(a_Gallery, a_Request)
 	if not(GalleryName) or not(GalleryIdx) or not(rot) then
 		return "Invalid identification"
 	end
-	
+
 	local fnam = g_Config.WebPreview.ThumbnailFolder .. "/" .. GalleryName .. "/" .. GalleryIdx .. "." .. rot .. ".png"
 	local f, msg = io.open(fnam, "rb")
 	if not(f) then
@@ -571,7 +571,7 @@ local function BuildGalleryPage(a_Gallery, a_Request)
 			return Page
 		end
 	end
-	
+
 	-- No action, or the action handler returned nothing
 	return BuildGalleryPager(a_Gallery, a_Request) .. BuildGalleryAreaList(a_Gallery, a_Request) .. BuildGalleryPager(a_Gallery, a_Request)
 end
@@ -591,7 +591,7 @@ local function InitWebPreview()
 
 	-- Read the "preview not available yet" image:
 	g_PreviewNotAvailableYetPng = cFile:ReadWholeFile(cPluginManager:GetCurrentPlugin():GetLocalFolder() .. "/PreviewNotAvailableYet.png")
-	
+
 	-- RefreshPreviewForAreas(g_DB:LoadAllAreas())
 end
 
@@ -609,7 +609,7 @@ function InitWebList()
 			end
 		)
 	end
-	
+
 	if (g_Config.WebPreview) then
 		InitWebPreview()
 	end

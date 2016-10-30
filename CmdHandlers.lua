@@ -20,7 +20,7 @@ local function SendAreaDetails(a_Player, a_Area, a_LeadingText)
 	assert(tolua.type(a_Player) == "cPlayer")
 	assert(type(a_Area) == "table")
 	assert(type(a_LeadingText) == "string")
-	
+
 	a_Player:SendMessage(a_LeadingText .. DescribeArea(a_Area) .. ":")
 	a_Player:SendMessage("  Boundaries: {" .. a_Area.MinX .. ", " .. a_Area.MinZ .. "} - {" .. tostring(a_Area.MaxX - 1) .. ", " .. tostring(a_Area.MaxZ - 1) .. "}")
 	a_Player:SendMessage("  Buildable region: {" .. a_Area.StartX .. ", " .. a_Area.StartZ .. "} - {" .. tostring(a_Area.EndX - 1) .. ", " .. tostring(a_Area.EndZ - 1) .. "}")
@@ -37,7 +37,7 @@ end
 --- Lists all areas that the player owns in their current world
 function ListPlayerAreasInWorld(a_Player)
 	local Areas = GetPlayerAreas(a_Player);
-	
+
 	-- Send count:
 	if (#Areas == 0) then
 		a_Player:SendMessage("You own no areas in this world");
@@ -46,7 +46,7 @@ function ListPlayerAreasInWorld(a_Player)
 	else
 		a_Player:SendMessage("You own " .. #Areas .. " areas in this world:");
 	end
-	
+
 	-- Send list:
 	for idx, area in ipairs(Areas) do
 		a_Player:SendMessage(cCompositeChat("  " .. DescribeArea(area) .. " (", mtInfo)
@@ -71,7 +71,7 @@ function ListPlayerAreasInGallery(a_Player, a_GalleryName)
 		return true;
 	end
 	local Areas = g_DB:LoadPlayerAreasInGallery(a_GalleryName, a_Player:GetName());
-	
+
 	-- Send count:
 	if (#Areas == 0) then
 		a_Player:SendMessage("You own no areas in that gallery");
@@ -115,7 +115,7 @@ local function ListOtherPlayerAreas(a_Player, a_OwnerName, a_GalleryName)
 	else
 		Areas = g_DB:LoadPlayerAreasInGallery(a_GalleryName, a_OwnerName);
 	end
-	
+
 	-- Send count:
 	if (#Areas == 0) then
 		a_Player:SendMessage("They own no areas");
@@ -145,26 +145,26 @@ local function RenamePlayerArea(a_PlayerName, a_AreaWorldName, a_OldAreaName, a_
 	assert(a_AreaWorldName ~= nil);
 	assert(a_OldAreaName ~= nil);
 	assert(a_NewAreaName ~= nil);
-	
+
 	-- Check the new name for invalid chars:
 	local Unacceptable = a_NewAreaName:gsub("[a-zA-Z0-9%-_/*+%.]", "");  -- Erase all valid chars, all that's left is unacceptable
 	if (Unacceptable ~= "") then
 		return false, "The following characters are not acceptable in an area name: " .. Unacceptable;
 	end
-	
+
 	-- Renaming to same name?
 	if (a_OldAreaName == a_NewAreaName) then
 		return false, "This area is already named '" .. a_NewAreaName .. "'.";
 	end
-	
+
 	-- Check the DB for duplicate name:
 	if (g_DB:IsAreaNameUsed(a_PlayerName, a_AreaWorldName, a_NewAreaName)) then
 		return false, "This area name is already used, pick another one.";
 	end
-	
+
 	-- Rename in the DB:
 	g_DB:RenameArea(a_PlayerName, a_OldAreaName, a_NewAreaName);
-	
+
 	-- Rename in the loaded table, if it exists (player connected):
 	local PlayerAreas = g_PlayerAreas[a_AreaWorldName][a_PlayerName];
 	if (PlayerAreas ~= nil) then
@@ -174,7 +174,7 @@ local function RenamePlayerArea(a_PlayerName, a_AreaWorldName, a_OldAreaName, a_
 		PlayerAreas[a_NewAreaName] = Area;
 		Area.Name = a_NewAreaName;
 	end
-	
+
 	return true, "Area '" .. a_OldAreaName .. "' renamed to '" .. a_NewAreaName .. "'.";
 end
 
@@ -193,7 +193,7 @@ function HandleCmdAllow(a_Split, a_Player)
 		return true;
 	end
 	local FriendName = a_Split[3]
-	
+
 	-- Get the area to be allowed:
 	local BlockX = math.floor(a_Player:GetPosX())
 	local BlockZ = math.floor(a_Player:GetPosZ())
@@ -202,14 +202,14 @@ function HandleCmdAllow(a_Split, a_Player)
 		a_Player:SendMessage(cCompositeChat("You do not own this area", mtFailure))
 		return true
 	end
-	
+
 	-- Allow the player:
 	local res, msg = g_DB:AllowPlayerInArea(Area, FriendName)
 	if not(res) then
 		a_Player:SendMessage(cCompositeChat("Cannot store allowed friend to DB: " .. (msg or "<no details>"), mtFailure))
 		return true
 	end
-	
+
 	-- Reload the allowed player's allowances:
 	local WorldName = a_Player:GetWorld():GetName()
 	local Allowances = GetPlayerAllowances(WorldName, FriendName)
@@ -217,7 +217,7 @@ function HandleCmdAllow(a_Split, a_Player)
 		-- Hack: we're using the actual area as the Allowance. They have compatible structure, after all
 		table.insert(Allowances, Area)
 	end
-	
+
 	a_Player:SendMessage(cCompositeChat("You have allowed " .. FriendName .. " to build in your area " .. DescribeArea(Area), mtInfo))
 	return true
 end
@@ -235,7 +235,7 @@ function HandleCmdClaim(a_Split, a_Player)
 		)
 		return true
 	end
-	
+
 	-- Find the gallery specified:
 	local Gallery = FindGalleryByName(a_Split[3])
 	if (Gallery == nil) then
@@ -248,20 +248,20 @@ function HandleCmdClaim(a_Split, a_Player)
 		a_Player:SendMessage(cCompositeChat("That gallery is in world " .. Gallery.WorldName .. ", you need to go to that world before claiming.", mtFailure))
 		return true
 	end
-	
+
 	-- Claim an area:
 	local Area, ErrMsg = ClaimArea(a_Player, Gallery)
 	if (Area == nil) then
 		a_Player:SendMessage(cCompositeChat("Cannot claim area in gallery " .. Gallery.Name .. ": " .. ErrMsg, mtFailure))
 		return true
 	end
-	
+
 	-- Fill the area with the schematic, if available:
 	if (Gallery.AreaTemplateSchematic ~= nil) then
 		Gallery.AreaTemplateSchematic:Write   (a_Player:GetWorld(), Area.MinX, 0,               Area.MinZ)
 		Gallery.AreaTemplateSchematicTop:Write(a_Player:GetWorld(), Area.MinX, Gallery.AreaTop, Area.MinZ)
 	end
-	
+
 	-- Teleport to the area and set orientation to look at the area:
 	a_Player:TeleportToCoords(Area.MinX + 0.5, Area.Gallery.TeleportCoordY + 0.001, Area.MinZ + 0.5)
 	a_Player:SendRotation(-45, 0)
@@ -283,7 +283,7 @@ function HandleCmdDeny(a_Split, a_Player)
 		return true
 	end
 	local FormerFriendName = a_Split[3]
-	
+
 	-- Get the area to be allowed:
 	local BlockX = math.floor(a_Player:GetPosX())
 	local BlockZ = math.floor(a_Player:GetPosZ())
@@ -292,14 +292,14 @@ function HandleCmdDeny(a_Split, a_Player)
 		a_Player:SendMessage(cCompositeChat("You do not own this area", mtFailure))
 		return true
 	end
-	
+
 	-- Deny the player:
 	local res, msg = g_DB:DenyPlayerInArea(Area, FormerFriendName)
 	if not(res) then
 		a_Player:SendMessage(cCompositeChat("Denying failed in the DB: " .. (msg or "<no details>"), mtFailure))
 		return true
 	end
-	
+
 	-- Reload the allowed player's allowances:
 	local WorldName = a_Player:GetWorld():GetName()
 	local Allowances = GetPlayerAllowances(WorldName, FormerFriendName)
@@ -312,7 +312,7 @@ function HandleCmdDeny(a_Split, a_Player)
 		end
 		SetPlayerAllowances(WorldName, FormerFriendName, NewAllowances)
 	end
-	
+
 	a_Player:SendMessage("You have denied " .. FormerFriendName .. " to build in your area " .. DescribeArea(Area))
 	return true;
 end
@@ -330,7 +330,7 @@ function HandleCmdFork(a_Split, a_Player)
 		)
 		return true
 	end
-	
+
 	-- Find the area where the player is:
 	local World = a_Player:GetWorld()
 	local BlockX = math.floor(a_Player:GetPosX())
@@ -341,16 +341,16 @@ function HandleCmdFork(a_Split, a_Player)
 		a_Player:SendMessage(cCompositeChat("There is no area claimed here, nothing to fork.", mtFailure))
 		return true
 	end
-	
+
 	a_Player:SendMessage(cCompositeChat("Preparing the forked area, please stand by...", mtInfo))
-	
+
 	-- Claim a new area:
 	local NewArea, ErrMsg = ClaimArea(a_Player, Area.Gallery, Area)
 	if (NewArea == nil) then
 		a_Player:SendMessage(ErrMsg)
 		return true
 	end
-	
+
 	-- Copy the area contents and teleport the player, once copied:
 	CopyAreaContents(Area, NewArea,
 		function ()
@@ -368,7 +368,7 @@ function HandleCmdFork(a_Split, a_Player)
 			)
 		end
 	)
-	
+
 	return true
 end
 
@@ -385,13 +385,13 @@ local function HandleCmdGotoAdmin(a_Split, a_Player)
 		return true;
 	end
 	local AreaName = table.concat(a_Split, " ", 4);
-	
+
 	-- Check permission:
 	if not(a_Player:HasPermission("gallery.admin.goto")) then
 		a_Player:SendMessage("You do not have the required permission to use this command");
 		return true;
 	end
-	
+
 	local Area = g_DB:LoadPlayerAreaByName(a_Split[3]:sub(2), AreaName);
 	if (Area == nil) then
 		a_Player:SendMessage("They don't have such an area.");
@@ -413,19 +413,19 @@ function HandleCmdGoto(a_Split, a_Player)
 		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " goto <areaName>");
 		return true;
 	end
-	
+
 	-- If the first char is a @, it is the admin override:
 	if (a_Split[3]:sub(1, 1) == '@') then
 		return HandleCmdGotoAdmin(a_Split, a_Player);
 	end
-	
+
 	local ReqAreaName = table.concat(a_Split, " ", 3);  -- Support spaces in names
 	local Area = GetPlayerAreas(a_Player)[ReqAreaName];
 	if (Area == nil) then
 		a_Player:SendMessage("You don't own an area named \"" .. ReqAreaName .. "\".");
 		return true;
 	end
-	
+
 	a_Player:TeleportToCoords(Area.MinX + 0.5, Area.Gallery.TeleportCoordY + 0.001, Area.MinZ + 0.5);
 	return true;
 end
@@ -438,13 +438,13 @@ function HandleCmdHelp(a_Split, a_Player)
 	local ColCmd    = cChatColor.Green;
 	local ColParams = cChatColor.Blue;
 	local ColText   = cChatColor.White;
-	
+
 	-- For the parameter-less invocation, list all the subcommands:
 	if (#a_Split == 2) then
 		SendUsage(a_Player, "Listing all subcommands, use " .. ColCmd .. g_Config.CommandPrefix .. " help " .. ColParams .. "<subcommand>" .. ColText .. " for more info on a specific subcommand");
 		return true;
 	end
-	
+
 	-- Find the requested subcommand:
 	local Subcommands = g_PluginInfo.Commands[a_Split[1]].Subcommands;
 	assert(Subcommands ~= nil);
@@ -455,7 +455,7 @@ function HandleCmdHelp(a_Split, a_Player)
 		SendUsage(a_Player);
 		return
 	end;
-	
+
 	-- Print detailed help on the subcommand:
 	local CommonPrefix = ColCmd .. g_Config.CommandPrefix .. " " .. a_Split[3];
 	a_Player:SendMessage(CommonPrefix .. ColText .. " - " .. Subcommand.HelpString);
@@ -473,7 +473,7 @@ function HandleCmdHelp(a_Split, a_Player)
 			a_Player:SendMessage(txt);
 		end
 	end
-	
+
 	return true;
 end
 
@@ -526,12 +526,12 @@ function HandleCmdList(a_Split, a_Player)
 			NumGalleries = NumGalleries + 1;
 		end
 	end
-	
+
 	if (NumGalleries == 0) then
 		a_Player:SendMessage("There are no galleries defined for this world.");
 		return true;
 	end
-	
+
 	-- List all the galleries in this world:
 	a_Player:SendMessage("Number of galleries in this world: " .. NumGalleries);
 	for idx, gal in ipairs(g_Galleries) do
@@ -539,7 +539,7 @@ function HandleCmdList(a_Split, a_Player)
 			a_Player:SendMessage("  " .. gal.Name);
 		end
 	end
-	
+
 	return true;
 end
 
@@ -554,7 +554,7 @@ function HandleCmdLockArea(a_Split, a_Player)
 		a_Player:SendMessage(Msg or ("<Unknown error while locking area (" .. (ErrCode or "<UnknownCode>") .. ">"))
 		return true
 	end
-	
+
 	-- Notify the player:
 	a_Player:SendMessage("The area has been locked.")
 	return true
@@ -570,7 +570,7 @@ function HandleCmdMy(a_Split, a_Player)
 		ListPlayerAreasInWorld(a_Player);
 		return true;
 	end
-	
+
 	if (a_Split[3]:sub(1, 1) == '@') then
 		-- "/gal my @playername [<gallery>]" command, available only to admins
 		if not(a_Player:HasPermission("gallery.admin.my")) then
@@ -580,7 +580,7 @@ function HandleCmdMy(a_Split, a_Player)
 		ListOtherPlayerAreas(a_Player, a_Split[3]:sub(2), a_Split[4]);
 		return true;
 	end
-	
+
 	-- "/gal my <gallery>" command, list all areas in the specified gallery
 	-- Note that the gallery may be in a different world, need to list using DB Storage
 	ListPlayerAreasInGallery(a_Player, a_Split[3]);
@@ -598,7 +598,7 @@ local function HandleCmdNameAdmin(a_Split, a_Player)
 		a_Player:SendMessage("areaName may contain only a-z, A-Z, 0-9, +, -, /, * and _");
 		return true;
 	end
-	
+
 	-- Is the first arg a @playername?
 	if (a_Split[3]:sub(1, 1) == '@') then
 		if (#a_Split ~= 5) then
@@ -611,7 +611,7 @@ local function HandleCmdNameAdmin(a_Split, a_Player)
 		end
 		return true;
 	end
-	
+
 	local Area = nil;
 	local NewName = nil;
 	if (#a_Split == 3) then
@@ -638,7 +638,7 @@ local function HandleCmdNameAdmin(a_Split, a_Player)
 		a_Player:SendMessage("  " .. g_Config.CommandPrefix .. " name <ThisAreaNewName>");
 		return true;
 	end
-	
+
 	-- Do the actual rename:
 	local IsSuccess, Msg = RenamePlayerArea(Area.PlayerName, Area.Gallery.WorldName, Area.Name, NewName);
 	if (Msg ~= nil) then
@@ -656,14 +656,14 @@ function HandleCmdName(a_Split, a_Player)
 	if (a_Player:HasPermission("gallery.admin.name")) then
 		return HandleCmdNameAdmin(a_Split, a_Player);
 	end
-	
+
 	-- Basic params check:
 	if (#a_Split < 3) then
 		a_Player:SendMessage("Usage: " .. g_Config.CommandPrefix .. " name <areaName>");
 		a_Player:SendMessage("areaName may contain only a-z, A-Z, 0-9, +, -, /, * and _");
 		return true;
 	end
-	
+
 	-- Get the area to rename:
 	local Area = nil;
 	if (#a_Split == 3) then
@@ -686,13 +686,13 @@ function HandleCmdName(a_Split, a_Player)
 		end
 		NewName = a_Split[4];
 	end
-	
+
 	-- Rename:
 	local IsSuccess, Msg = RenamePlayerArea(a_Player:GetName(), Area.Gallery.WorldName, Area.Name, NewName);
 	if (Msg ~= nil) then
 		a_Player:SendMessage(Msg);
 	end
-	
+
 	return true;
 end
 
@@ -707,11 +707,11 @@ function HandleCmdRemove(a_Split, a_Player)
 		a_Player:SendMessage("There is no gallery area here")
 		return true
 	end
-	
+
 	-- Remove the area:
 	g_DB:RemoveArea(Area, a_Player:GetName())
 	RemovePlayerArea(a_Player, Area)
-	
+
 	-- Notify the player:
 	a_Player:SendMessage("The area has been unclaimed.")
 	return true
@@ -757,15 +757,15 @@ function HandleCmdReset(a_Split, a_Player)
 	assert(MinX ~= nil);
 	assert(MinZ ~= nil);
 	assert(AreaTop ~= nil);
-	
+
 	-- Check if there is a valid schematic in the gallery:
 	if (Template == nil) then
 		a_Player:SendMessage("Cannot reset this area, the gallery doesn't use schematic templates");
 		return true;
 	end
-	
+
 	assert(TemplateTop ~= nil);
-	
+
 	-- Reset the area:
 	Template:Write(a_Player:GetWorld(), MinX, 0, MinZ);
 	TemplateTop:Write(a_Player:GetWorld(), MinX, AreaTop, MinZ);
@@ -787,14 +787,14 @@ function HandleCmdSelect(a_Split, a_Player)
 		a_Player:SendMessage(cCompositeChat("Cannot select, there is no gallery here.", mtFailure))
 		return true
 	end
-	
+
 	-- Get the area buildable coords:
 	local StartX, StartZ, EndX, EndZ = GetAreaBuildableCoordsFromBlockCoords(Gallery, BlockX, BlockZ)
 	if not(StartX) then
 		a_Player:SendMessage(cCompositeChat("Cannot select, there is no gallery area here.", mtFailure))
 		return true
 	end
-	
+
 	-- Select the area in WorldEdit:
 	local Cuboid = cCuboid(StartX, 0, StartZ, EndX, 255, EndZ)
 	local IsSuccess = cPluginManager:CallPlugin("WorldEdit", "SetPlayerCuboidSelection", a_Player, Cuboid)
@@ -805,7 +805,7 @@ function HandleCmdSelect(a_Split, a_Player)
 		a_Player:SendMessage(cCompositeChat("Cannot select, WorldEdit reported an error.", mtFailure))
 		return true
 	end
-	
+
 	-- Report success:
 	a_Player:SendMessage(cCompositeChat("Selected the entire area.", mtInfo))
 	return true
@@ -823,7 +823,7 @@ function HandleCmdStats(a_Split, a_Player)
 	if (not(PlayerAreaCounts) or (#PlayerAreaCounts == 0)) then
 		return true
 	end
-	
+
 	-- List the top gallerists:
 	local Top = #PlayerAreaCounts
 	if (Top > Limit) then
@@ -912,11 +912,11 @@ function HandleCmdUnclaim(a_Split, a_Player)
 		a_Player:SendMessage("This isn't your area.")
 		return true
 	end
-	
+
 	-- Remove the area:
 	g_DB:RemoveArea(Area, a_Player:GetName())
 	RemovePlayerArea(a_Player, Area)
-	
+
 	-- Notify the player:
 	a_Player:SendMessage("The area has been unclaimed.")
 	return true
@@ -933,7 +933,7 @@ function HandleCmdUnlockArea(a_Split, a_Player)
 		a_Player:SendMessage(Msg or ("<Unknown error while unlocking area (" .. (ErrCode or "<UnknownCode>") .. ">"))
 		return true
 	end
-	
+
 	-- Notify the player:
 	a_Player:SendMessage("The area has been unlocked.")
 	return true
@@ -949,7 +949,7 @@ function HandleCmdVisit(a_Split, a_Player)
 		a_Player:SendMessage("Usage: " .. cChatColor.Green .. g_Config.CommandPrefix .. " visit " .. cChatColor.Blue .. "<GalleryName> [<AreaNumber>]");
 		return true;
 	end
-	
+
 	-- Get the requested gallery:
 	local GalleryName = a_Split[3];
 	local Gallery = FindGalleryByName(GalleryName);
@@ -957,10 +957,10 @@ function HandleCmdVisit(a_Split, a_Player)
 		a_Player:SendMessage("There is no gallery named \"" .. GalleryName .. "\" in this world.");
 		return true;
 	end
-	
+
 	-- Get the requested area (last claimed area in gallery if not specified):
 	local AreaIndex = tonumber(a_Split[4]) or Gallery.NextAreaIdx;
-	
+
 	-- Teleport:
 	local BlockX, MaxX, BlockZ = AreaCoordsToBlockCoords(Gallery, AreaIndexToCoords(AreaIndex, Gallery));
 	assert(BlockX ~= nil);
@@ -982,19 +982,19 @@ function HandleConsoleCmdCheckIndices(a_Split, a_EntireCommand)
 			shouldForce = true
 		end
 	end
-	
+
 	-- If there are any players connected, refuse to process unless forced explicitly:
 	if not(shouldForce) then
 		if (cRoot:Get():GetServer():GetNumPlayers() ~= 0) then
 			return true, "Cannot check indices, there are players connected to the server. You can use the \"-force\" parameter to force checking despite players being present."
 		end
 	end
-	
+
 	-- Check the indices in each gallery:
 	for _, gallery in ipairs(g_Galleries) do
 		g_DB:CheckAreaIndices(gallery, "<console>")
 	end
-	
+
 	return true, "Indices checked"
 end
 
@@ -1010,14 +1010,14 @@ function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
 			shouldForce = true
 		end
 	end
-	
+
 	-- If there are any players connected, refuse to process unless forced explicitly:
 	if not(shouldForce) then
 		if (cRoot:Get():GetServer():GetNumPlayers() ~= 0) then
 			return true, "Cannot fix block stats, there are players connected to the server. You can use the \"-force\" parameter to force fixing despite players being present."
 		end
 	end
-	
+
 	-- Find all areas that need fixing:
 	local Areas = g_DB:LoadAllAreas()
 	local ToFix = {}
@@ -1026,7 +1026,7 @@ function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
 			table.insert(ToFix, area)
 		end
 	end
-	
+
 	-- Sort the areas by their X coord first, Z coord second, to put near areas together for chunk sharing:
 	table.sort(ToFix,
 		function (a_Item1, a_Item2)
@@ -1053,7 +1053,7 @@ function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
 			LOG("Fixing block stats for area " .. idx .. " out of " .. NumToFix)
 			a_CBWorld:QueueUnloadUnusedChunks()
 		end
-		
+
 		-- Fix the area:
 		ToFix[idx].Gallery.World:ChunkStay(GetAreaChunkCoords(ToFix[idx]), nil,
 			function()
@@ -1064,7 +1064,7 @@ function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
 				ba:Merge(gal.AreaTemplateSchematic, -gal.AreaEdge, 0, -gal.AreaEdge, cBlockArea.msSimpleCompare)
 				area.NumPlacedBlocks = ba:CountNonAirBlocks()
 				g_DB:UpdateAreaBlockStats(area)
-				
+
 				-- Queue the next area:
 				idx = idx + 1
 				if (ToFix[idx]) then

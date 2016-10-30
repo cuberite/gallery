@@ -10,7 +10,7 @@
 function Initialize(a_Plugin)
 	-- Load the InfoReg library file for registering the Info.lua command table:
 	dofile(cPluginManager:GetPluginsPath() .. "/InfoReg.lua")
-	
+
 	-- Load the config
 	LoadConfig()
 
@@ -26,14 +26,14 @@ function Initialize(a_Plugin)
 	-- Register commands:
 	RegisterPluginInfoCommands()
 	RegisterPluginInfoConsoleCommands()
-	
+
 	-- Hook to the player interaction events so that we can disable them:
 	InitHookHandlers()
 
 	-- Initialize webadmin pages:
 	InitWebList()
 
-	return true;
+	return true
 end
 
 

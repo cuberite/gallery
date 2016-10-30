@@ -49,7 +49,7 @@ local g_AreasColumns =
 --- Formats the datetime (as returned by os.time() ) into textual representation used in the DB
 function FormatDateTime(a_DateTime)
 	assert(type(a_DateTime) == "number");
-	
+
 	return os.date("%Y-%m-%dT%H:%M:%S", a_DateTime);
 end
 
@@ -60,7 +60,7 @@ end
 --- Executes an SQL query on the SQLite DB
 function SQLite:DBExec(a_SQL, a_Callback, a_CallbackParam)
 	assert(a_SQL ~= nil);
-	
+
 	local ErrCode = self.DB:exec(a_SQL, a_Callback, a_CallbackParam);
 	if (ErrCode ~= sqlite3.OK) then
 		LOGWARNING(PLUGIN_PREFIX .. "Error " .. ErrCode .. " (" .. self.DB:errmsg() ..
@@ -82,10 +82,11 @@ end
 -- Returns false and error message on failure, or true on success
 function SQLite:ExecuteStatement(a_SQL, a_Params, a_Callback)
 	-- Check params:
+	assert(self)
 	assert(type(a_SQL) == "string")
 	assert((a_Params == nil) or (type(a_Params) == "table"))
 	assert((a_Callback == nil) or (type(a_Callback) == "function"))
-	
+
 	local Stmt, ErrCode, ErrMsg = self.DB:prepare(a_SQL)
 	if (Stmt == nil) then
 		LOGWARNING("Cannot prepare SQL \"" .. a_SQL .. "\": " .. (ErrCode or "<unknown>") .. " (" .. (ErrMsg or "<no message>") .. ")")
@@ -118,7 +119,7 @@ function SQLite:CreateDBTable(a_TableName, a_Columns)
 	assert(a_Columns ~= nil)
 	assert(a_Columns[1])
 	assert(a_Columns[1][1])
-	
+
 	-- Try to create the table first
 	local ColumnDefs = {}
 	for _, col in ipairs(a_Columns) do
@@ -132,12 +133,12 @@ function SQLite:CreateDBTable(a_TableName, a_Columns)
 		return false;
 	end
 	-- SQLite doesn't inform us if it created the table or not, so we have to continue anyway
-	
+
 	-- Add the map of LowerCaseColumnName => {ColumnName, ColumnType} to a_Columns:
 	for _, col in ipairs(a_Columns) do
 		a_Columns[string.lower(col[1])] = col
 	end
-	
+
 	-- Check each column whether it exists
 	-- Remove all the existing columns from a_Columns:
 	local RemoveExistingColumnFromDef = function(UserData, NumCols, Values, Names)
@@ -160,7 +161,7 @@ function SQLite:CreateDBTable(a_TableName, a_Columns)
 		LOGWARNING(PLUGIN_PREFIX .. "Cannot query DB table structure");
 		return false;
 	end
-	
+
 	-- Create the missing columns
 	-- a_Columns now contains only those columns that are missing in the DB
 	if (a_Columns[1]) then
@@ -173,7 +174,7 @@ function SQLite:CreateDBTable(a_TableName, a_Columns)
 		end
 		LOGINFO(PLUGIN_PREFIX .. "Database table \"" .. a_TableName .. "\" columns fixed.");
 	end
-	
+
 	return true;
 end
 
@@ -189,7 +190,7 @@ function SQLite:FixupAreaAfterLoad(a_Area)
 	-- Check params:
 	assert(type(a_Area) == "table")
 	assert(a_Area.GalleryName ~= nil)
-	
+
 	-- Assign the proper Gallery object to the area:
 	if (a_Area.Gallery == nil) then
 		a_Area.Gallery = FindGalleryByName(a_Area.GalleryName);
@@ -197,19 +198,19 @@ function SQLite:FixupAreaAfterLoad(a_Area)
 			return;
 		end
 	end
-	
+
 	-- Fix area name, if not present:
 	if ((a_Area.Name == nil) or (a_Area.Name == "")) then
 		a_Area.Name = a_Area.GalleryName .. " " .. tostring(a_Area.GalleryIndex)
 	end
-	
+
 	-- Convert IsLocked from "number or bool" to "bool":
 	a_Area.IsLocked = (a_Area.IsLocked ~= 0) and (a_Area.IsLocked ~= false) and (a_Area.IsLocked ~= nil)
-	
+
 	-- Add some defaults:
 	a_Area.NumPlacedBlocks = a_Area.NumPlacedBlocks or 0
 	a_Area.NumBrokenBlocks = a_Area.NumBrokenBlocks or 0
-	
+
 	return a_Area
 end
 
@@ -230,7 +231,7 @@ The table returned has the format:
 
 function SQLite:GetPlayerAreaCounts(a_Limit, a_PlayerName)
 	a_Limit = tonumber(a_Limit) or 5
-	
+
 	-- Add the top N players:
 	local res = {}
 	self:ExecuteStatement(
@@ -246,7 +247,7 @@ function SQLite:GetPlayerAreaCounts(a_Limit, a_PlayerName)
 			end
 		end
 	)
-	
+
 	-- Add a_Player, if not already added:
 	if (a_PlayerName) then
 		local HasFound = false
@@ -264,7 +265,7 @@ function SQLite:GetPlayerAreaCounts(a_Limit, a_PlayerName)
 			table.insert(res, {NumAreas = 0, PlayerName = a_PlayerName})
 		end
 	end
-	
+
 	return res
 end
 
@@ -278,7 +279,7 @@ end
 function SQLite:LoadPlayerAreasInWorld(a_WorldName, a_PlayerName)
 	assert(a_WorldName ~= nil);
 	assert(a_PlayerName ~= nil);
-	
+
 	local res = {};
 	local ToDelete = {};  -- List of IDs to delete because of missing Gallery
 	self:ExecuteStatement(
@@ -298,7 +299,7 @@ function SQLite:LoadPlayerAreasInWorld(a_WorldName, a_PlayerName)
 			end
 		end
 	)
-	
+
 	-- Remove areas that reference non-existent galleries:
 	if (ToDelete[1] ~= nil) then
 		local stmt = self.DB:prepare("DELETE FROM Areas WHERE ID = ?");
@@ -308,7 +309,7 @@ function SQLite:LoadPlayerAreasInWorld(a_WorldName, a_PlayerName)
 		end
 		stmt:finalize();
 	end
-	
+
 	return res;
 end
 
@@ -355,15 +356,15 @@ end
 function SQLite:LoadPlayerAreasInGallery(a_GalleryName, a_PlayerName)
 	assert(a_GalleryName ~= nil);
 	assert(a_PlayerName ~= nil);
-	
+
 	local Gallery = FindGalleryByName(a_GalleryName);
 	if (Gallery == nil) then
 		-- no such gallery
 		return {};
 	end
-	
+
 	local res = {};
-	self.ExecuteStatement(
+	self:ExecuteStatement(
 		"SELECT * FROM Areas WHERE PlayerName = ? AND GalleryName = ?",
 		{
 			a_PlayerName,
@@ -379,7 +380,7 @@ function SQLite:LoadPlayerAreasInGallery(a_GalleryName, a_PlayerName)
 			res[area.Name] = area;
 		end
 	)
-	
+
 	return res;
 end
 
@@ -406,7 +407,7 @@ function SQLite:LoadAllAreas()
 			res[area.Name] = area
 		end
 	)
-	
+
 	return res;
 end
 
@@ -418,7 +419,7 @@ end
 -- Returns a table that has both an array of the area objects, as well as a map AreaName -> area object
 function SQLite:LoadAllPlayerAreas(a_PlayerName)
 	assert(a_PlayerName ~= nil);
-	
+
 	local res = {};
 	self:ExecuteStatement(
 		"SELECT * FROM Areas WHERE PlayerName = ?",
@@ -435,7 +436,7 @@ function SQLite:LoadAllPlayerAreas(a_PlayerName)
 			res[area.Name] = area
 		end
 	)
-	
+
 	return res;
 end
 
@@ -448,7 +449,7 @@ function SQLite:LoadPlayerAreaByName(a_PlayerName, a_AreaName)
 	assert(a_PlayerName ~= nil);
 	assert(a_AreaName ~= nil);
 	assert(a_AreaName ~= "");
-	
+
 	local res = nil;
 	self:ExecuteStatement(
 		"SELECT * FROM Areas WHERE PlayerName = ? AND Name = ?",
@@ -458,7 +459,7 @@ function SQLite:LoadPlayerAreaByName(a_PlayerName, a_AreaName)
 			res = self:FixupAreaAfterLoad(a_Values)
 		end
 	);
-	
+
 	return res;
 end
 
@@ -472,7 +473,7 @@ function SQLite:LoadAreaByID(a_AreaID)
 	-- Check params:
 	a_AreaID = tonumber(a_AreaID)
 	assert(a_AreaID ~= nil)
-	
+
 	local res = nil
 	self:ExecuteStatement(
 		"SELECT * FROM Areas WHERE ID = ?",
@@ -483,7 +484,7 @@ function SQLite:LoadAreaByID(a_AreaID)
 			res = self:FixupAreaAfterLoad(a_Values)
 		end
 	)
-	
+
 	return res
 end
 
@@ -497,10 +498,10 @@ function SQLite:LoadAreaByPos(a_WorldName, a_BlockX, a_BlockZ)
 	assert(a_WorldName ~= nil);
 	assert(a_BlockX ~= nil);
 	assert(a_BlockZ ~= nil);
-	
+
 	a_BlockX = math.floor(a_BlockX);
 	a_BlockZ = math.floor(a_BlockZ);
-	
+
 	local res = nil;
 	self:ExecuteStatement(
 		"SELECT * FROM Areas WHERE WorldName = ? AND MinX <= ? AND MaxX > ? AND MinZ <= ? AND MaxZ > ?",
@@ -509,7 +510,7 @@ function SQLite:LoadAreaByPos(a_WorldName, a_BlockX, a_BlockZ)
 			res = self:FixupAreaAfterLoad(a_Values)
 		end
 	);
-	
+
 	return res;
 end
 
@@ -567,7 +568,7 @@ function SQLite:LoadGalleryAreasRange(a_GalleryName, a_SortBy, a_StartIndex, a_E
 	if (g_AreasColumns[a_SortBy:lower()][2] == "TEXT") then
 		a_SortBy = a_SortBy .. " COLLATE NOCASE"
 	end
-	
+
 	-- Get the results:
 	local res = {}
 	self:ExecuteStatement(
@@ -631,7 +632,7 @@ function SQLite:CheckAreaIndices(a_Gallery, a_RemovedBy)
 	assert(type(a_Gallery) == "table")
 	assert(a_Gallery.Name)
 	assert(a_RemovedBy)
-	
+
 	-- Walk through all claimed areas, remember them in a map of GalleryIndex -> true:
 	local IsPresent = {}
 	local MaxIndex = 0
@@ -647,7 +648,7 @@ function SQLite:CheckAreaIndices(a_Gallery, a_RemovedBy)
 			end
 		end
 	)
-	
+
 	-- Walk through all removed areas, add them to the map:
 	self:ExecuteStatement(
 		"SELECT GalleryIndex FROM RemovedAreas WHERE GalleryName = ?",
@@ -658,7 +659,7 @@ function SQLite:CheckAreaIndices(a_Gallery, a_RemovedBy)
 			IsPresent[a_Values.GalleryIndex] = true
 		end
 	)
-	
+
 	-- Add all areas between index 0 and MaxIndex that are not present into the RemovedAreas table:
 	local now = FormatDateTime(os.time())
 	for idx = 0, MaxIndex do
@@ -674,7 +675,7 @@ function SQLite:CheckAreaIndices(a_Gallery, a_RemovedBy)
 			)
 		end  -- if not(IsPresent)
 	end  -- for idx
-	
+
 	-- Remove areas from RemovedAreas that are above the MaxIndex:
 	self:ExecuteStatement(
 		"DELETE FROM RemovedAreas WHERE GalleryName = ? AND GalleryIndex > ?",
@@ -696,7 +697,7 @@ function SQLite:ClaimArea(a_Gallery, a_PlayerName, a_ForkedFromArea)
 	assert(type(a_Gallery) == "table")
 	assert(type(a_PlayerName) == "string")
 	assert((a_ForkedFromArea == nil) or (type(a_ForkedFromArea) == "table"))
-	
+
 	-- Get the index for the new area:
 	local NextAreaIdx = self:PopRemovedArea(a_Gallery)
 	if (NextAreaIdx == -1) then
@@ -708,7 +709,7 @@ function SQLite:ClaimArea(a_Gallery, a_PlayerName, a_ForkedFromArea)
 	local AreaX, AreaZ = AreaIndexToCoords(NextAreaIdx, a_Gallery)
 
 	local MinX, MaxX, MinZ, MaxZ = AreaCoordsToBlockCoords(a_Gallery, AreaX, AreaZ);
-	
+
 	local Area = {
 		MinX = MinX,
 		MaxX = MaxX,
@@ -733,7 +734,7 @@ function SQLite:ClaimArea(a_Gallery, a_PlayerName, a_ForkedFromArea)
 		a_Gallery.NextAreaIdx = NextAreaIdx + 1;
 		self:UpdateGallery(a_Gallery);
 	end
-	
+
 	return Area
 end
 
@@ -748,7 +749,7 @@ function SQLite:LockArea(a_Area, a_LockedByName)
 	assert(type(a_Area) == "table")
 	assert(a_Area.ID ~= nil)
 	assert(type(a_LockedByName) == "string")
-	
+
 	-- Set the area's properties:
 	a_Area.IsLocked = true
 	a_Area.LockedBy = a_LockedByName
@@ -775,7 +776,7 @@ end
 function SQLite:PopRemovedArea(a_Gallery)
 	-- Check params:
 	assert(type(a_Gallery) == "table")
-	
+
 	-- Get the lowest index stored in the DB:
 	local AreaIndex = -1
 	local AreaID = -1
@@ -789,7 +790,7 @@ function SQLite:PopRemovedArea(a_Gallery)
 			AreaID = a_Values["ID"]
 		end
 	)
-	
+
 	-- If the area is valid, remove it from the table:
 	if (AreaID < 0) then
 		return -1
@@ -800,7 +801,7 @@ function SQLite:PopRemovedArea(a_Gallery)
 			AreaID
 		}
 	)
-	
+
 	return AreaIndex
 end
 
@@ -812,7 +813,7 @@ function SQLite:IsAreaNameUsed(a_PlayerName, a_WorldName, a_AreaName)
 	assert(a_PlayerName ~= nil);
 	assert(a_WorldName ~= nil);
 	assert(a_AreaName ~= nil);
-	
+
 	local IsNameUsed = false;
 	self:ExecuteStatement(
 		"SELECT ID FROM Areas WHERE WorldName = ? AND PlayerName = ? AND Name = ?",
@@ -839,9 +840,9 @@ function SQLite:RemoveArea(a_Area, a_RemovedBy)
 	-- Check params:
 	assert(type(a_Area) == "table")
 	assert(type(a_RemovedBy) == "string")
-	
+
 	-- TODO: Check that the area really exists
-	
+
 	-- Add the area to the RemovedAreas table:
 	self:ExecuteStatement(
 		"INSERT INTO RemovedAreas (GalleryIndex, GalleryName, DateRemoved, RemovedBy) VALUES (?, ?, ?, ?)",
@@ -852,7 +853,7 @@ function SQLite:RemoveArea(a_Area, a_RemovedBy)
 			a_RemovedBy
 		}
 	)
-	
+
 	-- Remove the area from the Areas table:
 	self:ExecuteStatement(
 		"DELETE FROM Areas WHERE ID = ?",
@@ -860,7 +861,7 @@ function SQLite:RemoveArea(a_Area, a_RemovedBy)
 			a_Area.ID
 		}
 	)
-	
+
 	-- Remove any allowances on the area:
 	self:ExecuteStatement(
 		"DELETE FROM Allowances WHERE AreaID = ?",
@@ -880,18 +881,18 @@ function SQLite:RenameArea(a_PlayerName, a_AreaName, a_NewName)
 	assert(a_PlayerName ~= nil);
 	assert(a_AreaName ~= nil);
 	assert(a_NewName ~= nil);
-	
+
 	-- Load the area:
 	local Area = self:LoadPlayerAreaByName(a_PlayerName, a_AreaName);
 	if (Area == nil) then
 		return false, "Area doesn't exist";
 	end
-	
+
 	-- Check if the name is already used:
 	if (self:IsAreaNameUsed(a_PlayerName, Area.Gallery.WorldName, a_NewName)) then
 		return false
 	end
-	
+
 	-- Rename the area:
 	self:ExecuteStatement(
 		"UPDATE Areas SET Name = ? WHERE GalleryName = ? AND ID = ?",
@@ -915,7 +916,7 @@ function SQLite:UnlockArea(a_Area, a_UnlockedByName)
 	assert(type(a_Area) == "table")
 	assert(a_Area.ID ~= nil)
 	assert(type(a_UnlockedByName) == "string")
-	
+
 	-- Set the area's properties:
 	a_Area.IsLocked = false
 	a_Area.LockedBy = a_UnlockedByName
@@ -942,7 +943,7 @@ function SQLite:UpdateAreaEditRange(a_Area)
 	-- Check params:
 	assert(type(a_Area) == "table")
 	assert(a_Area.ID ~= nil)
-	
+
 	-- Update the DB:
 	self:ExecuteStatement(
 		"UPDATE Areas SET EditMaxX = ?, EditMaxY = ?, EditMaxZ = ?, EditMinX = ?, EditMinY = ?, EditMinZ = ? WHERE ID = ?",
@@ -963,7 +964,7 @@ function SQLite:UpdateAreaBlockStats(a_Area)
 	-- Check params:
 	assert(type(a_Area) == "table")
 	assert(a_Area.ID ~= nil)
-	
+
 	-- Update the DB:
 	self:ExecuteStatement(
 		"UPDATE Areas SET NumPlacedBlocks = ?, NumBrokenBlocks = ? WHERE ID = ?",
@@ -984,7 +985,7 @@ function SQLite:UpdateAreaStats(a_Area)
 	-- Check params:
 	assert(type(a_Area) == "table")
 	assert(a_Area.ID ~= nil)
-	
+
 	-- Update the DB:
 	self:ExecuteStatement(
 		"UPDATE Areas SET DateLastChanged = ?, NumPlacedBlocks = ?, NumBrokenBlocks = ? WHERE ID = ?",
@@ -1021,7 +1022,7 @@ function SQLite:AllowPlayerInArea(a_Area, a_PlayerName)
 	assert(a_Area ~= nil);
 	assert(a_Area.ID ~= nil);
 	assert(type(a_PlayerName) == "string");
-	
+
 	-- First try if the pairing is already there:
 	local IsThere = false;
 	local IsSuccess, Msg = self:ExecuteStatement(
@@ -1040,7 +1041,7 @@ function SQLite:AllowPlayerInArea(a_Area, a_PlayerName)
 	if (IsThere) then
 		return false, a_PlayerName .. " is already allowed";
 	end
-	
+
 	-- Insert the new pairing
 	return self:ExecuteStatement(
 		"INSERT INTO Allowances (AreaID, FriendName) VALUES (?, ?)",
@@ -1061,7 +1062,7 @@ function SQLite:DenyPlayerInArea(a_Area, a_PlayerName)
 	assert(a_Area ~= nil);
 	assert(a_Area.ID ~= nil);
 	assert(type(a_PlayerName) == "string");
-	
+
 	-- First try whether the pairing is already there:
 	local IsThere = false;
 	local IsSuccess, Msg = self:ExecuteStatement(
@@ -1080,7 +1081,7 @@ function SQLite:DenyPlayerInArea(a_Area, a_PlayerName)
 	if not(IsThere) then
 		return false, a_PlayerName .. " has not been allowed";
 	end
-	
+
 	-- Insert the new pairing
 	return self:ExecuteStatement(
 		"DELETE FROM Allowances WHERE AreaID = ? AND FriendName = ?",
@@ -1098,7 +1099,7 @@ end
 function SQLite_CreateStorage(a_Params)
 	DB = SQLite;
 	local DBFile = a_Params.File or "Galleries.sqlite";
-	
+
 	-- Open the DB:
 	local ErrCode, ErrMsg;
 	DB.DB, ErrCode, ErrMsg = sqlite3.open(DBFile);
@@ -1106,7 +1107,7 @@ function SQLite_CreateStorage(a_Params)
 		LOGWARNING(PLUGIN_PREFIX .. "Cannot open database \"" .. DBFile .. "\": " .. ErrMsg);
 		error(ErrMsg);  -- Abort the plugin
 	end
-	
+
 	-- Create the tables, if they don't exist yet:
 	local GalleryEndColumns =
 	{
@@ -1135,17 +1136,17 @@ function SQLite_CreateStorage(a_Params)
 		LOGWARNING(PLUGIN_PREFIX .. "Cannot create DB tables!");
 		error("Cannot create DB tables!");
 	end
-	
+
 	-- Areas that have no DateClaimed assigned get a dummy value:
 	DB:ExecuteStatement("UPDATE Areas SET DateClaimed='1999-01-01T00:00:00' WHERE DateClaimed IS NULL")
-	
+
 	-- Set each area with an unassigned DateLastChanged to its claiming date, so that the value is always present:
 	DB:ExecuteStatement("UPDATE Areas SET DateLastChanged = DateClaimed WHERE DateLastChanged IS NULL")
-	
+
 	-- Set initial statistics values for areas that pre-date statistics collection:
 	DB:ExecuteStatement("UPDATE Areas SET NumPlacedBlocks = 0 WHERE NumPlacedBlocks IS NULL")
 	DB:ExecuteStatement("UPDATE Areas SET NumBrokenBlocks = 0 WHERE NumBrokenBlocks IS NULL")
-	
+
 	-- Returns the initialized database access object
 	return DB;
 end

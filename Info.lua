@@ -7,7 +7,7 @@
 
 
 
-g_PluginInfo = 
+g_PluginInfo =
 {
 	Name = "Gallery",
 	Date = "2014-01-22",
@@ -16,7 +16,7 @@ g_PluginInfo =
 This plugin allows users to automatically claim areas from a predefined "pool" of areas (galleries). Each such area
 is then protected so that only the area owner can interact with the area.
 ]],
-	
+
 	AdditionalInfo =
 	{
 		{
@@ -102,7 +102,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 ]]
 		},
 	},  -- AdditionalInfo
-	
+
 	Commands =
 	{
 		["/gallery"] =
@@ -126,7 +126,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						},
 					},
 				},  -- allow
-				
+
 				claim =
 				{
 					HelpString = "claims a new area",
@@ -140,7 +140,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						},
 					},
 				},  -- claim
-				
+
 				deny =
 				{
 					HelpString = "denies a friend the build permissions for your area",
@@ -154,7 +154,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						},
 					},
 				},  -- deny
-				
+
 				fork =
 				{
 					HelpString = "copy-and-claims an area",
@@ -168,7 +168,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						},
 					},
 				},  -- fork
-				
+
 				["goto"] =
 				{
 					HelpString = "teleports you to specified gallery area",
@@ -187,7 +187,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						},
 					},
 				},  -- goto
-				
+
 				help =
 				{
 					HelpString = "prints detailed help for the subcommand",
@@ -205,28 +205,28 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						},
 					},
 				},  -- help
-				
+
 				info =
 				{
 					HelpString = "prints information on the area you're currently standing at",
 					Permission = "gallery.info",
 					Handler = HandleCmdInfo,
 				},  -- info
-				
+
 				list =
 				{
 					HelpString = "lists all available galleries",
 					Permission = "gallery.list",
 					Handler = HandleCmdList,
 				},  -- list
-				
+
 				lockarea =
 				{
 					HelpString = "locks an area so that even the owner can't build there",
 					Permission = "gallery.admin.lockarea",
 					Handler = HandleCmdLockArea,
 				},  -- lockarea
-				
+
 				my =
 				{
 					HelpString = "lists all your areas",
@@ -254,8 +254,8 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						},
 					},
 				},  -- my
-				
-				name = 
+
+				name =
 				{
 					HelpString = "renames the area you're currently standing at",
 					Permission = "gallery.name",
@@ -282,14 +282,14 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						},
 					},
 				},  -- name
-				
+
 				remove =
 				{
 					HelpString = "removes the area you're standing on from its owner",
 					Permission = "gallery.admin.remove",
 					Handler = HandleCmdRemove,
 				},  -- remove
-				
+
 				reset =
 				{
 					HelpString = "resets the area you're standing on to its original state",
@@ -307,21 +307,21 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						}
 					},
 				},  -- reset
-				
+
 				select =
 				{
 					HelpString = "selects the entire area you're standing in.",
 					Permission = "gallery.select",
 					Handler = HandleCmdSelect,
 				},  -- select
-				
+
 				stats =
 				{
 					HelpString = "shows statistics about the galleries on this server",
 					Permission = "gallery.stats",
 					Handler = HandleCmdStats,
 				},  -- stats
-				
+
 				template =
 				{
 					HelpString = "creates new .schematic template based on your selection",
@@ -335,21 +335,21 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 						},
 					},
 				},  -- template
-				
+
 				unclaim =
 				{
 					HelpString = "removes your claim on the area you're standing in",
 					Permission = "gallery.unclaim",
 					Handler = HandleCmdUnclaim,
 				},  -- unclaim
-				
+
 				unlockarea =
 				{
 					HelpString = "unlocks a previously locked area",
 					Permission = "gallery.admin.unlockarea",
 					Handler = HandleCmdUnlockArea,
 				},  -- unlockarea
-				
+
 				visit =
 				{
 					HelpString = "teleports you to the specified gallery",
@@ -370,8 +370,8 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 			},  -- Subcommands
 		},  -- ["/gallery"]
 	},  -- Commands
-	
-	
+
+
 	ConsoleCommands =
 	{
 		["gallery"] =
@@ -383,7 +383,7 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 					HelpString = "Checks each gallery's area indices against the list of Claimed and Removed areas, if an area is in neither, it is moved to the Removed areas.",
 					Handler = HandleConsoleCmdCheckIndices,
 				},  -- checkindices
-				
+
 				fixblockstats =
 				{
 					HelpString = "Fixes placed and broken block counts for areas edited before the statistics were implemented.",
@@ -392,8 +392,8 @@ someone "gallery.admin.goto" but not "gallery.goto", they will not be able to us
 			},  -- Subcommands
 		},  -- ["gallery"]
 	},  -- ConsoleCommands
-	
-	
+
+
 	Permissions =
 	{
 		["gallery.admin.buildanywhere"] =

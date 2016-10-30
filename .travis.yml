@@ -12,7 +12,7 @@ install:
   - luarocks --local install lsqlite3
   - luarocks --local install luasocket
   - git clone --depth=1 --branch=luasec-0.6 git://github.com/brunoos/luasec.git
-  - luarocks --local install luasec/luasec-0.6-1.rockspec OPENSSL_LIBDIR=/usr/lib/x86_64-linux-gnu/
+  - cd luasec && luarocks make
   - wget -O ~/InfoReg.lua https://raw.githubusercontent.com/cuberite/cuberite/master/Server/Plugins/InfoReg.lua
   - mkdir ~/AutoAPI
   - wget -O ~/AutoAPI.zip https://builds.cuberite.org/job/Cuberite%20Windows%20x64%20Master/lastSuccessfulBuild/artifact/AutoAPI.zip

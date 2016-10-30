@@ -8,6 +8,7 @@ addons:
 
 install:
   - git --version
+  - git clone --depth=1 --branch=luasec-0.6 git://github.com/brunoos/luasec.git
   - luarocks --local install luafilesystem
   - luarocks --local install lsqlite3
   - luarocks --local install luasocket

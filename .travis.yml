@@ -5,6 +5,7 @@ addons:
     packages:
     - lua5.1
     - luarocks
+    - strace
 
 install:
   - git --version

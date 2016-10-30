@@ -12,7 +12,7 @@ install:
   - luarocks --local install luasocket
   - git clone --depth=1 --branch=luasec-0.6 git://github.com/brunoos/luasec.git
   - cd luasec && luarocks --local make OPENSSL_LIBDIR=/usr/lib/x86_64-linux-gnu/
-  - wget -O ~/InfoReg.lua https://raw.githubusercontent.com/cuberite/cuberite/master/Server/Plugins/InfoReg.lua
+  - wget -O $TRAVIS_BUILD_DIR/../InfoReg.lua https://raw.githubusercontent.com/cuberite/cuberite/master/Server/Plugins/InfoReg.lua
   - mkdir ~/AutoAPI
   - wget -O ~/AutoAPI.zip --no-check-certificate https://builds.cuberite.org/job/Cuberite%20Windows%20x64%20Master/lastSuccessfulBuild/artifact/AutoAPI.zip
   - unzip ~/AutoAPI.zip -d ~/AutoAPI

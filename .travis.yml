@@ -7,6 +7,7 @@ addons:
     - luarocks
 
 install:
+  - cd / && find -name libssl.so
   - luarocks --local install luafilesystem
   - luarocks --local install lsqlite3
   - luarocks --local install luasocket

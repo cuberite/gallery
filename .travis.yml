@@ -5,7 +5,6 @@ addons:
     packages:
     - lua5.1
     - luarocks
-    - strace
 
 install:
   - luarocks --local install luafilesystem
@@ -15,9 +14,9 @@ install:
   - cd luasec && luarocks --local make OPENSSL_LIBDIR=/usr/lib/x86_64-linux-gnu/
   - wget -O ~/InfoReg.lua https://raw.githubusercontent.com/cuberite/cuberite/master/Server/Plugins/InfoReg.lua
   - mkdir ~/AutoAPI
-  - wget -O ~/AutoAPI.zip https://builds.cuberite.org/job/Cuberite%20Windows%20x64%20Master/lastSuccessfulBuild/artifact/AutoAPI.zip
+  - wget -O ~/AutoAPI.zip --no-check-certificate https://builds.cuberite.org/job/Cuberite%20Windows%20x64%20Master/lastSuccessfulBuild/artifact/AutoAPI.zip
   - unzip ~/AutoAPI.zip -d ~/AutoAPI
-  - wget -O ~/ManualAPI.zip https://builds.cuberite.org/job/Cuberite%20Windows%20x64%20Master/lastSuccessfulBuild/artifact/ManualAPI.zip
+  - wget -O ~/ManualAPI.zip --no-check-certificate https://builds.cuberite.org/job/Cuberite%20Windows%20x64%20Master/lastSuccessfulBuild/artifact/ManualAPI.zip
   - unzip ~/ManualAPI.zip -d ~
   - git clone https://github.com/cuberite/CuberitePluginChecker ~/Checker
 

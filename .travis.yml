@@ -7,6 +7,7 @@ addons:
     - luarocks
 
 install:
+  - git --version
   - luarocks --local install luafilesystem
   - luarocks --local install lsqlite3
   - luarocks --local install luasocket

@@ -1,0 +1,24 @@
+sudo: false
+
+addons:
+  apt:
+    packages:
+    - lua5.1
+    - luarocks
+
+install:
+  - luarocks install luafilesystem
+  - luarocks install lsqlite3
+  - luarocks install luasocket
+  - luarocks install luasec
+  - wget -O ~/InfoReg.lua https://raw.githubusercontent.com/cuberite/cuberite/master/Server/Plugins/InfoReg.lua
+  - mkdir ~/AutoAPI
+  - wget -O ~/AutoAPI.zip https://builds.cuberite.org/job/Cuberite%20Windows%20x64%20Master/lastSuccessfulBuild/artifact/AutoAPI.zip
+  - unzip ~/AutoAPI.zip -d ~/AutoAPI
+  - wget -O ~/ManualAPI.zip https://builds.cuberite.org/job/Cuberite%20Windows%20x64%20Master/lastSuccessfulBuild/artifact/ManualAPI.zip
+  - unzip ~/ManualAPI.zip -d ~
+  - git clone https://github.com/cuberite/CuberitePluginChecker ~/Checker
+
+script:
+  - cd ~/Checker && lua CuberitePluginChecker.lua -p $TRAVIS_BUILD_DIR -a ~/AutoAPI -e ~/ManualAPI.lua -i APIImpl/All.lua -s $TRAVIS_BUILD_DIR/tests/FuzzCommands.lua -g
+

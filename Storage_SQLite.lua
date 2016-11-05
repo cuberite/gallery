@@ -317,6 +317,58 @@ end
 
 
 
+--- Loads up to a_NumAreas most recently claimed areas
+-- Returns an array-table of area descriptions, in recentness order (most recent first)
+function SQLite:LoadLatestClaimedAreas(a_NumAreas)
+	-- Check params:
+	assert(self)
+	assert(tonumber(a_NumAreas))
+
+	-- Query the DB:
+	local res = {}
+	self:ExecuteStatement(
+		"SELECT * FROM Areas ORDER BY DateClaimed DESC LIMIT " .. tonumber(a_NumAreas),
+		{},
+		function (a_Values)
+			local area = self:FixupAreaAfterLoad(a_Values)
+			if (area) then
+				table.insert(res, area)
+			end
+		end
+	)
+	return res
+end
+
+
+
+
+
+--- Loads up to a_NumAreas most recently changed areas
+-- Returns an array-table of area descriptions, in recentness order (most recent first)
+function SQLite:LoadLatestChangedAreas(a_NumAreas)
+	-- Check params:
+	assert(self)
+	assert(tonumber(a_NumAreas))
+
+	-- Query the DB:
+	local res = {}
+	self:ExecuteStatement(
+		"SELECT * FROM Areas WHERE ((NumPlacedBlocks > 0) OR (NumBrokenBlocks > 0)) ORDER BY DateLastChanged DESC LIMIT " .. tonumber(a_NumAreas),
+		{},
+		function (a_Values)
+			local area = self:FixupAreaAfterLoad(a_Values)
+			if (area) then
+				table.insert(res, area)
+			end
+		end
+	)
+	return res
+end
+
+
+
+
+
 --- Loads all player allowances in the specified world
 -- Returns a table that has both an array of the area objects, as well as a map AreaName -> area object
 function SQLite:LoadPlayerAllowancesInWorld(a_WorldName, a_PlayerName)

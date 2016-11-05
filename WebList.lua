@@ -1,7 +1,7 @@
 
 -- WebList.lua
 
--- Implements the webadmin page listing the gallery areas
+-- Implements the webadmin page listing the gallery areas, and the News
 
 
 
@@ -599,16 +599,106 @@ end
 
 
 
+local function HandleWebLatestClaims(a_Request)
+	-- Schedule the previews for a refresh:
+	local Areas = g_DB:LoadLatestClaimedAreas(g_Config.NumWebNewsClaims or 20)
+	if (g_Config.WebPreview) then
+		RefreshPreviewForAreas(Areas)
+	end
+
+	-- Compose the page:
+	local res =
+	{
+		"<h2>Latest claimed areas</h2>\n",
+		"<table>\n",
+		"<tr><th>#</th><th>Claimed</th><th>Player</th><th>Position</th><th>Block changes</th>",
+		g_Config.WebPreview and "<th colspan=4>Preview</th>" or "",
+		"</tr>\n"
+	}
+	local requestBasePath = a_Request.Path .. "/../"
+	for idx, area in ipairs(Areas) do
+		local cells =
+		{
+			idx,
+			string.gsub(area.DateClaimed, "T", " "),
+			cWebAdmin:GetHTMLEscapedString(area.PlayerName),
+			cWebAdmin:GetHTMLEscapedString(area.GalleryName) .. " " .. area.GalleryIndex,
+			"+" .. area.NumPlacedBlocks .. " / -" .. area.NumBrokenBlocks
+		}
+		if (g_Config.WebPreview) then
+			for rot = 0, 3 do
+				table.insert(cells, string.format("<img src=\"/~%s%s?action=getpreview&galleryname=%s&galleryidx=%d&rot=%d\"/>",
+					requestBasePath, area.GalleryName, area.GalleryName, area.GalleryIndex, rot)
+				)
+			end
+		end
+		table.insert(res, "<tr><td valign='top'>" .. table.concat(cells, "</td><td valign='top'>") .. "</td></tr>\n")
+	end
+	table.insert(res, "</table>\n")
+	return table.concat(res)
+end
+
+
+
+
+
+local function HandleWebLatestChanges(a_Request)
+	-- Schedule the previews for a refresh:
+	local Areas = g_DB:LoadLatestChangedAreas(g_Config.NumWebNewsChanges or 20)
+	if (g_Config.WebPreview) then
+		RefreshPreviewForAreas(Areas)
+	end
+
+	-- Compose the page:
+	local res =
+	{
+		"<h2>Latest edits</h2>\n",
+		"<table>\n",
+		"<tr><th>#</th><th>Changed</th><th>Player</th><th>Position</th><th>Total block changes</th>",
+		g_Config.WebPreview and "<th colspan=4>Preview</th>" or "",
+		"</tr>\n"
+	}
+	local requestBasePath = a_Request.Path .. "/../"
+	for idx, area in ipairs(Areas) do
+		local cells =
+		{
+			idx,
+			string.gsub(area.DateLastChanged, "T", " "),
+			cWebAdmin:GetHTMLEscapedString(area.PlayerName),
+			cWebAdmin:GetHTMLEscapedString(area.GalleryName) .. " " .. area.GalleryIndex,
+			"+" .. area.NumPlacedBlocks .. " / -" .. area.NumBrokenBlocks
+		}
+		if (g_Config.WebPreview) then
+			for rot = 0, 3 do
+				table.insert(cells, string.format("<img src=\"/~%s%s?action=getpreview&galleryname=%s&galleryidx=%d&rot=%d\"/>",
+					requestBasePath, area.GalleryName, area.GalleryName, area.GalleryIndex, rot)
+				)
+			end
+		end
+		table.insert(res, "<tr><td valign='top'>" .. table.concat(cells, "</td><td valign='top'>") .. "</td></tr>\n")
+	end
+	table.insert(res, "</table>\n")
+	return table.concat(res)
+end
+
+
+
+
+
 --- Registers the web page in the webadmin and does whatever initialization is needed
 function InitWebList()
 	-- For each gallery, add a webadmin tab of the name, and a custom handler producing HTML for that gallery
 	for _, gal in ipairs(g_Galleries) do
-		cPluginManager:Get():GetCurrentPlugin():AddWebTab(gal.Name,
+		cWebAdmin:AddWebTab(gal.Name, gal.Name,
 			function (a_Request)
 				return BuildGalleryPage(gal, a_Request)
 			end
 		)
 	end
+
+	-- Add the News tabs:
+	cWebAdmin:AddWebTab("Latest claims",  "latest-claims",  HandleWebLatestClaims)
+	cWebAdmin:AddWebTab("Latest changes", "latest-changes", HandleWebLatestChanges)
 
 	if (g_Config.WebPreview) then
 		InitWebPreview()

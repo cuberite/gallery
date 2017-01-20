@@ -34,6 +34,7 @@ local g_AreasColumns =
 	{"LockedBy",        "TEXT"},     -- Name of the player who last locked / unlocked the area
 	{"DateLocked",      "TEXT"},     -- ISO 8601 DateTime when the area was last locked / unlocked
 	{"DateLastChanged", "TEXT"},     -- ISO 8601 DateTime when the area was last changed
+	{"TickLastChanged", "INTEGER"},  -- World Age, in ticks, when the area was last changed
 	{"NumPlacedBlocks", "INTEGER"},  -- Total number of blocks that the players have placed in the area
 	{"NumBrokenBlocks", "INTEGER"},  -- Total number of blocks that the players have broken in the area
 	{"EditMaxX",        "INTEGER"},  -- Maximum X coord of the edits within the area
@@ -651,7 +652,7 @@ function SQLite:AddArea(a_Area)
 	self:ExecuteStatement(
 		"INSERT INTO Areas \
 			(MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, \
-			PlayerName, Name, DateClaimed, ForkedFromID, IsLocked, DateLastChanged, \
+			PlayerName, Name, DateClaimed, ForkedFromID, IsLocked, DateLastChanged, TickLastChanged, \
 			NumPlacedBlocks, NumBrokenBlocks) \
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		{
@@ -665,6 +666,7 @@ function SQLite:AddArea(a_Area)
 			(a_Area.ForkedFrom or {}).ID or -1,
 			a_Area.IsLocked or 0,
 			DateTimeNow,
+			a_Area.Gallery.World:GetWorldAge(),
 			a_Area.NumPlacedBlocks or 0,
 			a_Area.NumBrokenBlocks or 0,
 		}
@@ -1032,7 +1034,7 @@ end
 
 
 
---- Updates the DateLastChanged, NumPlacedBlocks and NumBrokenBlocks values in the DB for the specified area
+--- Updates the DateLastChanged, TickLastChanged, NumPlacedBlocks and NumBrokenBlocks values in the DB for the specified area
 function SQLite:UpdateAreaStats(a_Area)
 	-- Check params:
 	assert(type(a_Area) == "table")
@@ -1040,9 +1042,10 @@ function SQLite:UpdateAreaStats(a_Area)
 
 	-- Update the DB:
 	self:ExecuteStatement(
-		"UPDATE Areas SET DateLastChanged = ?, NumPlacedBlocks = ?, NumBrokenBlocks = ? WHERE ID = ?",
+		"UPDATE Areas SET DateLastChanged = ?, TickLastChanged = ?, NumPlacedBlocks = ?, NumBrokenBlocks = ? WHERE ID = ?",
 		{
 			FormatDateTime(os.time()),
+			a_Area.Gallery.World:GetWorldAge(),
 			a_Area.NumPlacedBlocks,
 			a_Area.NumBrokenBlocks,
 			a_Area.ID
@@ -1194,6 +1197,9 @@ function SQLite_CreateStorage(a_Params)
 
 	-- Set each area with an unassigned DateLastChanged to its claiming date, so that the value is always present:
 	DB:ExecuteStatement("UPDATE Areas SET DateLastChanged = DateClaimed WHERE DateLastChanged IS NULL")
+
+	-- Set each area with an unassigned TickLastChanged to zero tick:
+	DB:ExecuteStatement("UPDATE Areas SET TickLastChanged = 0 WHERE TickLastChanged IS NULL")
 
 	-- Set initial statistics values for areas that pre-date statistics collection:
 	DB:ExecuteStatement("UPDATE Areas SET NumPlacedBlocks = 0 WHERE NumPlacedBlocks IS NULL")

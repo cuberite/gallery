@@ -57,7 +57,7 @@ end
 local function CheckGallery(a_Gallery, a_Index)
 	-- Check if the name is given:
 	if (a_Gallery.Name == nil) then
-		LOGWARNNIG("Gallery #" .. a_Index .. " doesn't have a Name, disabling it.");
+		LOGWARNING("Gallery #" .. a_Index .. " doesn't have a Name, disabling it.");
 		return false;
 	end
 

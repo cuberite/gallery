@@ -5,6 +5,7 @@ addons:
     packages:
     - lua5.1
     - luarocks
+    - libsqlite3-dev
 
 install:
   - luarocks --local install luafilesystem

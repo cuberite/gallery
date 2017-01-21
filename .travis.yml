@@ -24,7 +24,6 @@ install:
 script:
   - echo $PATH
   - luarocks path --bin
-  - locate libsqlite
-  - locate libsqlite3.so
+  - find / -iname \*libsqlite\*
   - nm -D libsqlite3.so
   - eval `luarocks path --bin` && cd ~/Checker && lua CuberitePluginChecker.lua -p $TRAVIS_BUILD_DIR -a ~/AutoAPI -e ~/ManualAPI.lua -i APIImpl/All.lua -s $TRAVIS_BUILD_DIR/tests/FuzzCommands.lua -g

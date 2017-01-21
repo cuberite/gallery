@@ -22,5 +22,7 @@ install:
   - git clone https://github.com/cuberite/CuberitePluginChecker ~/Checker
 
 script:
+  - echo $PATH
+  - luarocks path --bin
   - eval `luarocks path --bin` && cd ~/Checker && lua CuberitePluginChecker.lua -p $TRAVIS_BUILD_DIR -a ~/AutoAPI -e ~/ManualAPI.lua -i APIImpl/All.lua -s $TRAVIS_BUILD_DIR/tests/FuzzCommands.lua -g
 

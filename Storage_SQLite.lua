@@ -654,7 +654,7 @@ function SQLite:AddArea(a_Area)
 			(MinX, MaxX, MinZ, MaxZ, StartX, EndX, StartZ, EndZ, GalleryName, GalleryIndex, WorldName, \
 			PlayerName, Name, DateClaimed, ForkedFromID, IsLocked, DateLastChanged, TickLastChanged, \
 			NumPlacedBlocks, NumBrokenBlocks) \
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 		{
 			a_Area.MinX, a_Area.MaxX, a_Area.MinZ, a_Area.MaxZ,
 			a_Area.StartX, a_Area.EndX, a_Area.StartZ, a_Area.EndZ,

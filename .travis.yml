@@ -9,7 +9,7 @@ addons:
 
 install:
   - luarocks --local install luafilesystem
-  - luarocks --local install lsqlite3
+  - luarocks --local install lsqlite3 0.9.3-0
   - luarocks --local install luasocket
   - git clone --depth=1 --branch=luasec-0.6 git://github.com/brunoos/luasec.git
   - cd luasec && luarocks --local make OPENSSL_LIBDIR=/usr/lib/x86_64-linux-gnu/
@@ -22,8 +22,4 @@ install:
   - git clone https://github.com/cuberite/CuberitePluginChecker ~/Checker
 
 script:
-  - echo $PATH
-  - luarocks path --bin
-  - ldconfig -p | grep sqlite
-  - nm -D /usr/lib/x86_64-linux-gnu/libsqlite3.so
-  - LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH" eval `luarocks path --bin` && cd ~/Checker && lua CuberitePluginChecker.lua -p $TRAVIS_BUILD_DIR -a ~/AutoAPI -e ~/ManualAPI.lua -i APIImpl/All.lua -s $TRAVIS_BUILD_DIR/tests/FuzzCommands.lua -g
+  - eval `luarocks path --bin` && cd ~/Checker && lua CuberitePluginChecker.lua -p $TRAVIS_BUILD_DIR -a ~/AutoAPI -e ~/ManualAPI.lua -i APIImpl/All.lua -s $TRAVIS_BUILD_DIR/tests/FuzzCommands.lua -g

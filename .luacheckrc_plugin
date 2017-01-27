@@ -1,0 +1,15 @@
+-- This file contains plugin specific options or tables for luacheck
+-- It will be merged with cuberite's luacheck
+
+-- Ignore variables / warning codes
+-- Doc: http://luacheck.readthedocs.io/en/stable/warnings.html
+ignore =
+{
+	"112",  -- Mutating an undefined global variable.
+	"113",  -- Accessing an undefined global variable.
+	"131",  -- Unused implicitly defined global variable.
+	"211",  -- Unused local variable.
+	"231",  -- Local variable is set but never accessed.
+	"311",  -- Value assigned to a local variable is unused.
+	"542",  -- An empty if branch.
+}

@@ -380,7 +380,7 @@ function ReplaceAreaForAllPlayers(a_Area)
 	for _, allowances in pairs(g_PlayerAllowances[a_Area.Gallery.WorldName] or {}) do
 		for idx, area in ipairs(allowances or {}) do
 			if (area.ID == a_Area.ID) then
-				areas[idx] = a_Area
+				allowances[idx] = a_Area
 			end
 		end
 		allowances[a_Area.Name] = a_Area

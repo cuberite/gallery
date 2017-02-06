@@ -447,9 +447,7 @@ function SQLite:LoadAllAreas()
 	local res = {};
 	self:ExecuteStatement(
 		"SELECT * FROM Areas",
-		{
-			a_PlayerName
-		},
+		{},
 		function (a_Values)
 			-- Assign the proper gallery:
 			local area = self:FixupAreaAfterLoad(a_Values)
@@ -1074,12 +1072,12 @@ end
 --- Adds the playername to the list of allowed players in the specified area
 -- Returns success state and an error message in case of failure
 function SQLite:AllowPlayerInArea(a_Area, a_PlayerName)
-	assert(a_Area ~= nil);
-	assert(a_Area.ID ~= nil);
-	assert(type(a_PlayerName) == "string");
+	assert(a_Area ~= nil)
+	assert(a_Area.ID ~= nil)
+	assert(type(a_PlayerName) == "string")
 
 	-- First try if the pairing is already there:
-	local IsThere = false;
+	local IsThere = false
 	local IsSuccess, Msg = self:ExecuteStatement(
 		"SELECT * FROM Allowances WHERE AreaID = ? AND FriendName = ?",
 		{
@@ -1087,14 +1085,14 @@ function SQLite:AllowPlayerInArea(a_Area, a_PlayerName)
 			a_PlayerName
 		},
 		function (a_Values)
-			IsThere = true;
+			IsThere = true
 		end
-	);
+	)
 	if not(IsSuccess) then
-		return false, msg;
+		return false, Msg
 	end
 	if (IsThere) then
-		return false, a_PlayerName .. " is already allowed";
+		return false, a_PlayerName .. " is already allowed"
 	end
 
 	-- Insert the new pairing
@@ -1104,7 +1102,7 @@ function SQLite:AllowPlayerInArea(a_Area, a_PlayerName)
 			a_Area.ID,
 			a_PlayerName
 		}
-	);
+	)
 end
 
 
@@ -1114,12 +1112,12 @@ end
 --- Removes the playername from the list of allowed players in the specified area
 -- Returns success state and an error message in case of failure
 function SQLite:DenyPlayerInArea(a_Area, a_PlayerName)
-	assert(a_Area ~= nil);
-	assert(a_Area.ID ~= nil);
-	assert(type(a_PlayerName) == "string");
+	assert(a_Area ~= nil)
+	assert(a_Area.ID ~= nil)
+	assert(type(a_PlayerName) == "string")
 
 	-- First try whether the pairing is already there:
-	local IsThere = false;
+	local IsThere = false
 	local IsSuccess, Msg = self:ExecuteStatement(
 		"SELECT * FROM Allowances WHERE AreaID = ? AND FriendName = ?",
 		{
@@ -1129,12 +1127,12 @@ function SQLite:DenyPlayerInArea(a_Area, a_PlayerName)
 		function (a_Values)
 			IsThere = true;
 		end
-	);
+	)
 	if not(IsSuccess) then
-		return false, msg;
+		return false, Msg
 	end
 	if not(IsThere) then
-		return false, a_PlayerName .. " has not been allowed";
+		return false, a_PlayerName .. " has not been allowed"
 	end
 
 	-- Insert the new pairing
@@ -1144,7 +1142,7 @@ function SQLite:DenyPlayerInArea(a_Area, a_PlayerName)
 			a_Area.ID,
 			a_PlayerName
 		}
-	);
+	)
 end
 
 

@@ -6,7 +6,6 @@
 ignore =
 {
 	"112",  -- Mutating an undefined global variable.
-	"113",  -- Accessing an undefined global variable.
 	"131",  -- Unused implicitly defined global variable.
 	"211",  -- Unused local variable.
 	"231",  -- Local variable is set but never accessed.

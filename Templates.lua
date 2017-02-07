@@ -36,13 +36,13 @@ end
 
 --- Sends the current templating status, along with hints about what to do next, to the player
 function SendTemplatingStatus(a_Player)
-	assert(a_Player ~= nil);
-	assert(IsPlayerTemplating(a_Player));
+	assert(a_Player)
+	assert(IsPlayerTemplating(a_Player))
 
 	local PlayerTemplate = g_Templates[a_Player:GetWorld():GetName()][a_Player:GetUniqueID()];
 	local msg = "You are templating with the export file set to '" .. PlayerTemplate.FileName .. "'. Left-click on a block to (re)set the first corner. Right-click on a block to (re)set the second corner. ";
-	local HasBothPoints = true;
-	if ((PlayerTemplate.FirstPoint ~= nil) and (PlayerTemplate.SecondPoint ~= nil)) then
+	if (PlayerTemplate.FirstPoint and PlayerTemplate.SecondPoint) then
+		-- Both points are assigned, output coords:
 		local DiffX = math.abs(PlayerTemplate.FirstPoint.x - PlayerTemplate.SecondPoint.x) + 1;
 		local DiffZ = math.abs(PlayerTemplate.FirstPoint.z - PlayerTemplate.SecondPoint.z) + 1;
 		msg =

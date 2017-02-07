@@ -486,30 +486,29 @@ function HandleCmdInfo(a_Split, a_Player)
 	local BlockX = math.floor(a_Player:GetPosX());
 	local BlockZ = math.floor(a_Player:GetPosZ());
 
-	local Area = nil;
-	local LeadingLine = nil;
+	local Area, LeadingLine
 	if (a_Player:HasPermission("gallery.admin.info")) then
 		-- Admin-level info tool, if the player has the necessary permissions, print info about anyone's area:
 		Area = g_DB:LoadAreaByPos(a_Player:GetWorld():GetName(), BlockX, BlockZ);
-		if (Area == nil) then
-			a_Player:SendMessage("There is no claimed area here.");
-			return true;
+		if not(Area) then
+			a_Player:SendMessage("There is no claimed area here.")
+			return true
 		end;
-		LeadingLine = "This is " .. Area.PlayerName .. "'s area ";
+		LeadingLine = "This is " .. Area.PlayerName .. "'s area "
 	else
 		-- Default infotool - print only info on own areas:
-		Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
-		if (Area == nil) then
-			a_Player:SendMessage("This isn't your area.");
-			return true;
+		Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ)
+		if not(Area) then
+			a_Player:SendMessage("This isn't your area.")
+			return true
 		end
-		LeadingLine = "This is your area ";
+		LeadingLine = "This is your area "
 	end
 
-	assert(Area ~= nil);
-	assert(LeadingLine ~= nil);
-	SendAreaDetails(a_Player, Area, LeadingLine);
-	return true;
+	assert(Area)
+	assert(LeadingLine)
+	SendAreaDetails(a_Player, Area, LeadingLine)
+	return true
 end
 
 
@@ -606,30 +605,30 @@ local function HandleCmdNameAdmin(a_Split, a_Player)
 			return true
 		end
 		local IsSuccess, Msg = RenamePlayerArea(a_Split[3]:sub(2), a_Player:GetWorld():GetName(), a_Split[4], a_Split[5]);
-		if (Msg ~= nil) then
-			a_Player:SendMessage(Msg);
+		if not(IsSuccess) then
+			a_Player:SendMessage("Failed to rename area: " .. (Msg or "<no message>"))
 		end
 		return true;
 	end
 
-	local Area = nil;
-	local NewName = nil;
+	local Area
+	local NewName
 	if (#a_Split == 3) then
 		-- "/gal name <newareaname>", allow renaming any player's area
 		Area = g_DB:LoadAreaByPos(a_Player:GetWorld():GetName(), a_Player:GetPosX(), a_Player:GetPosZ());
-		if (Area == nil) then
-			a_Player:SendMessage("There's no area claimed here");
-			return true;
+		if not(Area) then
+			a_Player:SendMessage("There's no area claimed here")
+			return true
 		end
-		NewName = a_Split[3];
+		NewName = a_Split[3]
 	elseif (#a_Split == 4) then
 		-- "/gal name <MyOldAreaName> <MyNewAreaName>", only for my areas
 		Area = GetPlayerAreas(a_Player)[a_Split[3]];
-		if (Area == nil) then
-			a_Player:SendMessage("You don't own an area of name '" .. a_Split[3] .. "'.");
-			return true;
+		if not(Area) then
+			a_Player:SendMessage("You don't own an area of name '" .. a_Split[3] .. "'.")
+			return true
 		end
-		NewName = a_Split[4];
+		NewName = a_Split[4]
 	else
 		-- Unknown syntax
 		a_Player:SendMessage("Usage (pick one):");
@@ -641,8 +640,8 @@ local function HandleCmdNameAdmin(a_Split, a_Player)
 
 	-- Do the actual rename:
 	local IsSuccess, Msg = RenamePlayerArea(Area.PlayerName, Area.Gallery.WorldName, Area.Name, NewName);
-	if (Msg ~= nil) then
-		a_Player:SendMessage(Msg);
+	if not(IsSuccess) then
+		a_Player:SendMessage("Failed to rename area: " .. (Msg or "<no message>"))
 	end
 	return true;
 end
@@ -665,32 +664,32 @@ function HandleCmdName(a_Split, a_Player)
 	end
 
 	-- Get the area to rename:
-	local Area = nil;
+	local Area, NewName
 	if (#a_Split == 3) then
 		-- Rename by position:
 		Area = FindPlayerAreaByCoords(a_Player, a_Player:GetPosX(), a_Player:GetPosZ());
-		if (Area == nil) then
+		if not(Area) then
 			a_Player:SendMessage(
 				"You can only name your areas. Stand in your area and then issue the command again, or specify the old name (" ..
 				g_Config.CommandPrefix .. " name <oldname> <newname>)"
-			);
-			return true;
+			)
+			return true
 		end
-		NewName = a_Split[3];
+		NewName = a_Split[3]
 	else
 		-- Rename by old name:
-		Area = GetPlayerAreas(a_Player)[a_Split[3]];
-		if (Area == nil) then
-			a_Player:SendMessage("You don't own an area of name '" .. a_Split[3] .. "'.");
-			return true;
+		Area = GetPlayerAreas(a_Player)[a_Split[3]]
+		if not(Area) then
+			a_Player:SendMessage("You don't own an area of name '" .. a_Split[3] .. "'.")
+			return true
 		end
-		NewName = a_Split[4];
+		NewName = a_Split[4]
 	end
 
 	-- Rename:
 	local IsSuccess, Msg = RenamePlayerArea(a_Player:GetName(), Area.Gallery.WorldName, Area.Name, NewName);
-	if (Msg ~= nil) then
-		a_Player:SendMessage(Msg);
+	if not(IsSuccess) then
+		a_Player:SendMessage("Failed to rename area: " .. (Msg or "<no message>"))
 	end
 
 	return true;
@@ -725,16 +724,14 @@ function HandleCmdReset(a_Split, a_Player)
 	-- Find the appropriate Area:
 	local BlockX = math.floor(a_Player:GetPosX());
 	local BlockZ = math.floor(a_Player:GetPosZ());
-	local Template = nil;
-	local TemplateTop = nil;
-	local AreaTop = nil;
+	local Template, TemplateTop, AreaTop
 	local MinX, MinZ;
 	if (a_Player:HasPermission("gallery.admin.reset")) then
 		-- Admin-level reset tool, if the player has the necessary permissions, reset anyone's area:
 		local Gallery = FindGalleryByCoords(a_Player:GetWorld(), BlockX, BlockZ);
-		if (Gallery == nil) then
-			a_Player:SendMessage("There is no gallery here");
-			return true;
+		if not(Gallery) then
+			a_Player:SendMessage("There is no gallery here")
+			return true
 		end
 		MinX, MinZ = GetAreaCoordsFromBlockCoords(Gallery, BlockX, BlockZ);
 		Template = Gallery.AreaTemplateSchematic;
@@ -743,9 +740,9 @@ function HandleCmdReset(a_Split, a_Player)
 	else
 		-- Default reset tool - reset only own areas:
 		local Area = FindPlayerAreaByCoords(a_Player, BlockX, BlockZ);
-		if (Area == nil) then
-			a_Player:SendMessage("This isn't your area.");
-			return true;
+		if not(Area) then
+			a_Player:SendMessage("This isn't your area.")
+			return true
 		end
 		MinX = Area.MinX;
 		MinZ = Area.MinZ;
@@ -962,7 +959,7 @@ function HandleCmdVisit(a_Split, a_Player)
 	local AreaIndex = tonumber(a_Split[4]) or Gallery.NextAreaIdx;
 
 	-- Teleport:
-	local BlockX, MaxX, BlockZ = AreaCoordsToBlockCoords(Gallery, AreaIndexToCoords(AreaIndex, Gallery));
+	local BlockX, _, BlockZ = AreaCoordsToBlockCoords(Gallery, AreaIndexToCoords(AreaIndex, Gallery));
 	assert(BlockX ~= nil);
 	assert(BlockZ ~= nil);
 	a_Player:TeleportToCoords(BlockX + 0.5, Gallery.TeleportCoordY + 0.001, BlockZ + 0.5);
@@ -1041,7 +1038,6 @@ function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
 			return (a_Item1.MinZ < a_Item2.MinZ)
 		end
 	)
-	Areas = nil
 
 	-- Fix each area that has a nil blockstat, queueing each next area to the world tick thread of the world in which it resides:
 	local idx = 1
@@ -1088,10 +1084,9 @@ end
 
 
 function SendUsage(a_Player, a_Message)
-	if (a_Message ~= nil) then
-		a_Player:SendMessage(a_Message);
+	if (a_Message) then
+		a_Player:SendMessage(a_Message)
 	end
-	local HasAnyCommands = false;
 	local Commands = {};
 	local Command = g_PluginInfo.Commands[g_Config.CommandPrefix];
 	if (Command == nil) then
@@ -1103,12 +1098,12 @@ function SendUsage(a_Player, a_Message)
 			table.insert(Commands, "  " .. cChatColor.Green .. g_Config.CommandPrefix .. " " .. cmd .. cChatColor.White .. " - " .. info.HelpString);
 		end
 	end
-	if (#Commands == 0) then
-		a_Player:SendMessage("You are not allowed to use any subcommands.");
+	if not(Commands[1]) then
+		a_Player:SendMessage("You are not allowed to use any subcommands.")
 	else
-		table.sort(Commands);
+		table.sort(Commands)
 		for idx, cmd in ipairs(Commands) do
-			a_Player:SendMessage(cmd);
+			a_Player:SendMessage(cmd)
 		end
 	end
 end

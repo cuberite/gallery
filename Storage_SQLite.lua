@@ -1154,11 +1154,13 @@ function SQLite_CreateStorage(a_Params)
 	local DBFile = a_Params.File or "Galleries.sqlite";
 
 	-- Open the DB:
-	local ErrCode, ErrMsg;
+	local ErrCode, ErrMsg
 	DB.DB, ErrCode, ErrMsg = sqlite3.open(DBFile);
-	if (DB.DB == nil) then
-		LOGWARNING(PLUGIN_PREFIX .. "Cannot open database \"" .. DBFile .. "\": " .. ErrMsg);
-		error(ErrMsg);  -- Abort the plugin
+	if not(DB.DB) then
+		LOGWARNING(string.format("%sCannot open database \"%s\": code = %s, msg = %s",
+			PLUGIN_PREFIX , DBFile, ErrCode or "<no code>", ErrMsg or "<no message>"
+		))
+		error(ErrMsg or "<no message>")  -- Abort the plugin
 	end
 
 	-- Create the tables, if they don't exist yet:

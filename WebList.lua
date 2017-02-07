@@ -370,7 +370,6 @@ end
 local function BuildGalleryPager(a_Gallery, a_Request)
 	-- Read the request params:
 	local StartIdx = a_Request.Params["startidx"] or 0
-	local EndIdx = StartIdx + g_NumAreasPerPage - 1
 	local CurrentPage = StartIdx / g_NumAreasPerPage + 1
 	local Path = a_Request.Path
 	local SortBy = a_Request.Params["sortby"]
@@ -533,7 +532,7 @@ local function ExecuteGetPreview(a_Gallery, a_Request)
 	end
 
 	local fnam = g_Config.WebPreview.ThumbnailFolder .. "/" .. GalleryName .. "/" .. GalleryIdx .. "." .. rot .. ".png"
-	local f, msg = io.open(fnam, "rb")
+	local f = io.open(fnam, "rb")
 	if not(f) then
 		return g_PreviewNotAvailableYetPng
 	end

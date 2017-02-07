@@ -20,6 +20,7 @@ function InitStorage()
 		g_DB = SQLite_CreateStorage(g_Config.DatabaseParams);
 	elseif (DBEngine == "mysql") then
 		-- TODO: MySQL bindings (via LuaRocks)
+		LOGWARNING("MySQL bindings not supported yet")
 	end
 
 	-- If the DB failed to initialize, fall back to SQLite:

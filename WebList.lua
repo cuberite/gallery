@@ -20,36 +20,6 @@ local g_AreaPreview
 
 
 
---- Compares the area to the gallery template (if available), thus calculating the coord range of the changes
--- If the gallery has no template, there's no way to calculate and this function just bails out
--- When the ranges are calculated, they are stored back in the DB
--- a_Area is the DB description of the area
--- a_BlockArea is a cBlockArea containing the area's blocks read from the world
-local function UpdateAreaEditRange(a_Area, a_BlockArea)
-	-- Check params:
-	assert(type(a_Area) == "table")
-	assert(a_Area.Gallery)
-	assert(tolua.type(a_BlockArea) == "cBlockArea")
-
-	-- If there's no gallery template, bail out:
-	if not(a_Area.Gallery.AreaTemplateSchematic) then
-		return
-	end
-
-	-- Get the range of the edits by msSimpleCompare-ing to the gallery's template:
-	a_BlockArea:Merge(a_Area.Gallery.AreaTemplateSchematic, -a_Area.Gallery.AreaEdge, 0, -a_Area.Gallery.AreaEdge, cBlockArea.msSimpleCompare)
-	a_Area.EditMinX, a_Area.EditMinY, a_Area.EditMinZ, a_Area.EditMaxX, a_Area.EditMaxY, a_Area.EditMaxZ = a_BlockArea:GetNonAirCropRelCoords()
-	if (a_Area.EditMinX > a_Area.EditMaxX) then
-		-- The entire area is the same as the template, reset all the coords to the template's ones:
-		a_Area.EditMinX, a_Area.EditMinY, a_Area.EditMinZ, a_Area.EditMaxX, a_Area.EditMaxY, a_Area.EditMaxZ = a_Area.Gallery.AreaTemplateSchematic:GetNonAirCropRelCoords()
-	end
-	g_DB:UpdateAreaEditRange(a_Area)
-end
-
-
-
-
-
 --- Checks the previews for the specified areas and regenerates the ones that are outdated
 -- a_Areas is an array of areas as loaded from the DB
 local function RefreshPreviewForAreas(a_Areas)

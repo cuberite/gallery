@@ -873,27 +873,6 @@ end
 
 
 
---- Updates the edit range values (MaxEditX etc.) in the DB for the specified area
-function StorageSQLite:UpdateAreaEditRange(a_Area)
-	-- Check params:
-	assert(type(a_Area) == "table")
-	assert(a_Area.ID ~= nil)
-
-	-- Update the DB:
-	self:ExecuteStatement(
-		"UPDATE Areas SET EditMaxX = ?, EditMaxY = ?, EditMaxZ = ?, EditMinX = ?, EditMinY = ?, EditMinZ = ? WHERE ID = ?",
-		{
-			a_Area.EditMaxX, a_Area.EditMaxY, a_Area.EditMaxZ,
-			a_Area.EditMinX, a_Area.EditMinY, a_Area.EditMinZ,
-			a_Area.ID
-		}
-	)
-end
-
-
-
-
-
 --- Updates the NumPlacedBlocks and NumBrokenBlocks values in the DB for the specified area
 function StorageSQLite:UpdateAreaBlockStats(a_Area)
 	-- Check params:
@@ -906,6 +885,54 @@ function StorageSQLite:UpdateAreaBlockStats(a_Area)
 		{
 			a_Area.NumPlacedBlocks,
 			a_Area.NumBrokenBlocks,
+			a_Area.ID
+		}
+	)
+end
+
+
+
+
+
+--- Updates the DateLastChanged, TickLastChanged, NumPlacedBlocks, NumBrokenBlocks and edit range values in the DB for the specified area
+function StorageSQLite:UpdateAreaBlockStatsAndEditRange(a_Area)
+	-- Check params:
+	assert(type(a_Area) == "table")
+	assert(a_Area.ID)
+
+	-- Update the DB:
+	self:ExecuteStatement(
+		"UPDATE Areas SET \
+		NumPlacedBlocks = ?, NumBrokenBlocks = ?, \
+		EditMinX = ?, EditMinY = ?, EditMinZ = ?, \
+		EditMaxX = ?, EditMaxY = ?, EditMaxZ = ? \
+		WHERE ID = ?",
+		{
+			a_Area.NumPlacedBlocks,
+			a_Area.NumBrokenBlocks,
+			a_Area.EditMinX, a_Area.EditMinY, a_Area.EditMinZ,
+			a_Area.EditMaxX, a_Area.EditMaxY, a_Area.EditMaxZ,
+			a_Area.ID
+		}
+	)
+end
+
+
+
+
+
+--- Updates the edit range values (MaxEditX etc.) in the DB for the specified area
+function StorageSQLite:UpdateAreaEditRange(a_Area)
+	-- Check params:
+	assert(type(a_Area) == "table")
+	assert(a_Area.ID)
+
+	-- Update the DB:
+	self:ExecuteStatement(
+		"UPDATE Areas SET EditMaxX = ?, EditMaxY = ?, EditMaxZ = ?, EditMinX = ?, EditMinY = ?, EditMinZ = ? WHERE ID = ?",
+		{
+			a_Area.EditMaxX, a_Area.EditMaxY, a_Area.EditMaxZ,
+			a_Area.EditMinX, a_Area.EditMinY, a_Area.EditMinZ,
 			a_Area.ID
 		}
 	)

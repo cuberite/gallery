@@ -16,6 +16,54 @@ end
 
 
 
+--- Returns true if the area has suspicious stats - zero NumPlacedBlocks, or invalid min / max edit range
+local function AreaNeedsFixingStats(a_Area)
+	-- Check params:
+	assert(type(a_Area) == "table")
+	assert(a_Area.Gallery)
+	assert(a_Area.Gallery.AreaEdge)
+
+	-- Zero placed blocks is suspicious
+	if (a_Area.NumPlacedBlocks == 0) then
+		return true
+	end
+
+	-- No edit range is a definite reason for stats recalc:
+	if (
+		not(a_Area.EditMaxX) or not(a_Area.EditMinX) or
+		not(a_Area.EditMaxY) or not(a_Area.EditMinY) or
+		not(a_Area.EditMaxZ) or not(a_Area.EditMinZ)
+	) then
+		return true
+	end
+
+	-- Inverted min / max edit range is suspicious
+	if (
+		(a_Area.EditMaxX < a_Area.EditMinX) or
+		(a_Area.EditMaxY < a_Area.EditMinY) or
+		(a_Area.EditMaxZ < a_Area.EditMinZ)
+	) then
+		return true
+	end
+
+	-- Out-of-bounds min / max edit range is suspicious:
+	local gal = a_Area.Gallery
+	if (
+		(a_Area.EditMinX < 0) or (a_Area.EditMaxX >= gal.AreaSizeX - 2 * gal.AreaEdge) or
+		(a_Area.EditMinY < 0) or (a_Area.EditMaxY >= 255) or
+		(a_Area.EditMinZ < 0) or (a_Area.EditMaxZ >= gal.AreaSizeZ - 2 * gal.AreaEdge)
+	) then
+		return true
+	end
+
+	-- Nothing suspicious, no need to fix stats:
+	return false
+end
+
+
+
+
+
 local function SendAreaDetails(a_Player, a_Area, a_LeadingText)
 	assert(tolua.type(a_Player) == "cPlayer")
 	assert(type(a_Area) == "table")
@@ -1019,7 +1067,7 @@ function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
 	local Areas = g_DB:LoadAllAreas()
 	local ToFix = {}
 	for _, area in ipairs(Areas) do
-		if ((area.NumPlacedBlocks == 0) and area.Gallery.AreaTemplateSchematic) then
+		if (area.Gallery.AreaTemplateSchematic and AreaNeedsFixingStats(area)) then
 			table.insert(ToFix, area)
 		end
 	end
@@ -1058,8 +1106,14 @@ function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
 				local ba = cBlockArea()
 				ba:Read(gal.World, area.MinX + gal.AreaEdge, area.MaxX - gal.AreaEdge - 1, 0, 255, area.MinZ + gal.AreaEdge, area.MaxZ - gal.AreaEdge - 1)
 				ba:Merge(gal.AreaTemplateSchematic, -gal.AreaEdge, 0, -gal.AreaEdge, cBlockArea.msSimpleCompare)
+				area.EditMinX, area.EditMinY, area.EditMinZ, area.EditMaxX, area.EditMaxY, area.EditMaxZ = ba:GetNonAirCropRelCoords()
+				if (area.EditMinX > area.EditMaxX) then
+					-- The entire area is the same as the template, reset all the coords to "invalid" (min > max):
+					area.EditMinX, area.EditMinY, area.EditMinZ = area.EndX - area.StartX, 255, area.EndZ - area.StartZ
+					area.EditMaxX, area.EditMaxY, area.EditMaxZ = 0, 0, 0
+				end
 				area.NumPlacedBlocks = ba:CountNonAirBlocks()
-				g_DB:UpdateAreaBlockStats(area)
+				g_DB:UpdateAreaBlockStatsAndEditRange(area)
 
 				-- Queue the next area:
 				idx = idx + 1
@@ -1073,7 +1127,9 @@ function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
 	end
 
 	if (ToFix[1]) then
-		LOG("Fixing area block stats...")
+		LOG(string.format("%sFixing area block stats... (Number of areas: %d)",
+			PLUGIN_PREFIX, #ToFix
+		))
 		ToFix[1].Gallery.World:QueueTask(FixNextArea)
 	end
 	return true

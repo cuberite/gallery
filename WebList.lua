@@ -463,8 +463,8 @@ local function HandleWebLatestClaims(a_Request)
 		}
 		if (g_Config.WebPreview) then
 			for rot = 0, 3 do
-				table.insert(cells, string.format("<img src=\"/~%s%s?action=getpreview&galleryname=%s&galleryidx=%d&rot=%d\"/>",
-					requestBasePath, area.GalleryName, area.GalleryName, area.GalleryIndex, rot)
+				table.insert(cells, string.format("<img src=\"/~%s%s?action=getpreview&areaid=%d&rot=%d\"/>",
+					requestBasePath, area.GalleryName, area.ID, rot)
 				)
 			end
 		end
@@ -506,8 +506,8 @@ local function HandleWebLatestChanges(a_Request)
 		}
 		if (g_Config.WebPreview) then
 			for rot = 0, 3 do
-				table.insert(cells, string.format("<img src=\"/~%s%s?action=getpreview&galleryname=%s&galleryidx=%d&rot=%d\"/>",
-					requestBasePath, area.GalleryName, area.GalleryName, area.GalleryIndex, rot)
+				table.insert(cells, string.format("<img src=\"/~%s%s?action=getpreview&areaid=%d&rot=%d\"/>",
+					requestBasePath, area.GalleryName, area.ID, rot)
 				)
 			end
 		end

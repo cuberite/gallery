@@ -1050,9 +1050,16 @@ end
 function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
 	-- Check params:
 	local shouldForce = false
+	local isSingleAreaOp = false
+	local singleAreaID = 0
 	for _, v in ipairs(a_Split) do
 		if (v == "-force") then
 			shouldForce = true
+		end
+		local n = tonumber(v)
+		if (n) then
+			isSingleAreaOp = true
+			singleAreaID = n
 		end
 	end
 
@@ -1064,11 +1071,22 @@ function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
 	end
 
 	-- Find all areas that need fixing:
-	local Areas = g_DB:LoadAllAreas()
-	local ToFix = {}
-	for _, area in ipairs(Areas) do
-		if (area.Gallery.AreaTemplateSchematic and AreaNeedsFixingStats(area)) then
-			table.insert(ToFix, area)
+	local ToFix
+	if (isSingleAreaOp) then
+		local area = { g_DB:LoadAreaByID(singleAreaID) }
+		if not(area[1]) then
+			return true, string.format("Cannot load area ID %d from the DB: %s",
+				PLUGIN_PREFIX, singleAreaID, area[2] or "<no message>"
+			)
+		end
+		ToFix = { area[1] }
+	else
+		local Areas = g_DB:LoadAllAreas()
+		ToFix = {}
+		for _, area in ipairs(Areas) do
+			if (area.Gallery.AreaTemplateSchematic and AreaNeedsFixingStats(area)) then
+				table.insert(ToFix, area)
+			end
 		end
 	end
 

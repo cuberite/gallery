@@ -123,6 +123,11 @@ local function GetAreaExportCoords(a_Area)
 		end
 	end
 
+	-- If the area is the same as the template (hasn't been edited yet), return a single block:
+	if (minX > maxX) then
+		return a_Area.StartX, a_Area.StartX, 255, 255, a_Area.StartZ, a_Area.StartZ
+	end
+
 	return
 		minX, maxX,
 		a_Area.ExportMinY or a_Area.EditMinY or 0,

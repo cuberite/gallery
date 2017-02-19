@@ -904,12 +904,14 @@ function StorageSQLite:UpdateAreaBlockStatsAndEditRange(a_Area)
 	self:ExecuteStatement(
 		"UPDATE Areas SET \
 		NumPlacedBlocks = ?, NumBrokenBlocks = ?, \
+		DateLastChanged = ?, TickLastChanged = ?, \
 		EditMinX = ?, EditMinY = ?, EditMinZ = ?, \
 		EditMaxX = ?, EditMaxY = ?, EditMaxZ = ? \
 		WHERE ID = ?",
 		{
 			a_Area.NumPlacedBlocks,
 			a_Area.NumBrokenBlocks,
+			FormatDateTime(os.time()), a_Area.Gallery.World:GetWorldAge(),
 			a_Area.EditMinX, a_Area.EditMinY, a_Area.EditMinZ,
 			a_Area.EditMaxX, a_Area.EditMaxY, a_Area.EditMaxZ,
 			a_Area.ID

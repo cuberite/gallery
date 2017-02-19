@@ -149,7 +149,7 @@ function AreaPreview:Connect()
 	cNetwork:Connect(self.m_HostName, self.m_Port,
 	{
 		OnError = function (a_Link, a_ErrorCode, a_ErrorMsg)
-			LOGWARNING(PLUGIN_PREFIX .. "Error in connection to MCSchematicToPng (" .. self.HostName .. ":" .. self.Port .. "): " .. (a_ErrorMsg or "<unknown error>"))
+			LOGWARNING(PLUGIN_PREFIX .. "Error in connection to MCSchematicToPng (" .. self.m_HostName .. ":" .. self.m_Port .. "): " .. (a_ErrorMsg or "<unknown error>"))
 			self:Disconnected()
 		end,
 		OnRemoteClosed = function (a_Link)

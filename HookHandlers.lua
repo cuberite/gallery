@@ -365,7 +365,11 @@ function WorldEditCallback(a_AffectedAreaCuboid, a_Player, a_World, a_Operation)
 		if (a_Player:HasPermission("gallery.admin.worldedit")) then
 			return false;
 		end
-		a_Player:SendMessage(cChatColor.LightPurple .. "Cannot allow WorldEdit action, you don't own the area");
+		if (a_Operation == "paste") then
+			a_Player:SendMessage(cChatColor.LightPurple .. "Cannot allow WorldEdit paste action. WorldEdit doesn't support the relative to player paste. Maybe try somewhere else in the area.")
+		else
+			a_Player:SendMessage(cChatColor.LightPurple .. "Cannot allow WorldEdit action, you don't own the area");
+		end
 		return true;
 	end
 

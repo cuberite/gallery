@@ -6,4 +6,5 @@
 ignore =
 {
 	"WorldEditCallback",  -- Unused implicitly defined global variable; used as a callback from WE
+	"631",                -- Line too long
 }

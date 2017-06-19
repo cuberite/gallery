@@ -259,7 +259,9 @@ function HandleCmdClaim(a_Split, a_Player)
 	-- Fill the area with the schematic, if available:
 	if (Gallery.AreaTemplateSchematic ~= nil) then
 		Gallery.AreaTemplateSchematic:Write   (a_Player:GetWorld(), Area.MinX, 0,               Area.MinZ)
-		Gallery.AreaTemplateSchematicTop:Write(a_Player:GetWorld(), Area.MinX, Gallery.AreaTop, Area.MinZ)
+		if (Gallery.AreaTemplateSchematicTop) then
+			Gallery.AreaTemplateSchematicTop:Write(a_Player:GetWorld(), Area.MinX, Gallery.AreaTop, Area.MinZ)
+		end
 	end
 
 	-- Teleport to the area and set orientation to look at the area:
@@ -761,11 +763,11 @@ function HandleCmdReset(a_Split, a_Player)
 		return true;
 	end
 
-	assert(TemplateTop ~= nil);
-
 	-- Reset the area:
 	Template:Write(a_Player:GetWorld(), MinX, 0, MinZ);
-	TemplateTop:Write(a_Player:GetWorld(), MinX, AreaTop, MinZ);
+	if (TemplateTop) then
+		TemplateTop:Write(a_Player:GetWorld(), MinX, AreaTop, MinZ);
+	end
 	a_Player:SendMessage("Area has been reset");
 	return true;
 end

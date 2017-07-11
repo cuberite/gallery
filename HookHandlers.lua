@@ -201,7 +201,7 @@ local function ImprintChunkWithGallery(a_MinX, a_MinZ, a_MaxX, a_MaxZ, a_ChunkDe
 	for z = FromZ, ToZ, a_Gallery.AreaSizeZ do
 		for x = FromX, ToX, a_Gallery.AreaSizeX do
 			a_ChunkDesc:WriteBlockArea(Template, x, 0, z);
-			if (a_ClearAbove) then
+			if (a_ClearAbove and TemplateTop) then
 				a_ChunkDesc:WriteBlockArea(TemplateTop, x, Top, z);
 			end
 		end

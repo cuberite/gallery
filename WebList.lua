@@ -463,7 +463,7 @@ local function HandleWebLatestClaims(a_Request)
 		}
 		if (g_Config.WebPreview) then
 			for rot = 0, 3 do
-				table.insert(cells, string.format("<img src=\"/~%s%s?action=getpreview&areaid=%d&rot=%d\"/>",
+				table.insert(cells, string.format("<img style='max-width: 100%%' src=\"/~%s%s?action=getpreview&areaid=%d&rot=%d\"/>",
 					requestBasePath, area.GalleryName, area.ID, rot)
 				)
 			end

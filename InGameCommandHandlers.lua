@@ -795,7 +795,10 @@ function HandleCmdSelect(a_Split, a_Player)
 	end
 
 	-- Select the area in WorldEdit:
-	local Cuboid = cCuboid(StartX, 0, StartZ, EndX, 255, EndZ)
+	local Cuboid = cCuboid(
+		Vector3i(StartX, 0, StartZ),
+		Vector3i(EndX, 255, EndZ)
+	)
 	local IsSuccess = cPluginManager:CallPlugin("WorldEdit", "SetPlayerCuboidSelection", a_Player, Cuboid)
 	if (IsSuccess == nil) then
 		a_Player:SendMessage(cCompositeChat("Cannot select, WorldEdit is not installed.", mtFailure))

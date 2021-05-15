@@ -1,0 +1,44 @@
+# This is the GitHub Actions configuration file to enable CI tests
+# It installs Lua, LuaRocks and LuaFileSystem, lsqlite3, luasocket and luasec on the CI worker, then downloads the CuberitePluginChecker and API descriptions
+# Finally it runs the Checker on the plugin
+
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Sets up lua
+      - name: Install Lua
+        run: |
+          sudo apt install lua5.1 luarocks libsqlite3-dev
+          sudo luarocks install luafilesystem
+          sudo luarocks install lsqlite3
+          sudo luarocks install luasocket
+          sudo luarocks install luacheck
+          sudo luarocks install luasec OPENSSL_LIBDIR=/usr/lib/x86_64-linux-gnu
+
+      # Sets up the environment
+      - name: Set up environment
+        run: |
+          wget -O ../InfoReg.lua https://raw.githubusercontent.com/cuberite/cuberite/master/Server/Plugins/InfoReg.lua
+          mkdir ~/AutoAPI
+          wget -O ~/AutoAPI.zip --no-check-certificate 'https://ci.appveyor.com/api/projects/cuberite/cuberite/artifacts/AutoAPI.zip?job=Windows-x64&pr=false&branch=master'
+          unzip ~/AutoAPI.zip -d ~/AutoAPI
+          wget -O ~/ManualAPI.zip --no-check-certificate 'https://ci.appveyor.com/api/projects/cuberite/cuberite/artifacts/ManualAPI.zip?job=Windows-x64&pr=false&branch=master'
+          unzip ~/ManualAPI.zip -d ~
+          git clone https://github.com/cuberite/CuberitePluginChecker ~/Checker
+          wget -O .luacheckrc --no-check-certificate 'https://ci.appveyor.com/api/projects/cuberite/cuberite/artifacts/.luacheckrc?job=Windows-x64&pr=false&branch=master'
+
+      # Runs the test
+      - name: Run tests
+        run: |
+          cd ~/Checker && lua CuberitePluginChecker.lua -p $GITHUB_WORKSPACE -a ~/AutoAPI -e ~/ManualAPI.lua -i APIImpl/All.lua -s $GITHUB_WORKSPACE/tests/FuzzCommands.lua -g
+          cd $GITHUB_WORKSPACE && luacheck . --codes

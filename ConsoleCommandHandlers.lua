@@ -113,7 +113,7 @@ function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
 		local area = { g_DB:LoadAreaByID(singleAreaID) }
 		if not(area[1]) then
 			return true, string.format("Cannot load area ID %d from the DB: %s",
-				PLUGIN_PREFIX, singleAreaID, area[2] or "<no message>"
+				singleAreaID, area[2] or "<no message>"
 			)
 		end
 		ToFix = { area[1] }
@@ -182,8 +182,8 @@ function HandleConsoleCmdFixBlockStats(a_Split, a_EntireCommand)
 	end
 
 	if (ToFix[1]) then
-		LOG(string.format("%sFixing area block stats... (Number of areas: %d)",
-			PLUGIN_PREFIX, #ToFix
+		LOG(string.format("Fixing area block stats... (Number of areas: %d)",
+			#ToFix
 		))
 		ToFix[1].Gallery.World:QueueTask(FixNextArea)
 	end

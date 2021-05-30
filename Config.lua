@@ -240,8 +240,8 @@ local function VerifyConfig(a_Config)
 			a_Config.WebPreview = nil
 		else
 			if (type(schematicToPng) ~= "table") then
-				LOGINFO(string.format("%sThe config for WebPreview.MCSchematicToPng is wrong, table expected, got %s. Web preview is disabled.",
-					PLUGIN_PREFIX, type(schematicToPng)
+				LOGINFO(string.format("The config for WebPreview.MCSchematicToPng is wrong, table expected, got %s. Web preview is disabled.",
+					type(schematicToPng)
 				))
 				a_Config.WebPreview = nil
 			end

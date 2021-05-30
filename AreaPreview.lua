@@ -295,8 +295,8 @@ function AreaPreview:ProcessIncomingCmdReply(a_CmdReply)
 	end
 	local cmd = self.m_PendingRenderCommands[cmdID]
 	if not(cmd) then
-		LOG(string.format("%sMCSchematicToPng connection received a cmd reply with an invalid CmdID %q; ignoring message.",
-			PLUGIN_PREFIX, cmdID
+		LOG(string.format("MCSchematicToPng connection received a cmd reply with an invalid CmdID %q; ignoring message.",
+			cmdID
 		))
 		return
 	end
@@ -305,22 +305,22 @@ function AreaPreview:ProcessIncomingCmdReply(a_CmdReply)
 	-- Check the command status:
 	local status = a_CmdReply.Status
 	if (status == "error") then
-		LOG(string.format("%sMCSchematicToPng connection received a cmd reply with an error for CmdID %q: %s",
-			PLUGIN_PREFIX, cmdID, a_CmdReply.ErrorText or "[no message]"
+		LOG(string.format("MCSchematicToPng connection received a cmd reply with an error for CmdID %q: %s",
+			cmdID, a_CmdReply.ErrorText or "[no message]"
 		))
 		return
 	end
 	if (status ~= "ok") then
-		LOG(string.format("%sMCSchematicToPng connection received a cmd reply with an unknown status %q for CmdID %q: %s",
-			PLUGIN_PREFIX, tostring(status), cmdID, a_CmdReply.ErrorText or "[no message]"
+		LOG(string.format("MCSchematicToPng connection received a cmd reply with an unknown status %q for CmdID %q: %s",
+			tostring(status), cmdID, a_CmdReply.ErrorText or "[no message]"
 		))
 		return
 	end
 
 	-- Store the image data into DB:
 	if not(a_CmdReply.PngData) then
-		LOG(string.format("%sMCSchematicToPng connection received a cmd reply with no PNG data for CmdID %q",
-			PLUGIN_PREFIX, cmdID
+		LOG(string.format("MCSchematicToPng connection received a cmd reply with no PNG data for CmdID %q",
+			cmdID
 		))
 		return
 	end
@@ -353,7 +353,7 @@ function AreaPreview:ProcessIncomingData(a_Data)
 		-- Got a full JSON message from the peer, parse, process and remove it from buffer:
 		local json, msg = cJson:Parse(self.m_IncomingData:sub(1, found))
 		if not(json) then
-			LOGWARNING(string.format("%sMCSchematicToPng connection received unparsable data: %s", PLUGIN_PREFIX, msg or "[no message]"))
+			LOGWARNING(string.format("MCSchematicToPng connection received unparsable data: %s", msg or "[no message]"))
 			self.m_Link:Close()
 			self:Disconnected()
 			return ""
@@ -384,15 +384,15 @@ function AreaPreview:ProcessIncomingMessage(a_Message)
 		self:Disconnected()
 	end
 	if (tostring(a_Message.MCSchematicToPng) ~= "2") then
-		LOGWARNING(string.format("%sMCSchematicToPng connection received unhandled protocol version: %s",
-			PLUGIN_PREFIX, tostring(a_Message.MCSchematicToPng))
+		LOGWARNING(string.format("MCSchematicToPng connection received unhandled protocol version: %s",
+			tostring(a_Message.MCSchematicToPng))
 		)
 		self.m_Link:Close()
 		self:Disconnected()
 	end
 	self.m_IsFullyConnected = true
-	LOG(string.format("%sMCSchematicToPng connected successfully to %s:%s",
-		PLUGIN_PREFIX, self.m_HostName, self.m_Port
+	LOG(string.format("MCSchematicToPng connected successfully to %s:%s",
+		self.m_HostName, self.m_Port
 	))
 	self:SendJson({Cmd = "SetName", Name = "GalExport", CmdID = "SetNameCmdID"})
 
@@ -480,8 +480,8 @@ function AreaPreview:RegeneratePreview(a_DBAreaOrID, a_NumRotations)
 					ba:Read(world, GetAreaExportCoords(area))
 					request.BlockData = Base64Encode(ba:SaveToSchematicString())
 					if not(request.BlockData) then
-						LOGWARNING(string.format("%sFailed to export block area for web preview: AreaID = %d, NumRotations = %d",
-							PLUGIN_PREFIX, area.ID, a_NumRotations
+						LOGWARNING(string.format("Failed to export block area for web preview: AreaID = %d, NumRotations = %d",
+							area.ID, a_NumRotations
 						))
 						return
 					end

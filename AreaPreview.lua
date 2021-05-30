@@ -154,7 +154,7 @@ function AreaPreview:Connect()
 	cNetwork:Connect(self.m_HostName, self.m_Port,
 	{
 		OnError = function (a_Link, a_ErrorCode, a_ErrorMsg)
-			LOGWARNING(PLUGIN_PREFIX .. "Error in connection to MCSchematicToPng (" .. self.m_HostName .. ":" .. self.m_Port .. "): " .. (a_ErrorMsg or "<unknown error>"))
+			LOGWARNING("Error in connection to MCSchematicToPng (" .. self.m_HostName .. ":" .. self.m_Port .. "): " .. (a_ErrorMsg or "<unknown error>"))
 			self:Disconnected()
 		end,
 		OnRemoteClosed = function (a_Link)
@@ -286,7 +286,7 @@ function AreaPreview:ProcessIncomingCmdReply(a_CmdReply)
 	-- Find the command:
 	local cmdID = a_CmdReply.CmdID
 	if not(cmdID) then
-		LOG(PLUGIN_PREFIX .. "MCSchematicToPng connection received a cmd reply without CmdID; ignoring message.")
+		LOG("MCSchematicToPng connection received a cmd reply without CmdID; ignoring message.")
 		return
 	end
 	if (cmdID == "SetNameCmdID") then
@@ -379,7 +379,7 @@ function AreaPreview:ProcessIncomingMessage(a_Message)
 
 	-- Receiving the initial handshake - name and version information:
 	if not(a_Message.MCSchematicToPng) then
-		LOGWARNING(PLUGIN_PREFIX .. "MCSchematicToPng connection received invalid handshake.")
+		LOGWARNING("MCSchematicToPng connection received invalid handshake.")
 		self.m_Link:Close()
 		self:Disconnected()
 	end
@@ -685,7 +685,7 @@ function InitAreaPreview(a_MCSchematicToPngConfig)
 	-- Open the DB file:
 	local isSuccess, errCode, errMsg = res.m_DB:OpenDB("GalleryPreviews.sqlite")
 	if not(isSuccess) then
-		LOGWARNING(PLUGIN_PREFIX .. "Cannot open the Previews database: " .. (errCode or "<no errCode>") .. ", " .. (errMsg or "<no message>"))
+		LOGWARNING("Cannot open the Previews database: " .. (errCode or "<no errCode>") .. ", " .. (errMsg or "<no message>"))
 		error(errMsg or "<no message>")  -- Abort the plugin
 	end
 

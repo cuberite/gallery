@@ -46,7 +46,7 @@ function SQLite:CreateDBTable(a_TableName, a_Columns)
 	sql = sql .. table.concat(ColumnDefs, ", ")
 	sql = sql .. ")"
 	if (not(self:DBExec(sql))) then
-		LOGWARNING(PLUGIN_PREFIX .. "Cannot create DB Table " .. a_TableName)
+		LOGWARNING("Cannot create DB Table " .. a_TableName)
 		return false
 	end
 	-- SQLite doesn't inform us if it created the table or not, so we have to continue anyway
@@ -75,21 +75,21 @@ function SQLite:CreateDBTable(a_TableName, a_Columns)
 		return 0
 	end
 	if (not(self:DBExec("PRAGMA table_info(" .. a_TableName .. ")", RemoveExistingColumnFromDef))) then
-		LOGWARNING(PLUGIN_PREFIX .. "Cannot query DB table structure")
+		LOGWARNING("Cannot query DB table structure")
 		return false
 	end
 
 	-- Create the missing columns
 	-- a_Columns now contains only those columns that are missing in the DB
 	if (a_Columns[1]) then
-		LOGINFO(PLUGIN_PREFIX .. "Database table \"" .. a_TableName .. "\" is missing " .. #a_Columns .. " columns, fixing now.")
+		LOGINFO("Database table \"" .. a_TableName .. "\" is missing " .. #a_Columns .. " columns, fixing now.")
 		for _, col in ipairs(a_Columns) do
 			if (not(self:DBExec("ALTER TABLE '" .. a_TableName .. "' ADD COLUMN " .. col[1] .. " " .. (col[2] or "")))) then
-				LOGWARNING(PLUGIN_PREFIX .. "Cannot add DB table \"" .. a_TableName .. "\" column \"" .. col[1] .. "\"")
+				LOGWARNING("Cannot add DB table \"" .. a_TableName .. "\" column \"" .. col[1] .. "\"")
 				return false
 			end
 		end
-		LOGINFO(PLUGIN_PREFIX .. "Database table \"" .. a_TableName .. "\" columns fixed.")
+		LOGINFO("Database table \"" .. a_TableName .. "\" columns fixed.")
 	end
 
 	return true
@@ -143,8 +143,8 @@ function SQLite:ExecuteStatement(a_SQL, a_Params, a_Callback, a_RowIDCallback)
 		ErrCode = ErrCode or self.DB:errcode()
 		ErrMsg = ErrMsg or self.DB:errmsg()
 		ErrMsg = (ErrCode or "<unknown>") .. " (" .. (ErrMsg or "<no message>") .. ")"
-		LOGWARNING(PLUGIN_PREFIX .. "Cannot prepare SQL \"" .. a_SQL .. "\": " .. ErrMsg)
-		LOGWARNING(PLUGIN_PREFIX .. "  Params = {" .. table.concat(a_Params or {}, ", ") .. "}")
+		LOGWARNING("Cannot prepare SQL \"" .. a_SQL .. "\": " .. ErrMsg)
+		LOGWARNING("  Params = {" .. table.concat(a_Params or {}, ", ") .. "}")
 		return nil, ErrMsg
 	end
 
@@ -153,7 +153,7 @@ function SQLite:ExecuteStatement(a_SQL, a_Params, a_Callback, a_RowIDCallback)
 		ErrCode = Stmt:bind_values(unpack(a_Params))
 		if ((ErrCode ~= sqlite3.OK) and (ErrCode ~= sqlite3.DONE)) then
 			ErrMsg = (ErrCode or "<unknown>") .. " (" .. (self.DB:errmsg() or "<no message>") .. ")"
-			LOGWARNING(PLUGIN_PREFIX .. "Cannot bind values to statement \"" .. a_SQL .. "\": " .. ErrMsg)
+			LOGWARNING("Cannot bind values to statement \"" .. a_SQL .. "\": " .. ErrMsg)
 			Stmt:finalize()
 			return nil, ErrMsg
 		end
@@ -164,7 +164,7 @@ function SQLite:ExecuteStatement(a_SQL, a_Params, a_Callback, a_RowIDCallback)
 		ErrCode = Stmt:step()
 		if ((ErrCode ~= sqlite3.ROW) and (ErrCode ~= sqlite3.DONE)) then
 			ErrMsg = (ErrCode or "<unknown>") .. " (" .. (self.DB:errmsg() or "<no message>") .. ")"
-			LOGWARNING(PLUGIN_PREFIX .. "Cannot step statement \"" .. a_SQL .. "\": " .. ErrMsg)
+			LOGWARNING("Cannot step statement \"" .. a_SQL .. "\": " .. ErrMsg)
 			Stmt:finalize()
 			return nil, ErrMsg
 		end

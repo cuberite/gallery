@@ -1105,7 +1105,7 @@ function SQLite_CreateStorage(a_Params)
 		not(res:CreateDBTable("Allowances",   AllowancesColumns)) or
 		not(res:CreateDBTable("RemovedAreas", RemovedAreasColumns))
 	) then
-		LOGWARNING(PLUGIN_PREFIX .. "Cannot create DB tables!")
+		LOGWARNING("Cannot create DB tables!")
 		error("Cannot create DB tables!")
 	end
 

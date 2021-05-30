@@ -65,11 +65,11 @@ local function CheckGallery(a_Gallery, a_Index)
 	for idx, param in ipairs(g_GalleryRequiredParams) do
 		local p = a_Gallery[param.Name];
 		if (p == nil) then
-			LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\" is missing a required parameter '" .. param.Name .."'. Disabling the gallery.");
+			LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\" is missing a required parameter '" .. param.Name .."'. Disabling the gallery.");
 			return false;
 		end
 		if (type(p) ~= param.Type) then
-			LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\"'s parameter \"" .. param.Name .."\" is wrong type. Expected " .. param.Type .. ", got " .. type(p) ..". Disabling the gallery.");
+			LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\"'s parameter \"" .. param.Name .."\" is wrong type. Expected " .. param.Type .. ", got " .. type(p) ..". Disabling the gallery.");
 			return false;
 		end
 	end
@@ -79,7 +79,7 @@ local function CheckGallery(a_Gallery, a_Index)
 		local p = a_Gallery[param.Name];
 		if (p ~= nil) then
 			if (type(p) ~= param.Type) then
-				LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\"'s parameter \"" .. param.Name .."\" is wrong type. Expected " .. param.Type .. ", got " .. type(p) ..". Disabling the gallery.");
+				LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\"'s parameter \"" .. param.Name .."\" is wrong type. Expected " .. param.Type .. ", got " .. type(p) ..". Disabling the gallery.");
 				return false;
 			end
 		end
@@ -95,14 +95,14 @@ local function CheckGallery(a_Gallery, a_Index)
 		end
 	end
 	if not(IsStrategyValid) then
-		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\"'s FillStrategy is not recognized. The gallery is disabled.");
+		LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\"'s FillStrategy is not recognized. The gallery is disabled.");
 		return false;
 	end
 
 	-- Assign the world:
 	a_Gallery.World = cRoot:Get():GetWorld(a_Gallery.WorldName);
 	if (a_Gallery.World == nil) then
-		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\" specifies an unknown world '" .. a_Gallery.WorldName .. "\".");
+		LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\" specifies an unknown world '" .. a_Gallery.WorldName .. "\".");
 		return false;
 	end
 
@@ -111,11 +111,11 @@ local function CheckGallery(a_Gallery, a_Index)
 	if (AreaTemplate ~= nil) then
 		local Schematic = cBlockArea();
 		if (Schematic == nil) then
-			LOGWARNING(PLUGIN_PREFIX .. "Cannot create the template schematic representation");
+			LOGWARNING("Cannot create the template schematic representation");
 			return true;
 		end
 		if not(Schematic:LoadFromSchematicFile(AreaTemplate)) then
-			LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\"'s AreaTemplate failed to load from \"" .. AreaTemplate .. "\".");
+			LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\"'s AreaTemplate failed to load from \"" .. AreaTemplate .. "\".");
 			return false;
 		end
 		a_Gallery.AreaTemplateSchematic = Schematic;
@@ -132,7 +132,7 @@ local function CheckGallery(a_Gallery, a_Index)
 	else
 		-- If no schematic is given, the area sizes must be specified:
 		if ((a_Gallery.AreaSizeX == nil) or (a_Gallery.AreaSizeZ == nil)) then
-			LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\" has neither AreaTemplate nor AreaSizeX / AreaSizeZ set.");
+			LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\" has neither AreaTemplate nor AreaSizeX / AreaSizeZ set.");
 			return false;
 		end
 		a_Gallery.TeleportCoordY = 256;
@@ -141,13 +141,13 @@ local function CheckGallery(a_Gallery, a_Index)
 	-- Calculate and check the number of areas per X / Z dimension:
 	a_Gallery.NumAreasPerX = math.floor((a_Gallery.MaxX -  a_Gallery.MinX) / a_Gallery.AreaSizeX);
 	if (a_Gallery.NumAreasPerX <= 0) then
-		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\" has areas wider than will fit in the X direction:" ..
+		LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\" has areas wider than will fit in the X direction:" ..
 			"AreaSizeX = " .. a_Gallery.AreaSizeX .. ", GallerySizeX = " .. tostring(a_Gallery.MaxX - a_Gallery.MinX));
 		return false;
 	end
 	a_Gallery.NumAreasPerZ = math.floor((a_Gallery.MaxZ -  a_Gallery.MinZ) / a_Gallery.AreaSizeZ);
 	if (a_Gallery.NumAreasPerZ <= 0) then
-		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. "\" has areas wider than will fit in the Z direction:" ..
+		LOGWARNING("Gallery \"" .. a_Gallery.Name .. "\" has areas wider than will fit in the Z direction:" ..
 			"AreaSizeZ = " .. a_Gallery.AreaSizeZ .. ", GallerySizeZ = " .. tostring(a_Gallery.MaxZ - a_Gallery.MinZ));
 		return false;
 	end
@@ -157,12 +157,12 @@ local function CheckGallery(a_Gallery, a_Index)
 	a_Gallery.AreaEdge = a_Gallery.AreaEdge or 2;
 
 	if (a_Gallery.AreaSizeX <= a_Gallery.AreaEdge * 2) then
-		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. " has AreaEdge greater than X size: " ..
+		LOGWARNING("Gallery \"" .. a_Gallery.Name .. " has AreaEdge greater than X size: " ..
 			"AreaEdge = " .. a_Gallery.AreaEdge .. ", GallerySizeX = " .. a_Gallery.AreaSizeX .. ". Gallery is disabled");
 		return false;
 	end
 	if (a_Gallery.AreaSizeZ <= a_Gallery.AreaEdge * 2) then
-		LOGWARNING(PLUGIN_PREFIX .. "Gallery \"" .. a_Gallery.Name .. " has AreaEdge greater than Z size: " ..
+		LOGWARNING("Gallery \"" .. a_Gallery.Name .. " has AreaEdge greater than Z size: " ..
 			"AreaEdge = " .. a_Gallery.AreaEdge .. ", GallerySizeZ = " .. a_Gallery.AreaSizeZ .. ". Gallery is disabled");
 		return false;
 	end
@@ -192,7 +192,7 @@ local function CheckGallery(a_Gallery, a_Index)
 	if (a_Gallery.Biome ~= nil) then
 		local BiomeType = StringToBiome(a_Gallery.Biome);
 		if (BiomeType == biInvalidBiome) then
-			LOGWARNING(PLUGIN_PREFIX .. "Gallery " .. a_Gallery.Name .. " has invalid Biome \"" .. a_Gallery.Biome .. "\"; biome support turned off.");
+			LOGWARNING("Gallery " .. a_Gallery.Name .. " has invalid Biome \"" .. a_Gallery.Biome .. "\"; biome support turned off.");
 			a_Gallery.Biome = nil;
 		else
 			a_Gallery.Biome = BiomeType;
@@ -236,7 +236,7 @@ local function VerifyConfig(a_Config)
 	if (a_Config.WebPreview) then
 		local schematicToPng = a_Config.WebPreview.MCSchematicToPng
 		if not(schematicToPng) then
-			LOGINFO(PLUGIN_PREFIX .. "The config doesn't define WebPreview.MCSchematicToPng. Web preview is disabled.")
+			LOGINFO("The config doesn't define WebPreview.MCSchematicToPng. Web preview is disabled.")
 			a_Config.WebPreview = nil
 		else
 			if (type(schematicToPng) ~= "table") then
@@ -270,8 +270,8 @@ function LoadConfig()
 		local PluginFolder = cPluginManager:Get():GetCurrentPlugin():GetLocalFolder()
 		local ExampleFile = CONFIG_FILE:gsub(".cfg", ".example.cfg");
 		cFile:Copy(PluginFolder .. "/example.cfg", ExampleFile);
-		LOGWARNING(PLUGIN_PREFIX .. "The config file '" .. CONFIG_FILE .. "' doesn't exist. An example configuration file '" .. ExampleFile .. "' has been created for you.");
-		LOGWARNING(PLUGIN_PREFIX .. "No galleries were loaded");
+		LOGWARNING("The config file '" .. CONFIG_FILE .. "' doesn't exist. An example configuration file '" .. ExampleFile .. "' has been created for you.");
+		LOGWARNING("No galleries were loaded");
 		g_Config = VerifyConfig({})
 		g_Galleries = VerifyGalleries({})
 		return;
@@ -280,8 +280,8 @@ function LoadConfig()
 	-- Load and compile the config file:
 	local cfg, err = loadfile(CONFIG_FILE);
 	if (cfg == nil) then
-		LOGWARNING(PLUGIN_PREFIX .. "Cannot open '" .. CONFIG_FILE .. "': " .. (err or "<unknown error>"));
-		LOGWARNING(PLUGIN_PREFIX .. "No galleries were loaded");
+		LOGWARNING("Cannot open '" .. CONFIG_FILE .. "': " .. (err or "<unknown error>"));
+		LOGWARNING("No galleries were loaded");
 		g_Config = VerifyConfig({})
 		g_Galleries = VerifyGalleries({})
 		return;
@@ -296,11 +296,11 @@ function LoadConfig()
 	-- Retrieve the values we want from the sandbox:
 	local Galleries, Config = Sandbox.Galleries, Sandbox.Config;
 	if (Galleries == nil) then
-		LOGWARNING(PLUGIN_PREFIX .. "Galleries not found in the config file '" .. CONFIG_FILE .. "'. Gallery plugin inactive.");
+		LOGWARNING("Galleries not found in the config file '" .. CONFIG_FILE .. "'. Gallery plugin inactive.");
 		Galleries = {};
 	end
 	if (Config == nil) then
-		LOGWARNING(PLUGIN_PREFIX .. "Config not found in the config file '" .. CONFIG_FILE .. "'. Using defaults.");
+		LOGWARNING("Config not found in the config file '" .. CONFIG_FILE .. "'. Using defaults.");
 		Config = {};  -- Defaults will be inserted by VerifyConfig()
 	end
 	g_Config = VerifyConfig(Config)

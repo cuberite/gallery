@@ -25,7 +25,7 @@ function InitStorage()
 
 	-- If the DB failed to initialize, fall back to SQLite:
 	if (g_DB == nil) then
-		LOGWARNING(PLUGIN_PREFIX .. "DB access failed to initialize, falling back to SQLite.");
+		LOGWARNING("DB access failed to initialize, falling back to SQLite.");
 		g_DB = SQLite_CreateStorage();
 	end
 end

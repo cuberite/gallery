@@ -1074,8 +1074,8 @@ function SQLite_CreateStorage(a_Params)
 	local DBFile = a_Params.File or "Galleries.sqlite"
 	local isSuccess, errCode, errMsg = res:OpenDB(DBFile)
 	if not(isSuccess) then
-		LOGWARNING(string.format("%sCannot open database \"%s\": error %s: %s",
-			PLUGIN_PREFIX, DBFile, errCode or "<no code>", errMsg or "<no message>"
+		LOGWARNING(string.format("Cannot open database \"%s\": error %s: %s",
+			DBFile, errCode or "<no code>", errMsg or "<no message>"
 		))
 		error(errMsg or "<no message>")  -- Abort the plugin
 	end
@@ -1105,7 +1105,7 @@ function SQLite_CreateStorage(a_Params)
 		not(res:CreateDBTable("Allowances",   AllowancesColumns)) or
 		not(res:CreateDBTable("RemovedAreas", RemovedAreasColumns))
 	) then
-		LOGWARNING(PLUGIN_PREFIX .. "Cannot create DB tables!")
+		LOGWARNING("Cannot create DB tables!")
 		error("Cannot create DB tables!")
 	end
 

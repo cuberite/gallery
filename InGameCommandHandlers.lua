@@ -50,7 +50,7 @@ function ListPlayerAreasInWorld(a_Player)
 	-- Send list:
 	for idx, area in ipairs(Areas) do
 		a_Player:SendMessage(cCompositeChat("  " .. DescribeArea(area) .. " (", mtInfo)
-			:AddRunCommandPart("goto", "/gal goto " .. area.Name, "@bu")
+			:AddRunCommandPart("goto", "/gal goto " .. area.Name, "bn")
 			:AddTextPart(")")
 		)
 	end
@@ -84,7 +84,7 @@ function ListPlayerAreasInGallery(a_Player, a_GalleryName)
 	-- Send list:
 	for idx, area in ipairs(Areas) do
 		a_Player:SendMessage(cCompositeChat("  " .. DescribeArea(area) .. " (", mtInfo)
-			:AddRunCommandPart("goto", "/gal goto " .. area.Name, "@bu")
+			:AddRunCommandPart("goto", "/gal goto " .. area.Name, "bn")
 			:AddTextPart(")")
 		)
 	end
@@ -128,7 +128,7 @@ local function ListOtherPlayerAreas(a_Player, a_OwnerName, a_GalleryName)
 	-- Send list:
 	for idx, area in ipairs(Areas) do
 		a_Player:SendMessage(cCompositeChat("  " .. DescribeArea(area) .. " (", mtInfo)
-			:AddRunCommandPart("goto", "/gal goto @" .. a_OwnerName .. " " .. area.Name, "@bu")
+			:AddRunCommandPart("goto", "/gal goto @" .. a_OwnerName .. " " .. area.Name, "bn")
 			:AddTextPart(")")
 		)
 	end
@@ -188,7 +188,7 @@ function HandleCmdAllow(a_Split, a_Player)
 		a_Player:SendMessage(cCompositeChat("You need to specify the player whom to allow here.", mtFailure))
 		a_Player:SendMessage(cCompositeChat("Usage: ", mtInfo)
 			:AddSuggestCommandPart(g_Config.CommandPrefix .. " allow ", g_Config.CommandPrefix .. " allow ")
-			:AddTextPart("FriendName", "@2")
+			:AddTextPart("FriendName", "2")
 		)
 		return true;
 	end
@@ -231,7 +231,7 @@ function HandleCmdClaim(a_Split, a_Player)
 		a_Player:SendMessage(cCompositeChat("You need to specify the gallery where to claim.", mtFailure))
 		a_Player:SendMessage(cCompositeChat("Usage: ", mtInfo)
 			:AddSuggestCommandPart(g_Config.CommandPrefix .. " claim ", g_Config.CommandPrefix .. " claim ")
-			:AddTextPart("Gallery", "@2")
+			:AddTextPart("Gallery", "2")
 		)
 		return true
 	end
@@ -280,7 +280,7 @@ function HandleCmdDeny(a_Split, a_Player)
 		a_Player:SendMessage(cCompositeChat("You need to specify the player whom to deny here.", mtFailure))
 		a_Player:SendMessage(cCompositeChat("Usage: ", mtInfo)
 			:AddSuggestCommandPart(g_Config.CommandPrefix .. " deny ", g_Config.CommandPrefix .. " deny ")
-			:AddTextPart("FormerFriendName", "@2")
+			:AddTextPart("FormerFriendName", "2")
 		)
 		return true
 	end
@@ -836,7 +836,7 @@ function HandleCmdStats(a_Split, a_Player)
 	for idx, stat in ipairs(PlayerAreaCounts) do
 		local Style = ""
 		if (stat.PlayerName == PlayerName) then
-			Style = "@2"
+			Style = "2"
 		end
 		local Prefix = "  -: "
 		if (idx <= Limit) then
